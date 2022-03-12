@@ -8,6 +8,7 @@ from . import Auth
 from . import Channel
 from . import Subscription
 from . import SubscriptionList
+from .events import parse_response
 from .utils import get_max_ws_uri
 
 
@@ -19,7 +20,10 @@ async def subscribe(uri, messages):
         while True:
             try:
                 response = await websocket.recv()
-                logger.info(response)
+                event = parse_response(json.loads(response))
+                if event is not None:
+                    logger.info(event)
+
             except websockets.ConnectionClosed as e:
                 logger.error(e)
                 break
