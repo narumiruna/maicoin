@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 from dataclasses import dataclass
 from enum import Enum
@@ -27,6 +29,14 @@ class Subscription:
             d['depth'] = self.depth
 
         return d
+
+    @classmethod
+    def parse(self, d: dict) -> Subscription:
+        return Subscription(
+            channel=Channel(d.get('channel')),
+            market=d.get('market'),
+            depth=d.get('depth'),
+        )
 
 
 @dataclass
