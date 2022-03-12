@@ -4,7 +4,10 @@ import json
 import websockets
 from loguru import logger
 
-from . import Auth, Channel, Subscription, SubscriptionList
+from . import Auth
+from . import Channel
+from . import Subscription
+from . import SubscriptionList
 from .utils import get_max_ws_uri
 
 
@@ -16,10 +19,7 @@ async def subscribe(uri, messages):
         while True:
             try:
                 response = await websocket.recv()
-                logger.info('{}', response)
-                if 'book' in response:
-                    print(response)
-
+                logger.info(response)
             except websockets.ConnectionClosed as e:
                 logger.error(e)
                 break
