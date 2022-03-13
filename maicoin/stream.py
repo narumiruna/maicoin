@@ -1,9 +1,6 @@
-from .websocket import subscribe
-from .websocket import get_max_ws_uri
+import json
 
 import websockets
-import asyncio
-import json
 from loguru import logger
 
 
