@@ -1,0 +1,27 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Upgrade pip
+        run: pip install -U pip
+      - name: Install poetry
+        run: pip install -U poetry
+      - name: Build
+        run: poetry build
+      - name: Publish
+        env: 
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        run: poetry publish -u __token__ -p $PYPI_TOKEN
