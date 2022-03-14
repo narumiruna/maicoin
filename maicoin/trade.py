@@ -24,16 +24,17 @@ from .event import Event
 class Trade:
     price: float
     volume: float
-    created_at: int
+    created_at: str
     trend: str
 
     @classmethod
     def from_dict(cls, d: dict) -> Trade:
-        price = d.get('p')
-        volume = d.get('v')
-        created_at = d.get('T')
-        trend = d.get('tr')
-        return cls(price, volume, created_at, trend)
+        return cls(
+            d.get('p'),
+            d.get('v'),
+            d.get('T'),
+            d.get('tr'),
+        )
 
 
 @dataclass
@@ -42,13 +43,14 @@ class TradeEvent:
     event: Event
     market: str
     trades: List[Trade]
-    created_at: int
+    created_at: str
 
     @classmethod
     def from_dict(cls, d: dict) -> TradeEvent:
-        channel = Channel(d.get('c'))
-        event = Event(d.get('e'))
-        market = d.get('M')
-        trades = [Trade.from_dict(t) for t in d.get('t')]
-        created_at = d.get('T')
-        return cls(channel, event, market, trades, created_at)
+        return cls(
+            Channel(d.get('c')),
+            Event(d.get('e')),
+            d.get('M'),
+            [Trade.from_dict(t) for t in d.get('t')],
+            d.get('T'),
+        )
