@@ -5,6 +5,7 @@ from typing import List
 
 from .channel import Channel
 from .event import Event
+from .side import Side
 
 # {
 #   "c": "trade",
@@ -20,12 +21,34 @@ from .event import Event
 # }
 
 
+# {
+#   "c": "user",
+#   "e": "trade_snapshot",
+#   "t": [{
+#     "i": 68444, // trade id
+#     "p": "21499.0",
+#     "v": "0.2658",
+#     "M": "ethtwd",
+#     "T": 1521726960357,
+#     "sd": "bid",
+#     "f": "3.2",
+#     "fc": "twd",
+#     "m": true    // maker
+#   }],
+#   "T": 1521726960357
+# }
 @dataclass
 class Trade:
     price: float
     volume: float
     created_at: str
     trend: str
+    id: str = None
+    market: str = None
+    side: Side = None
+    fee: float = None
+    fee_currency: str = None
+    maker: bool = None
 
     @classmethod
     def from_dict(cls, d: dict) -> Trade:
@@ -34,6 +57,12 @@ class Trade:
             d.get('v'),
             d.get('T'),
             d.get('tr'),
+            id=d.get('i'),
+            market=d.get('M'),
+            side=d.get('sd'),
+            fee=d.get('f'),
+            fee_currency=d.get('fc'),
+            maker=d.get('m'),
         )
 
 

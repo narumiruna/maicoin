@@ -18,7 +18,7 @@ async def subscribe(messages):
                 response = await websocket.recv()
                 event = parse_response(json.loads(response))
                 if event is not None:
-                    logger.info(event)
+                    logger.info(event.event)
 
             except websockets.ConnectionClosed as e:
                 logger.error(e)

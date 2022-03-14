@@ -31,8 +31,8 @@ def parse_response(d: dict):
         Event.UPDATE: parse_public_channel,
         Event.ORDER_SNAPSHOT: OrderEvent.from_dict,
         Event.ORDER_UPDATE: OrderEvent.from_dict,
-        Event.TRADE_SNAPSHOT: logger.info,
-        Event.TRADE_UPDATE: logger.info,
+        Event.TRADE_SNAPSHOT: TradeEvent.from_dict,
+        Event.TRADE_UPDATE: TradeEvent.from_dict,
         Event.ACCOUNT_SNAPSHOT: logger.info,
         Event.ACCOUNT_UPDATE: logger.info,
     }
