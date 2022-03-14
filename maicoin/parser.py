@@ -20,7 +20,7 @@ def parse_public_channel(d: dict):
     return m[Channel(d.get('c'))](d)
 
 
-def parse_response(d: dict):
+def parse_event(d: dict):
     m = {
         Event.ERROR: Error.from_dict,
         Event.SUBSCRIBED: SubscribedEvent.from_dict,
