@@ -36,7 +36,7 @@ class BookEvent:
             Channel(d.get('c')),
             Event(d.get('e')),
             d.get('M'),
-            [PriceVolume(p, v) for p, v in d.get('a')],
-            [PriceVolume(p, v) for p, v in d.get('b')],
+            [PriceVolume(price, volume) for price, volume in d.get('a')],
+            [PriceVolume(price, volume) for price, volume in d.get('b')],
             d.get('T'),
         )

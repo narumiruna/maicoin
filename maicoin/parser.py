@@ -1,5 +1,4 @@
-from loguru import logger
-
+from .account import AccountEvent
 from .auth import AuthenticatedEvent
 from .book import BookEvent
 from .channel import Channel
@@ -33,7 +32,7 @@ def parse_response(d: dict):
         Event.ORDER_UPDATE: OrderEvent.from_dict,
         Event.TRADE_SNAPSHOT: TradeEvent.from_dict,
         Event.TRADE_UPDATE: TradeEvent.from_dict,
-        Event.ACCOUNT_SNAPSHOT: logger.info,
-        Event.ACCOUNT_UPDATE: logger.info,
+        Event.ACCOUNT_SNAPSHOT: AccountEvent.from_dict,
+        Event.ACCOUNT_UPDATE: AccountEvent.from_dict,
     }
     return m[Event(d.get('e'))](d)

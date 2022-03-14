@@ -80,6 +80,6 @@ class TradeEvent:
             Channel(d.get('c')),
             Event(d.get('e')),
             d.get('M'),
-            [Trade.from_dict(t) for t in d.get('t')],
+            [Trade.from_dict(trade) for trade in d.get('t')],
             d.get('T'),
         )
