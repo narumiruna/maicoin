@@ -3,15 +3,15 @@
 ## To-Do List
 
 - [ ] WebSocket API
-  - [ ] Public channels
-    - [ ] Subscribe
-    - [ ] Unsubscribe
-    - [ ] Orderbook
-    - [ ] Trade
-    - [ ] Ticker
-  - [ ] Authentication
+  - [x] Public channels
+    - [x] Subscribe
+    - [x] Unsubscribe
+    - [x] Orderbook
+    - [x] Trade
+    - [x] Ticker
+  - [x] Authentication
   - [ ] Private channels
-    - [ ] Order
+    - [x] Order
     - [ ] Trade
     - [ ] Account
 - [ ] HTTP API
