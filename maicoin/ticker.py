@@ -64,8 +64,8 @@ class TickerEvent:
     @classmethod
     def from_dict(cls, d: dict) -> TickerEvent:
         return cls(
-            d.get('c'),
-            d.get('e'),
+            Channel(d.get('c')),
+            Event(d.get('e')),
             d.get('M'),
             Ticker.from_dict(d.get('tk')),
             d.get('T'),
