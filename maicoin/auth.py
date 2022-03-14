@@ -7,7 +7,9 @@ from datetime import datetime
 from enum import Enum
 from typing import List
 
-from .utils import get_api_key_from_env, get_api_secret_from_env
+from .event import Event
+from .utils import get_api_key_from_env
+from .utils import get_api_secret_from_env
 
 
 class Filter(Enum):
@@ -18,14 +20,14 @@ class Filter(Enum):
 
 
 @dataclass
-class Auth:
+class AuthAction:
     api_key: str
     nonce: int
     signature: str
     filters: List[Filter] = None
 
     @classmethod
-    def from_env(cls) -> Auth:
+    def from_env(cls) -> AuthAction:
         api_key = get_api_key_from_env()
         api_secret = get_api_secret_from_env()
 
@@ -41,7 +43,7 @@ class Auth:
             nonce=nonce,
         )
 
-    def to_msg(self) -> dict:
+    def to_dict(self) -> dict:
         d = {
             'action': 'auth',
             'apiKey': self.api_key,
@@ -54,3 +56,18 @@ class Auth:
             d['filters'] = [f.value for f in self.filters]
 
         return d
+
+
+@dataclass
+class AuthenticatedEvent:
+    event: Event
+    id: str
+    at: int
+
+    @classmethod
+    def from_dict(cls, d: dict) -> AuthenticatedEvent:
+        event = Event(d.get('e'))
+        id = d.get('i')
+        at = d.get('T')
+
+        return cls(event, id, at)

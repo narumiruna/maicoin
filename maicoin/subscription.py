@@ -2,15 +2,10 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from enum import Enum
 from typing import List
 
-
-class Channel(Enum):
-    BOOK = 'book'
-    TRADE = 'trade'
-    TICKER = 'ticker'
-    USER = 'user'
+from .channel import Channel
+from .event import Event
 
 
 @dataclass
@@ -31,7 +26,7 @@ class Subscription:
         return d
 
     @classmethod
-    def parse(self, d: dict) -> Subscription:
+    def from_dict(self, d: dict) -> Subscription:
         return Subscription(
             channel=Channel(d.get('channel')),
             market=d.get('market'),
@@ -40,7 +35,7 @@ class Subscription:
 
 
 @dataclass
-class SubscriptionList:
+class SubscriptionAction:
     subscriptions: List[Subscription]
 
     def to_dict(self) -> dict:
@@ -50,3 +45,37 @@ class SubscriptionList:
             'id': str(uuid.uuid4()),
         }
         return d
+
+
+@dataclass
+class SubscribedEvent:
+    event: Event
+    subscriptions: List[Subscription]
+    id: str
+    created_at: int
+
+    @classmethod
+    def from_dict(cls, d: dict) -> SubscribedEvent:
+        event = Event(d.get('e'))
+        subscriptions = [Subscription.from_dict(s) for s in d.get('s')]
+        id = d.get('i')
+        created_at = d.get('T')
+
+        return cls(event, subscriptions, id, created_at)
+
+
+@dataclass
+class UnsubscribedEvent:
+    event: Event
+    subscriptions: List[Subscription]
+    id: str
+    created_at: int
+
+    @classmethod
+    def from_dict(cls, d: dict) -> UnsubscribedEvent:
+        event = Event(d.get('e'))
+        subscriptions = [Subscription.from_dict(s) for s in d.get('s')]
+        id = d.get('i')
+        created_at = d.get('T')
+
+        return cls(event, subscriptions, id, created_at)

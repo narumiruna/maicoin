@@ -3,10 +3,12 @@ import json
 import websockets
 from loguru import logger
 
-from .events import parse_response
+from .parser import parse_response
+from .utils import get_max_ws_uri
 
 
-async def subscribe(uri, messages):
+async def subscribe(messages):
+    uri = get_max_ws_uri()
     async with websockets.connect(uri) as websocket:
         for message in messages:
             await websocket.send(json.dumps(message))
