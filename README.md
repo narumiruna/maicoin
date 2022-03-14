@@ -10,7 +10,7 @@
     - [x] Trade
     - [x] Ticker
   - [x] Authentication
-  - [ ] Private channels
+  - [x] Private channels
     - [x] Order
     - [x] Trade
     - [x] Account
