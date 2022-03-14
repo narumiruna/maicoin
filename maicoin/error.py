@@ -16,7 +16,7 @@ class Error:
     @classmethod
     def from_dict(cls, d: dict) -> Error:
         return cls(
-            d.get('e'),
+            Event(d.get('e')),
             d.get('E'),
             d.get('i'),
             d.get('T'),
