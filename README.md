@@ -12,6 +12,6 @@
   - [x] Authentication
   - [ ] Private channels
     - [x] Order
-    - [ ] Trade
-    - [ ] Account
+    - [x] Trade
+    - [x] Account
 - [ ] [HTTP API](https://max.maicoin.com/documents/api_list/v2)
