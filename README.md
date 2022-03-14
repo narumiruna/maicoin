@@ -1,5 +1,7 @@
 # maicoin
 
+A Python package for MaiCoin MAX API
+
 ## To-Do List
 
 - [ ] [WebSocket API](https://maicoin.github.io/max-websocket-docs/#/)
