@@ -11,6 +11,7 @@ from .trade import TradeEvent
 
 
 def parse_public_channel(d: dict):
+    print(d.get('c'))
     m = {
         Channel.BOOK: BookEvent.from_dict,
         Channel.TRADE: TradeEvent.from_dict,

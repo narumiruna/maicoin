@@ -14,7 +14,7 @@ class PriceVolume:
 
     @classmethod
     def from_dict(cls, asks_or_bids: list) -> List[PriceVolume]:
-        return [PriceVolume(float(p), float(v)) for p, v in asks_or_bids]
+        return [PriceVolume(p, v) for p, v in asks_or_bids]
 
 
 # {

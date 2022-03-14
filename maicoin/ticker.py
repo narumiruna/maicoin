@@ -44,7 +44,6 @@ class Ticker:
 
     @classmethod
     def from_dict(cls, d: dict) -> Ticker:
-        print(d, type(d.get('O')))
         return cls(
             d.get('O'),
             d.get('H'),
@@ -68,6 +67,6 @@ class TickerEvent:
             d.get('c'),
             d.get('e'),
             d.get('M'),
-            d.get('tk'),
+            Ticker.from_dict(d.get('tk')),
             d.get('T'),
         )
