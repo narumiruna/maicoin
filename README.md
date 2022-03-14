@@ -2,7 +2,7 @@
 
 ## To-Do List
 
-- [ ] WebSocket API
+- [ ] [WebSocket API](https://maicoin.github.io/max-websocket-docs/#/)
   - [x] Public channels
     - [x] Subscribe
     - [x] Unsubscribe
@@ -14,4 +14,4 @@
     - [x] Order
     - [ ] Trade
     - [ ] Account
-- [ ] HTTP API
+- [ ] [HTTP API](https://max.maicoin.com/documents/api_list/v2)
