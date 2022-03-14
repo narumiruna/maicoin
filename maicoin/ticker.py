@@ -59,7 +59,7 @@ class TickerEvent:
     event: Event
     market: str
     ticker: Ticker
-    created_at: int
+    created_at: str
 
     @classmethod
     def from_dict(cls, d: dict) -> TickerEvent:

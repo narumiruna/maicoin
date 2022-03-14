@@ -28,9 +28,9 @@ class Subscription:
     @classmethod
     def from_dict(self, d: dict) -> Subscription:
         return Subscription(
-            channel=Channel(d.get('channel')),
-            market=d.get('market'),
-            depth=d.get('depth'),
+            Channel(d.get('channel')),
+            d.get('market'),
+            d.get('depth'),
         )
 
 
@@ -39,12 +39,11 @@ class SubscriptionAction:
     subscriptions: List[Subscription]
 
     def to_dict(self) -> dict:
-        d = {
+        return {
             'action': 'sub',
             'subscriptions': [s.to_dict() for s in self.subscriptions],
             'id': str(uuid.uuid4()),
         }
-        return d
 
 
 @dataclass
@@ -52,16 +51,16 @@ class SubscribedEvent:
     event: Event
     subscriptions: List[Subscription]
     id: str
-    created_at: int
+    created_at: str
 
     @classmethod
     def from_dict(cls, d: dict) -> SubscribedEvent:
-        event = Event(d.get('e'))
-        subscriptions = [Subscription.from_dict(s) for s in d.get('s')]
-        id = d.get('i')
-        created_at = d.get('T')
-
-        return cls(event, subscriptions, id, created_at)
+        return cls(
+            Event(d.get('e')),
+            [Subscription.from_dict(s) for s in d.get('s')],
+            d.get('i'),
+            d.get('T'),
+        )
 
 
 @dataclass
@@ -69,13 +68,13 @@ class UnsubscribedEvent:
     event: Event
     subscriptions: List[Subscription]
     id: str
-    created_at: int
+    created_at: str
 
     @classmethod
     def from_dict(cls, d: dict) -> UnsubscribedEvent:
-        event = Event(d.get('e'))
-        subscriptions = [Subscription.from_dict(s) for s in d.get('s')]
-        id = d.get('i')
-        created_at = d.get('T')
-
-        return cls(event, subscriptions, id, created_at)
+        return cls(
+            Event(d.get('e')),
+            [Subscription.from_dict(s) for s in d.get('s')],
+            d.get('i'),
+            d.get('T'),
+        )

@@ -12,10 +12,6 @@ class PriceVolume:
     price: float
     volume: float
 
-    @classmethod
-    def from_dict(cls, asks_or_bids: list) -> List[PriceVolume]:
-        return [PriceVolume(p, v) for p, v in asks_or_bids]
-
 
 # {
 #  "c": "book",
@@ -32,14 +28,15 @@ class BookEvent:
     market: str
     asks: List[PriceVolume]
     bids: List[PriceVolume]
-    created_at: int
+    created_at: str
 
     @classmethod
     def from_dict(cls, d: dict) -> BookEvent:
-        channel = Channel(d.get('c'))
-        event = Event(d.get('e'))
-        market = d.get('M')
-        asks = PriceVolume.from_dict(d.get('a'))
-        bids = PriceVolume.from_dict(d.get('b'))
-        created_at = d.get('T')
-        return cls(channel, event, market, asks, bids, created_at)
+        return cls(
+            Channel(d.get('c')),
+            Event(d.get('e')),
+            d.get('M'),
+            [PriceVolume(p, v) for p, v in d.get('a')],
+            [PriceVolume(p, v) for p, v in d.get('b')],
+            d.get('T'),
+        )

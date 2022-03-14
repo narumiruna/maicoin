@@ -62,12 +62,12 @@ class AuthAction:
 class AuthenticatedEvent:
     event: Event
     id: str
-    at: int
+    created_at: str
 
     @classmethod
     def from_dict(cls, d: dict) -> AuthenticatedEvent:
-        event = Event(d.get('e'))
-        id = d.get('i')
-        at = d.get('T')
-
-        return cls(event, id, at)
+        return cls(
+            Event(d.get('e')),
+            d.get('i'),
+            d.get('T'),
+        )
