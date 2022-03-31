@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class Event(Enum):
+class EventType(Enum):
     ERROR = 'error'
     SUBSCRIBED = 'subscribed'
     UNSUBSCRIBED = 'unsubscribed'

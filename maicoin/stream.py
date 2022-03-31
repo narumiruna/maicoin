@@ -1,24 +1,30 @@
 import asyncio
 import json
+from typing import Callable
 from typing import List
 
-import websockets
 from loguru import logger
 from websockets.client import WebSocketClientProtocol
+from websockets.legacy.client import Connect
 
-from .auth import AuthAction
-from .parser import parse_event
-from .subscription import Subscription
-from .subscription import SubscriptionAction
+from .data import Event
+from .data import Subscription
+from .data import create_authorize_action_from_env
+from .data import create_subscribe_action
 from .utils import get_max_ws_uri
 
 
 class Stream(object):
-    websocket: WebSocketClientProtocol
+    protocol: WebSocketClientProtocol
 
-    def __init__(self, subscriptions: List[Subscription]) -> None:
+    def __init__(self, subscriptions: List[Subscription], log_event: bool = True) -> None:
         self.subscriptions = subscriptions
-        self.websocket = None
+
+        self.protocol = None
+        self.event_handlers = []
+
+        if log_event:
+            self.add_event_handler(lambda event: logger.info(event))
 
     def run(self):
         loop = asyncio.get_event_loop()
@@ -29,26 +35,31 @@ class Stream(object):
 
     async def run_loop(self):
         uri = get_max_ws_uri()
-        async with websockets.connect(uri) as self.websocket:
+        async with Connect(uri) as self.protocol:
             await self.authorize()
             await self.subscribe()
-
             while True:
                 response = await self.recv()
-                logger.info(response)
+                event = Event.from_dict(response)
+                self.fire_event_handlers(event)
 
     async def send(self, obj: dict):
         message = json.dumps(obj)
-        await self.websocket.send(message)
+        await self.protocol.send(message)
 
     async def recv(self) -> dict:
-        response = await self.websocket.recv()
-        return parse_event(json.loads(response))
+        response = await self.protocol.recv()
+        return json.loads(response)
 
     async def subscribe(self):
-        action = SubscriptionAction(self.subscriptions).to_dict()
-        await self.send(action)
+        await self.send(create_authorize_action_from_env().to_dict())
 
     async def authorize(self):
-        action = AuthAction.from_env().to_dict()
-        await self.send(action)
+        await self.send(create_subscribe_action(self.subscriptions).to_dict())
+
+    def add_event_handler(self, event_handler: Callable):
+        self.event_handlers.append(event_handler)
+
+    def fire_event_handlers(self, event: Event):
+        for event_handler in self.event_handlers:
+            event_handler(event)
