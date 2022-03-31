@@ -13,6 +13,7 @@ from .order import OrderEvent
 from .order import OrderState
 from .order import OrderType
 from .side import Side
+from .stream import Stream
 from .subscription import SubscribedEvent
 from .subscription import Subscription
 from .subscription import SubscriptionAction
