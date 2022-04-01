@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 MAX_WS_URI = 'wss://max-stream.maicoin.com/ws'
 
@@ -18,3 +19,7 @@ def get_api_key_from_env():
 
 def get_api_secret_from_env():
     return os.environ.get('MAX_API_SECRET')
+
+
+def to_datetime(timestamp: int):
+    return datetime.fromtimestamp(int(timestamp) / 1000)

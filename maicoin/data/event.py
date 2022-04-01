@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 from typing import List
 
 from ..enums import Channel
 from ..enums import EventType
+from ..utils import to_datetime
 from .balance import Balance
 from .order import Order
 from .subscription import Subscription
@@ -15,7 +17,7 @@ from .trade import Trade
 @dataclass
 class Event:
     event: EventType
-    created_at: str
+    created_at: datetime
     id: str = None
     errors: List[str] = None
     subscriptions: List[Subscription] = None
@@ -27,6 +29,9 @@ class Event:
     orders: List[Order] = None
     ticker: Ticker = None
     trades: List[Trade] = None
+
+    def __post_init__(self):
+        self.created_at = to_datetime(self.created_at)
 
     @classmethod
     def from_dict(cls, d: dict) -> Event:

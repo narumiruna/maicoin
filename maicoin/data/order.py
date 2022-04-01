@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 
+from ..enums import OrderState
+from ..enums import OrderType
 from ..enums import Side
-
-from ..enums import OrderState, OrderType
+from ..utils import to_datetime
 
 
 @dataclass
@@ -17,13 +19,16 @@ class Order:
     average_price: str
     state: OrderState
     market: str
-    created_at: str
+    created_at: datetime
     volume: str
     remaining_volume: str
     executed_volume: str
     trade_count: int
     client_order_id: str
     group_id: str
+
+    def __post_init__(self):
+        self.created_at = to_datetime(self.created_at)
 
     @classmethod
     def from_dict(cls, d: dict) -> Order:

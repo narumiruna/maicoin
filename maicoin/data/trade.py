@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 
 from ..enums import Side
+from ..utils import to_datetime
 
 
 @dataclass
 class Trade:
     price: float
     volume: float
-    created_at: str
+    created_at: datetime
     trend: str
     id: str = None
     market: str = None
@@ -17,6 +19,9 @@ class Trade:
     fee: float = None
     fee_currency: str = None
     maker: bool = None
+
+    def __post_init__(self):
+        self.created_at = to_datetime(self.created_at)
 
     @classmethod
     def from_dict(cls, d: dict) -> Trade:
