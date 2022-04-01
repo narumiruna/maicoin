@@ -1,33 +1,20 @@
-import asyncio
-
-from loguru import logger
-
-from maicoin import AuthorizeAction
 from maicoin import Channel
+from maicoin import Stream
 from maicoin import Subscription
-from maicoin import SubscribeAction
-from maicoin.websocket import subscribe
-
-
-def callback(event):
-    logger.info(event)
 
 
 def main():
-    actions = [
-        AuthorizeAction.from_env().to_dict(),
-        SubscribeAction([
-            Subscription(Channel.BOOK, 'btcusdt', depth=1),
-            Subscription(Channel.TRADE, 'btcusdt'),
-            Subscription(Channel.TICKER, 'btcusdt'),
-        ]).to_dict(),
+    subscriptions = [
+        Subscription(Channel.BOOK, market='btcusdt', depth=1),
+        Subscription(Channel.BOOK, market='ethusdt', depth=1),
+        Subscription(Channel.TICKER, market='btcusdt'),
+        Subscription(Channel.TICKER, market='ethusdt'),
+        Subscription(Channel.TRADE, market='btcusdt'),
+        Subscription(Channel.TRADE, market='ethusdt'),
     ]
 
-    callbacks = [
-        callback,
-    ]
-
-    asyncio.run(subscribe(actions, callbacks))
+    stream = Stream(subscriptions)
+    stream.run()
 
 
 if __name__ == '__main__':
