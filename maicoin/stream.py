@@ -9,16 +9,24 @@ from websockets.legacy.client import Connect
 
 from .data import Event
 from .data import Subscription
-from .data import create_authorize_action_from_env
+from .data import create_authorize_action
 from .data import create_subscribe_action
+from .utils import get_api_key_from_env
+from .utils import get_api_secret_from_env
 from .utils import get_max_ws_uri
 
 
 class Stream(object):
     protocol: WebSocketClientProtocol
 
-    def __init__(self, subscriptions: List[Subscription], log_event: bool = True) -> None:
-        self.subscriptions = subscriptions
+    def __init__(self,
+                 subscriptions: List[Subscription] = None,
+                 api_key: str = None,
+                 api_secret: str = None,
+                 log_event: bool = True) -> None:
+        self.subscriptions = subscriptions or []
+        self.api_key = api_key or get_api_key_from_env()
+        self.api_secret = api_secret or get_api_secret_from_env()
 
         self.protocol = None
         self.event_handlers = []
@@ -52,7 +60,7 @@ class Stream(object):
         return json.loads(response)
 
     async def subscribe(self):
-        await self.send(create_authorize_action_from_env().to_dict())
+        await self.send(create_authorize_action(self.api_key, self.api_secret).to_dict())
 
     async def authorize(self):
         await self.send(create_subscribe_action(self.subscriptions).to_dict())

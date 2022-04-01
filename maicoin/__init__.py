@@ -5,8 +5,6 @@ from .data import Order
 from .data import Subscription
 from .data import Ticker
 from .data import Trade
-from .data import create_authorize_action_from_env
-from .data import create_subscribe_action
 from .enums import ActionType
 from .enums import Channel
 from .enums import EventType

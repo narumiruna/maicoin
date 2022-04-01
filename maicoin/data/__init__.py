@@ -1,5 +1,5 @@
 from .action import Action
-from .action import create_authorize_action_from_env
+from .action import create_authorize_action
 from .action import create_subscribe_action
 from .balance import Balance
 from .event import Event

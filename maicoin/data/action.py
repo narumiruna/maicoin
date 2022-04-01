@@ -8,15 +8,10 @@ from typing import List
 
 from ..enums import ActionType
 from ..enums import Filter
-from ..utils import get_api_key_from_env
-from ..utils import get_api_secret_from_env
 from .subscription import Subscription
 
 
-def create_authorize_action_from_env() -> Action:
-    api_key = get_api_key_from_env()
-    api_secret = get_api_secret_from_env()
-
+def create_authorize_action(api_key, api_secret) -> Action:
     nonce = int(datetime.now().timestamp() * 1000)
 
     signature = hmac.new(api_secret.encode(), digestmod='sha256')
