@@ -19,11 +19,13 @@ from .utils import get_max_ws_uri
 class Stream(object):
     protocol: WebSocketClientProtocol
 
-    def __init__(self,
-                 subscriptions: List[Subscription] = None,
-                 api_key: str = None,
-                 api_secret: str = None,
-                 log_event: bool = True) -> None:
+    def __init__(
+        self,
+        subscriptions: List[Subscription] = None,
+        api_key: str = None,
+        api_secret: str = None,
+        log_event: bool = True,
+    ) -> None:
         self.subscriptions = subscriptions or []
         self.api_key = api_key or get_api_key_from_env()
         self.api_secret = api_secret or get_api_secret_from_env()
@@ -60,7 +62,9 @@ class Stream(object):
         return json.loads(response)
 
     async def subscribe(self):
-        await self.send(create_authorize_action(self.api_key, self.api_secret).to_dict())
+        await self.send(
+            create_authorize_action(self.api_key, self.api_secret).to_dict()
+        )
 
     async def authorize(self):
         await self.send(create_subscribe_action(self.subscriptions).to_dict())

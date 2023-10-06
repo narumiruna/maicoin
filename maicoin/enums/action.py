@@ -2,5 +2,5 @@ from enum import Enum
 
 
 class ActionType(Enum):
-    Subscribe = 'sub'
-    Authorize = 'auth'
+    Subscribe = "sub"
+    Authorize = "auth"

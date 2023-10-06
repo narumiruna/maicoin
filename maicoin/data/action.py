@@ -14,7 +14,7 @@ from .subscription import Subscription
 def create_authorize_action(api_key, api_secret) -> Action:
     nonce = int(datetime.now().timestamp() * 1000)
 
-    signature = hmac.new(api_secret.encode(), digestmod='sha256')
+    signature = hmac.new(api_secret.encode(), digestmod="sha256")
     signature.update(str(nonce).encode())
     signature = signature.hexdigest()
 
@@ -55,9 +55,9 @@ class Action:
         )
 
         if self.subscriptions:
-            d['subscriptions'] = [s.to_dict() for s in self.subscriptions]
+            d["subscriptions"] = [s.to_dict() for s in self.subscriptions]
 
         if self.filters:
-            d['filters'] = [f.value for f in self.filters]
+            d["filters"] = [f.value for f in self.filters]
 
         return d

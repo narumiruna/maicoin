@@ -14,9 +14,9 @@ class Ticker:
     @classmethod
     def from_dict(cls, d: dict) -> Ticker:
         return cls(
-            open=d.get('O'),
-            high=d.get('H'),
-            low=d.get('L'),
-            close=d.get('C'),
-            volume=d.get('v'),
+            open=d.get("O"),
+            high=d.get("H"),
+            low=d.get("L"),
+            close=d.get("C"),
+            volume=d.get("v"),
         )

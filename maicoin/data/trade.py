@@ -26,14 +26,14 @@ class Trade:
     @classmethod
     def from_dict(cls, d: dict) -> Trade:
         return cls(
-            price=d.get('p'),
-            volume=d.get('v'),
-            created_at=d.get('T'),
-            trend=d.get('tr'),
-            id=d.get('i'),
-            market=d.get('M'),
-            side=d.get('sd'),
-            fee=d.get('f'),
-            fee_currency=d.get('fc'),
-            maker=d.get('m'),
+            price=d.get("p"),
+            volume=d.get("v"),
+            created_at=d.get("T"),
+            trend=d.get("tr"),
+            id=d.get("i"),
+            market=d.get("M"),
+            side=d.get("sd"),
+            fee=d.get("f"),
+            fee_currency=d.get("fc"),
+            maker=d.get("m"),
         )

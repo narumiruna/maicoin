@@ -12,7 +12,7 @@ class Balance:
     @classmethod
     def from_dict(cls, d: dict) -> Balance:
         return cls(
-            currency=d.get('cu'),
-            available=d.get('av'),
-            locked=d.get('l'),
+            currency=d.get("cu"),
+            available=d.get("av"),
+            locked=d.get("l"),
         )

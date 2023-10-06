@@ -13,19 +13,19 @@ class Subscription:
 
     def to_dict(self) -> dict:
         d = {
-            'channel': self.channel.value,
-            'market': self.market,
+            "channel": self.channel.value,
+            "market": self.market,
         }
 
         if self.depth is not None:
-            d['depth'] = self.depth
+            d["depth"] = self.depth
 
         return d
 
     @classmethod
     def from_dict(self, d: dict) -> Subscription:
         return Subscription(
-            channel=Channel(d.get('channel')),
-            market=d.get('market'),
-            depth=d.get('depth'),
+            channel=Channel(d.get("channel")),
+            market=d.get("market"),
+            depth=d.get("depth"),
         )

@@ -9,9 +9,6 @@ python = "^3.9"
 websockets = "^10.2"
 loguru = "^0.6.0"
 
-[tool.poetry.dev-dependencies]
-pytest = "^7.1.0"
-
 [tool.poetry.group.dev.dependencies]
 black = "^23.9.1"
 toml = "^0.10.2"
