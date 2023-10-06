@@ -8,23 +8,23 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 2
+      matrix:
+        python-version: [3.9]
+        poetry-version: [1.6.1]
     steps:
       - uses: actions/checkout@v4
-
+      - uses: abatilo/actions-poetry@v2
+        with:
+          poetry-version: ${{ matrix.poetry-version }}
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.8
-
-      - name: Upgrade pip
-        run: pip install -U pip
-
-      - name: Install poetry
-        run: pip install -U poetry
-
-      - name: Build
-        run: poetry build
-
+          python-version: ${{ matrix.python-version }}
+          cache: poetry
       - name: Publish
-        env: 
+        env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
-        run: poetry publish -u __token__ -p $PYPI_TOKEN
+        run: |
+          poetry build -f wheel
+          poetry publish -u __token__ -p $PYPI_TOKEN
