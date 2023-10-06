@@ -11,7 +11,7 @@ from ..enums import Filter
 from .subscription import Subscription
 
 
-def create_authorize_action(api_key, api_secret) -> Action:
+def create_authorize_action(api_key: str, api_secret: str) -> Action:
     nonce = int(datetime.now().timestamp() * 1000)
 
     signature = hmac.new(api_secret.encode(), digestmod="sha256")
@@ -27,7 +27,7 @@ def create_authorize_action(api_key, api_secret) -> Action:
     )
 
 
-def create_subscribe_action(subscriptions: List[Subscription]):
+def create_subscribe_action(subscriptions: List[Subscription]) -> Action:
     return Action(
         action=ActionType.Subscribe,
         id=str(uuid.uuid4()),

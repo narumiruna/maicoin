@@ -8,6 +8,7 @@ authors = ["narumi <toucans-cutouts0f@icloud.com>"]
 python = "^3.9"
 websockets = "^10.2"
 loguru = "^0.6.0"
+python-dotenv = "^1.0.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.9.1"
