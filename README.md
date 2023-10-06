@@ -40,7 +40,7 @@ asyncio.run(subscribe(actions, callbacks))
 
 ## To-Do List
 
-- [ ] [WebSocket API](https://maicoin.github.io/max-websocket-docs/#/)
+- [x] [WebSocket API](https://maicoin.github.io/max-websocket-docs)
   - [x] Public channels
     - [x] Subscribe
     - [x] Unsubscribe
