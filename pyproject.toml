@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "maicoin"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 authors = ["narumi <toucans-cutouts0f@icloud.com>"]
 
