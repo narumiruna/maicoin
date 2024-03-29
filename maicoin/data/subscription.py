@@ -23,8 +23,8 @@ class Subscription:
         return d
 
     @classmethod
-    def from_dict(self, d: dict) -> Subscription:
-        return Subscription(
+    def from_dict(cls, d: dict) -> Subscription:
+        return cls(
             channel=Channel(d.get("channel")),
             market=d.get("market"),
             depth=d.get("depth"),
