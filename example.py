@@ -12,20 +12,15 @@ def log_response(response: Response) -> None:
     logger.info(response.model_dump(exclude_none=True))
 
 
-def main():
-    load_dotenv(find_dotenv())
+load_dotenv(find_dotenv())
 
-    subscriptions = [
-        Subscription(channel=Channel.BOOK, market="btcusdt", depth=5),
-        Subscription(channel=Channel.TICKER, market="btcusdt"),
-        Subscription(channel=Channel.TRADE, market="btcusdt"),
-    ]
+subscriptions = [
+    Subscription(channel=Channel.BOOK, market="btcusdt", depth=5),
+    Subscription(channel=Channel.TICKER, market="btcusdt"),
+    Subscription(channel=Channel.TRADE, market="btcusdt"),
+]
 
-    stream = Stream.from_env()
-    stream.subscribe(subscriptions)
-    stream.add_handler(log_response)
-    stream.run()
-
-
-if __name__ == "__main__":
-    main()
+stream = Stream.from_env()
+stream.subscribe(subscriptions)
+stream.add_handler(log_response)
+stream.run()
