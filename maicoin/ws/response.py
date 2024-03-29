@@ -10,6 +10,7 @@ from pydantic import field_validator
 from .balance import Balance
 from .channel import Channel
 from .kline import KLine
+from .market_status import MarketStatus
 from .order import Order
 from .subscription import Subscription
 from .ticker import Ticker
@@ -48,6 +49,7 @@ class Response(BaseModel):
     trades: list[Trade] | None = Field(default=None, validation_alias="t")
     currency: str | None = Field(default=None, validation_alias="cu")
     kline: KLine | None = Field(default=None, validation_alias="k")
+    market_status: list[MarketStatus] | None = Field(default=None, validation_alias="ms")
 
     @field_validator("created_at", mode="before")
     @classmethod

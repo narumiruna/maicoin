@@ -19,6 +19,7 @@ subscriptions = [
     Subscription(channel=Channel.TICKER, market="btcusdt"),
     Subscription(channel=Channel.TRADE, market="btcusdt"),
     Subscription(channel=Channel.KLINE, market="btcusdt"),
+    Subscription(channel=Channel.MARKET_STATUS),
 ]
 
 

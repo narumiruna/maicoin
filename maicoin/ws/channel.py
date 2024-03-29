@@ -7,3 +7,4 @@ class Channel(str, Enum):
     TICKER = "ticker"
     USER = "user"
     KLINE = "kline"
+    MARKET_STATUS = "market_status"
