@@ -47,6 +47,8 @@ asyncio.run(subscribe(actions, callbacks))
     - [x] Orderbook
     - [x] Trade
     - [x] Ticker
+    - [ ] Klin
+    - [ ] Market Status
   - [x] Authentication
   - [x] Private channels
     - [x] Order

@@ -1,24 +1,29 @@
 from dotenv import find_dotenv
 from dotenv import load_dotenv
+from loguru import logger
 
-from maicoin import Channel
-from maicoin import Stream
-from maicoin import Subscription
+from maicoin.ws import Channel
+from maicoin.ws import Response
+from maicoin.ws import Stream
+from maicoin.ws import Subscription
+
+
+def log_response(response: Response) -> None:
+    logger.info(response.model_dump(exclude_none=True))
 
 
 def main():
     load_dotenv(find_dotenv())
 
     subscriptions = [
-        Subscription(Channel.BOOK, market="btcusdt", depth=1),
-        Subscription(Channel.BOOK, market="ethusdt", depth=1),
-        Subscription(Channel.TICKER, market="btcusdt"),
-        Subscription(Channel.TICKER, market="ethusdt"),
-        Subscription(Channel.TRADE, market="btcusdt"),
-        Subscription(Channel.TRADE, market="ethusdt"),
+        Subscription(channel=Channel.BOOK, market="btcusdt", depth=5),
+        Subscription(channel=Channel.TICKER, market="btcusdt"),
+        Subscription(channel=Channel.TRADE, market="btcusdt"),
     ]
 
-    stream = Stream(subscriptions)
+    stream = Stream.from_env()
+    stream.subscribe(subscriptions)
+    stream.add_handler(log_response)
     stream.run()
 
 
