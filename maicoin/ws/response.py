@@ -17,7 +17,7 @@ from .ticker import Ticker
 from .trade import Trade
 
 
-class EventType(str, Enum):
+class Event(str, Enum):
     ERROR = "error"
     SUBSCRIBED = "subscribed"
     UNSUBSCRIBED = "unsubscribed"
@@ -34,7 +34,7 @@ class EventType(str, Enum):
 
 # https://maicoin.github.io/max-websocket-docs/#/?id=response-key-alias
 class Response(BaseModel):
-    event: EventType = Field(validation_alias="e")
+    event: Event = Field(validation_alias="e")
     created_at: datetime = Field(validation_alias="T")
     id: str | None = Field(default=None, validation_alias="i")
     errors: list[str] | None = Field(default=None, validation_alias="E")

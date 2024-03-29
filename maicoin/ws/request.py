@@ -11,7 +11,7 @@ from pydantic import Field
 from .subscription import Subscription
 
 
-class ActionType(str, Enum):
+class Action(str, Enum):
     Subscribe = "sub"
     Authorize = "auth"
     Unsubscribe = "unsub"
@@ -24,8 +24,8 @@ class Filter(str, Enum):
     TRADE_UPDATE = "trade_update"
 
 
-class Action(BaseModel):
-    action: ActionType
+class Request(BaseModel):
+    action: Action
     id: str
     api_key: str | None = Field(default=None, serialization_alias="apiKey")
     nonce: int | None = None
@@ -34,7 +34,7 @@ class Action(BaseModel):
     subscriptions: list[Subscription] | None = None
 
     @classmethod
-    def auth(cls, api_key: str, api_secret: str) -> Action:
+    def auth(cls, api_key: str, api_secret: str) -> Request:
         nonce = int(datetime.now().timestamp() * 1000)
 
         signature = hmac.new(api_secret.encode(), digestmod="sha256")
@@ -42,7 +42,7 @@ class Action(BaseModel):
         signature = signature.hexdigest()
 
         return cls(
-            action=ActionType.Authorize,
+            action=Action.Authorize,
             id=str(uuid.uuid4()),
             api_key=api_key,
             signature=signature,
@@ -50,9 +50,9 @@ class Action(BaseModel):
         )
 
     @classmethod
-    def subscribe(cls, subscriptions: list[Subscription]) -> Action:
+    def subscribe(cls, subscriptions: list[Subscription]) -> Request:
         return cls(
-            action=ActionType.Subscribe,
+            action=Action.Subscribe,
             id=str(uuid.uuid4()),
             subscriptions=subscriptions,
         )

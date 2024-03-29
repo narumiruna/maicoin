@@ -1,4 +1,4 @@
-from maicoin.ws.action import Action
+from maicoin.ws.request import Request
 
 
 # https://maicoin.github.io/max-websocket-docs/#/public_channels?id=subscribe
@@ -12,7 +12,7 @@ def test_action_subscribe() -> None:
         "id": "client1",
     }
 
-    a = Action.model_validate(d)
+    a = Request.model_validate(d)
 
     assert a.action == d["action"]
 
@@ -27,7 +27,7 @@ def test_action_unsubscribe() -> None:
         ],
         "id": "client1",
     }
-    Action.model_validate(d)
+    Request.model_validate(d)
 
 
 # https://maicoin.github.io/max-websocket-docs/#/authentication?id=subscription
@@ -40,7 +40,7 @@ def test_action_auth() -> None:
         "id": "client-id",
     }
 
-    Action.model_validate(d)
+    Request.model_validate(d)
 
 
 # https://maicoin.github.io/max-websocket-docs/#/authentication?id=subscription-with-filters
@@ -54,4 +54,4 @@ def test_action_auth_filters() -> None:
         "filters": ["order", "trade"],  # ignore account update
     }
 
-    Action.model_validate(d)
+    Request.model_validate(d)

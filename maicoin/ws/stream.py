@@ -6,7 +6,7 @@ from typing import Callable
 
 from websockets.client import connect
 
-from .action import Action
+from .request import Request
 from .response import Response
 from .subscription import Subscription
 
@@ -48,12 +48,12 @@ class Stream:
     async def arun(self):
         async with connect(MAX_WS_URI) as ws:
             if self.api_key and self.api_secret:
-                await ws.send(
-                    Action.auth(self.api_key, self.api_secret).model_dump_json(by_alias=True, exclude_none=True)
-                )
+                auth_req = Request.auth(self.api_key, self.api_secret)
+                await ws.send(auth_req.model_dump_json(by_alias=True, exclude_none=True))
 
             if self.subscriptions:
-                await ws.send(Action.subscribe(self.subscriptions).model_dump_json(by_alias=True, exclude_none=True))
+                sub_req = Request.subscribe(self.subscriptions)
+                await ws.send(sub_req.model_dump_json(by_alias=True, exclude_none=True))
 
             while True:
                 data = await ws.recv()
