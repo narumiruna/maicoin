@@ -1,6 +1,6 @@
 from enum import Enum
 
 
-class ActionType(Enum):
+class ActionType(str, Enum):
     Subscribe = "sub"
     Authorize = "auth"

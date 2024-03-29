@@ -10,15 +10,16 @@ def main():
     load_dotenv(find_dotenv())
 
     subscriptions = [
-        Subscription(Channel.BOOK, market="btcusdt", depth=1),
-        Subscription(Channel.BOOK, market="ethusdt", depth=1),
-        Subscription(Channel.TICKER, market="btcusdt"),
-        Subscription(Channel.TICKER, market="ethusdt"),
-        Subscription(Channel.TRADE, market="btcusdt"),
-        Subscription(Channel.TRADE, market="ethusdt"),
+        Subscription(channel=Channel.BOOK, market="btcusdt", depth=5),
+        Subscription(channel=Channel.BOOK, market="ethusdt", depth=5),
+        Subscription(channel=Channel.TICKER, market="btcusdt"),
+        Subscription(channel=Channel.TICKER, market="ethusdt"),
+        Subscription(channel=Channel.TRADE, market="btcusdt"),
+        Subscription(channel=Channel.TRADE, market="ethusdt"),
     ]
 
-    stream = Stream(subscriptions)
+    stream = Stream.from_env()
+    stream.subscribe(subscriptions)
     stream.run()
 
 

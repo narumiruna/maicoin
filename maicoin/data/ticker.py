@@ -1,22 +1,14 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from pydantic import BaseModel
+from pydantic import Field
 
 
-@dataclass
-class Ticker:
-    open: float
-    high: float
-    low: float
-    close: float
-    volume: float
-
-    @classmethod
-    def from_dict(cls, d: dict) -> Ticker:
-        return cls(
-            open=d.get("O"),
-            high=d.get("H"),
-            low=d.get("L"),
-            close=d.get("C"),
-            volume=d.get("v"),
-        )
+class Ticker(BaseModel):
+    market: str = Field(validation_alias="M")
+    open: str | float = Field(validation_alias="O")
+    high: str | float = Field(validation_alias="H")
+    low: str | float = Field(validation_alias="L")
+    close: str | float = Field(validation_alias="C")
+    volume: str | float = Field(validation_alias="v")
+    volume_in_btc: str | float = Field(validation_alias="V")

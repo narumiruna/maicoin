@@ -1,51 +1,34 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import datetime
+
+from pydantic import BaseModel
+from pydantic import Field
+from pydantic import field_validator
 
 from ..enums import OrderState
 from ..enums import OrderType
 from ..enums import Side
-from ..utils import to_datetime
 
 
-@dataclass
-class Order:
-    order_id: str
-    side: Side
-    order_type: OrderType
-    price: str
-    stop_price: str
-    average_price: str
-    state: OrderState
-    market: str
-    created_at: datetime
-    volume: str
-    remaining_volume: str
-    executed_volume: str
-    trade_count: int
-    client_order_id: str
-    group_id: str
+class Order(BaseModel):
+    order_id: str = Field(validation_alias="i")
+    side: Side = Field(validation_alias="sd")
+    order_type: OrderType = Field(validation_alias="ot")
+    price: str = Field(validation_alias="p")
+    stop_price: str = Field(validation_alias="sp")
+    average_price: str = Field(validation_alias="ap")
+    state: OrderState = Field(validation_alias="S")
+    market: str = Field(validation_alias="M")
+    created_at: int = Field(validation_alias="T")
+    volume: str = Field(validation_alias="v")
+    remaining_volume: str = Field(validation_alias="rv")
+    executed_volume: str = Field(validation_alias="ev")
+    trade_count: int = Field(validation_alias="tc")
+    client_order_id: str = Field(validation_alias="ci")
+    group_id: str = Field(validation_alias="gi")
 
-    def __post_init__(self):
-        self.created_at = to_datetime(self.created_at)
-
+    @field_validator("created_at", mode="before")
     @classmethod
-    def from_dict(cls, d: dict) -> Order:
-        return cls(
-            order_id=d.get("i"),
-            side=Side(d.get("sd")),
-            order_type=OrderType(d.get("ot")),
-            price=d.get("p"),
-            stop_price=d.get("sp"),
-            average_price=d.get("ap"),
-            state=OrderState(d.get("S")),
-            market=d.get("M"),
-            created_at=d.get("T"),
-            volume=d.get("v"),
-            remaining_volume=d.get("rv"),
-            executed_volume=d.get("ev"),
-            trade_count=d.get("tc"),
-            client_order_id=d.get("ci"),
-            group_id=d.get("gi"),
-        )
+    def convert(cls, t: int) -> None:
+        return datetime.fromtimestamp(int(t) / 1000)

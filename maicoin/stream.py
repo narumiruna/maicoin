@@ -1,71 +1,75 @@
+from __future__ import annotations
+
 import asyncio
 import json
+import os
 from typing import Callable
-from typing import List
 
 from loguru import logger
-from websockets.client import WebSocketClientProtocol
-from websockets.legacy.client import Connect
+from websockets.client import connect
 
+from .data import Action
 from .data import Event
 from .data import Subscription
-from .data import create_authorize_action
-from .data import create_subscribe_action
-from .utils import get_api_key_from_env
-from .utils import get_api_secret_from_env
-from .utils import get_max_ws_uri
+
+MAX_WS_URI = os.environ.get("MAX_WS_URI", "wss://max-stream.maicoin.com/ws")
+
+
+def log_event(event: Event) -> None:
+    logger.info(event.model_dump(exclude_none=True))
 
 
 class Stream:
-    protocol: WebSocketClientProtocol
+    subscriptions: list[Subscription]
 
     def __init__(
         self,
-        subscriptions: List[Subscription] = None,
-        api_key: str = None,
-        api_secret: str = None,
+        api_key: str | None = None,
+        api_secret: str | None = None,
         log_event: bool = True,
     ) -> None:
-        self.subscriptions = subscriptions or []
-        self.api_key = api_key or get_api_key_from_env()
-        self.api_secret = api_secret or get_api_secret_from_env()
+        self.api_key = api_key
+        self.api_secret = api_secret
 
-        self.protocol = None
+        self.subscriptions = []
         self.event_handlers = []
 
         if log_event:
-            self.add_event_handler(lambda event: logger.info(event))
+            self.add_event_handler(log_event)
+
+    def subscribe(self, subscriptions: list[Subscription]) -> None:
+        self.subscriptions += subscriptions
+
+    @classmethod
+    def from_env(cls) -> Stream:
+        api_key = os.getenv("MAX_API_KEY")
+        if not api_key:
+            raise ValueError("MAX_API_KEY is not set")
+
+        api_secret = os.getenv("MAX_API_SECRET")
+        if not api_secret:
+            raise ValueError("MAX_API_SECRET is not set")
+
+        return cls(api_key=api_key, api_secret=api_secret)
 
     def run(self):
-        loop = asyncio.get_event_loop()
-        try:
-            loop.run_until_complete(self.run_loop())
-        finally:
-            loop.close()
+        asyncio.run(self.arun())
 
-    async def run_loop(self):
-        uri = get_max_ws_uri()
-        async with Connect(uri) as self.protocol:
-            await self.authorize()
-            await self.subscribe()
+    async def arun(self):
+        async with connect(MAX_WS_URI) as ws:
+            if self.api_key and self.api_secret:
+                await ws.send(
+                    Action.auth(self.api_key, self.api_secret).model_dump_json(by_alias=True, exclude_none=True)
+                )
+
+            if self.subscriptions:
+                await ws.send(Action.subscribe(self.subscriptions).model_dump_json(by_alias=True, exclude_none=True))
+
             while True:
-                response = await self.recv()
-                event = Event.from_dict(response)
+                response = await ws.recv()
+                data = json.loads(response)
+                event = Event.model_validate(data)
                 self.fire_event_handlers(event)
-
-    async def send(self, obj: dict):
-        message = json.dumps(obj)
-        await self.protocol.send(message)
-
-    async def recv(self) -> dict:
-        response = await self.protocol.recv()
-        return json.loads(response)
-
-    async def subscribe(self):
-        await self.send(create_authorize_action(self.api_key, self.api_secret).to_dict())
-
-    async def authorize(self):
-        await self.send(create_subscribe_action(self.subscriptions).to_dict())
 
     def add_event_handler(self, event_handler: Callable):
         self.event_handlers.append(event_handler)

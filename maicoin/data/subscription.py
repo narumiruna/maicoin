@@ -1,31 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from pydantic import BaseModel
 
 from ..enums import Channel
 
 
-@dataclass
-class Subscription:
+class Subscription(BaseModel):
     channel: Channel
     market: str
-    depth: int = None
-
-    def to_dict(self) -> dict:
-        d = {
-            "channel": self.channel.value,
-            "market": self.market,
-        }
-
-        if self.depth is not None:
-            d["depth"] = self.depth
-
-        return d
-
-    @classmethod
-    def from_dict(cls, d: dict) -> Subscription:
-        return cls(
-            channel=Channel(d.get("channel")),
-            market=d.get("market"),
-            depth=d.get("depth"),
-        )
+    depth: int | None = None

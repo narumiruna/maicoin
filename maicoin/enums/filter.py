@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class Filter(Enum):
+class Filter(str, Enum):
     ORDER = "order"
     TRADE = "trade"
     ACCOUNT = "account"

@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class OrderType(Enum):
+class OrderType(str, Enum):
     MARKET = "market"
     LIMIT = "limit"
     STOP_MARKET = "stop_market"
@@ -10,7 +10,7 @@ class OrderType(Enum):
     IOC_LIMIT = "ioc_limit"
 
 
-class OrderState(Enum):
+class OrderState(str, Enum):
     CANCEL = "cancel"
     WAIT = "wait"
     DONE = "done"
