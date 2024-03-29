@@ -1,14 +1,31 @@
 from __future__ import annotations
 
 from datetime import datetime
+from enum import Enum
 
 from pydantic import BaseModel
 from pydantic import Field
 from pydantic import field_validator
 
-from ..enums import OrderState
-from ..enums import OrderType
-from ..enums import Side
+from .side import Side
+
+
+class OrderType(str, Enum):
+    MARKET = "market"
+    LIMIT = "limit"
+    STOP_MARKET = "stop_market"
+    STOP_LIMIT = "stop_limit"
+    POST_ONLY = "post_only"
+    IOC_LIMIT = "ioc_limit"
+
+
+class OrderState(str, Enum):
+    CANCEL = "cancel"
+    WAIT = "wait"
+    DONE = "done"
+    CONVERT = "convert"
+    FINALIZING = "finalizing"
+    FAILED = "failed"
 
 
 class Order(BaseModel):

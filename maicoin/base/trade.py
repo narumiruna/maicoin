@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from pydantic import Field
 from pydantic import field_validator
 
-from ..enums import Side
+from .side import Side
 
 
 class Trade(BaseModel):

@@ -15,7 +15,7 @@ from .base import Subscription
 MAX_WS_URI = os.environ.get("MAX_WS_URI", "wss://max-stream.maicoin.com/ws")
 
 
-def log_event(event: Event) -> None:
+def _log_event(event: Event) -> None:
     logger.info(event.model_dump(exclude_none=True))
 
 
@@ -35,7 +35,7 @@ class Stream:
         self.event_handlers = []
 
         if log_event:
-            self.add_event_handler(log_event)
+            self.add_event_handler(_log_event)
 
     def subscribe(self, subscriptions: list[Subscription]) -> None:
         self.subscriptions += subscriptions

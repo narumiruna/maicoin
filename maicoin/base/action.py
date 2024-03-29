@@ -3,13 +3,25 @@ from __future__ import annotations
 import hmac
 import uuid
 from datetime import datetime
+from enum import Enum
+from typing import Literal
 
 from pydantic import BaseModel
 from pydantic import Field
 
-from ..enums import ActionType
-from ..enums import Filter
 from .subscription import Subscription
+
+
+class ActionType(str, Enum):
+    Subscribe = "sub"
+    Authorize = "auth"
+
+
+class Filter(str, Enum):
+    ORDER = "order"
+    TRADE = "trade"
+    ACCOUNT = "account"
+    TRADE_UPDATE = "trade_update"
 
 
 class Action(BaseModel):

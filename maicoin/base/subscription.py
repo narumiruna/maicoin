@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from ..enums import Channel
+from .channel import Channel
 
 
 class Subscription(BaseModel):

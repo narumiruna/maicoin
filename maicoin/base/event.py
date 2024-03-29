@@ -1,18 +1,33 @@
 from __future__ import annotations
 
 from datetime import datetime
+from enum import Enum
 
 from pydantic import BaseModel
 from pydantic import Field
 from pydantic import field_validator
 
-from ..enums import Channel
-from ..enums import EventType
 from .balance import Balance
+from .channel import Channel
 from .order import Order
 from .subscription import Subscription
 from .ticker import Ticker
 from .trade import Trade
+
+
+class EventType(str, Enum):
+    ERROR = "error"
+    SUBSCRIBED = "subscribed"
+    UNSUBSCRIBED = "unsubscribed"
+    AUTHENTICATED = "authenticated"
+    SNAPSHOT = "snapshot"
+    UPDATE = "update"
+    ORDER_SNAPSHOT = "order_snapshot"
+    ORDER_UPDATE = "order_update"
+    TRADE_SNAPSHOT = "trade_snapshot"
+    TRADE_UPDATE = "trade_update"
+    ACCOUNT_SNAPSHOT = "account_snapshot"
+    ACCOUNT_UPDATE = "account_update"
 
 
 class Event(BaseModel):
@@ -23,7 +38,7 @@ class Event(BaseModel):
     subscriptions: list[Subscription] | None = Field(default=None, validation_alias="s")
     channel: Channel | None = Field(default=None, validation_alias="c")
     balances: list[Balance] | None = Field(default=None, validation_alias="B")
-    market: str = Field(default="", validation_alias="M")
+    market: str | None = Field(default=None, validation_alias="M")
     asks: list[list[float]] | None = Field(default=None, validation_alias="a")
     bids: list[list[float]] | None = Field(default=None, validation_alias="b")
     orders: list[Order] | None = Field(default=None, validation_alias="o")
