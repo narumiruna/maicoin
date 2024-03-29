@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import os
 from typing import Callable
 
-from loguru import logger
 from websockets.client import connect
 
 from .action import Action
@@ -13,8 +11,6 @@ from .response import Response
 from .subscription import Subscription
 
 MAX_WS_URI = os.environ.get("MAX_WS_URI", "wss://max-stream.maicoin.com/ws")
-
-
 
 
 class Stream:
