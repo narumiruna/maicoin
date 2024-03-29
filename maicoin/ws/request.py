@@ -56,3 +56,11 @@ class Request(BaseModel):
             id=str(uuid.uuid4()),
             subscriptions=subscriptions,
         )
+
+    @classmethod
+    def unsubscribe(cls, subscriptions: list[Subscription]) -> Request:
+        return cls(
+            action=Action.Unsubscribe,
+            id=str(uuid.uuid4()),
+            subscriptions=subscriptions,
+        )
