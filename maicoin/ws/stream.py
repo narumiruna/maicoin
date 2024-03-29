@@ -9,14 +9,12 @@ from loguru import logger
 from websockets.client import connect
 
 from .action import Action
-from .event import Event
+from .response import Response
 from .subscription import Subscription
 
 MAX_WS_URI = os.environ.get("MAX_WS_URI", "wss://max-stream.maicoin.com/ws")
 
 
-def _log_event(event: Event) -> None:
-    logger.info(event.model_dump(exclude_none=True))
 
 
 class Stream:
@@ -26,16 +24,12 @@ class Stream:
         self,
         api_key: str | None = None,
         api_secret: str | None = None,
-        log_event: bool = True,
     ) -> None:
         self.api_key = api_key
         self.api_secret = api_secret
 
         self.subscriptions = []
-        self.event_handlers = []
-
-        if log_event:
-            self.add_event_handler(_log_event)
+        self.handlers = []
 
     def subscribe(self, subscriptions: list[Subscription]) -> None:
         self.subscriptions += subscriptions
@@ -66,14 +60,13 @@ class Stream:
                 await ws.send(Action.subscribe(self.subscriptions).model_dump_json(by_alias=True, exclude_none=True))
 
             while True:
-                response = await ws.recv()
-                data = json.loads(response)
-                event = Event.model_validate(data)
-                self.fire_event_handlers(event)
+                data = await ws.recv()
+                resp = Response.model_validate_json(data)
+                self.fire_handlers(resp)
 
-    def add_event_handler(self, event_handler: Callable):
-        self.event_handlers.append(event_handler)
+    def add_handler(self, handler: Callable):
+        self.handlers.append(handler)
 
-    def fire_event_handlers(self, event: Event):
-        for event_handler in self.event_handlers:
-            event_handler(event)
+    def fire_handlers(self, response: Response):
+        for handler in self.handlers:
+            handler(response)

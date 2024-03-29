@@ -30,7 +30,8 @@ class EventType(str, Enum):
     ACCOUNT_UPDATE = "account_update"
 
 
-class Event(BaseModel):
+# https://maicoin.github.io/max-websocket-docs/#/?id=response-key-alias
+class Response(BaseModel):
     event: EventType = Field(validation_alias="e")
     created_at: datetime = Field(validation_alias="T")
     id: str | None = Field(default=None, validation_alias="i")

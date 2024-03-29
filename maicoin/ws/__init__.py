@@ -3,11 +3,11 @@ from .action import ActionType
 from .action import Filter
 from .balance import Balance
 from .channel import Channel
-from .event import Event
-from .event import EventType
 from .order import Order
 from .order import OrderState
 from .order import OrderType
+from .response import EventType
+from .response import Response
 from .side import Side
 from .stream import Stream
 from .subscription import Subscription
