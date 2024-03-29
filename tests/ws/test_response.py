@@ -330,3 +330,51 @@ def test_response_private_kline_update() -> None:
     }
 
     Response.model_validate(d)
+
+
+# https://maicoin.github.io/max-websocket-docs/#/public_market_status?id=snapshot
+def test_response_market_status_snapshot() -> None:
+    d = {
+        "c": "market_status",
+        "e": "snapshot",
+        "ms": [
+            {
+                "M": "btctwd",
+                "st": "active",
+                "bu": "btc",
+                "bup": 8,
+                "mba": 0.0004,
+                "qu": "twd",
+                "qup": 1,
+                "mqa": 250,
+                "mws": True,
+            },
+        ],
+        "T": 1659428472313,
+    }
+
+    Response.model_validate(d)
+
+
+# https://maicoin.github.io/max-websocket-docs/#/public_market_status?id=update
+def test_response_market_status_update() -> None:
+    d = {
+        "c": "market_status",
+        "e": "update",
+        "ms": [
+            {
+                "M": "btctwd",
+                "st": "active",
+                "bu": "btc",
+                "bup": 8,
+                "mba": 0.0004,
+                "qu": "twd",
+                "qup": 1,
+                "mqa": 250,
+                "mws": True,
+            }
+        ],
+        "T": 1659428472313,
+    }
+
+    Response.model_validate(d)
