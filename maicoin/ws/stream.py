@@ -8,9 +8,9 @@ from typing import Callable
 from loguru import logger
 from websockets.client import connect
 
-from .base import Action
-from .base import Event
-from .base import Subscription
+from .action import Action
+from .event import Event
+from .subscription import Subscription
 
 MAX_WS_URI = os.environ.get("MAX_WS_URI", "wss://max-stream.maicoin.com/ws")
 

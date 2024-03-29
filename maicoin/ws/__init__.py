@@ -9,6 +9,7 @@ from .order import Order
 from .order import OrderState
 from .order import OrderType
 from .side import Side
+from .stream import Stream
 from .subscription import Subscription
 from .ticker import Ticker
 from .trade import Trade
