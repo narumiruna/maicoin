@@ -3,6 +3,7 @@ from .action import ActionType
 from .action import Filter
 from .balance import Balance
 from .channel import Channel
+from .kline import KLine
 from .order import Order
 from .order import OrderState
 from .order import OrderType

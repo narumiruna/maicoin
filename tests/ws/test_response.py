@@ -280,3 +280,53 @@ def test_response_private_account_update() -> None:
     }
 
     Response.model_validate(d)
+
+
+# https://maicoin.github.io/max-websocket-docs/#/public_kline?id=snapshot
+def test_response_private_kline_snapshot() -> None:
+    d = {
+        "c": "kline",
+        "M": "ethusdt",
+        "e": "snapshot",
+        "T": 1684743644396,
+        "k": {
+            "ST": 1684743600000,
+            "ET": 1684743659999,
+            "M": "ethusdt",
+            "R": "1m",
+            "O": "1815.11",
+            "H": "1815.11",
+            "L": "1815.11",
+            "C": "1815.11",
+            "v": "0",
+            "ti": 58684589,
+            "x": False,
+        },
+    }
+
+    Response.model_validate(d)
+
+
+# https://maicoin.github.io/max-websocket-docs/#/public_kline?id=update
+def test_response_private_kline_update() -> None:
+    d = {
+        "c": "kline",
+        "M": "ethusdt",
+        "e": "update",
+        "T": 1684743650395,
+        "k": {
+            "ST": 1684743600000,
+            "ET": 1684743659999,
+            "M": "ethusdt",
+            "R": "1m",
+            "O": "1815.11",
+            "H": "1815.11",
+            "L": "1815.11",
+            "C": "1815.11",
+            "v": "0",
+            "ti": 58684589,
+            "x": False,
+        },
+    }
+
+    Response.model_validate(d)
