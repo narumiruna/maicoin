@@ -4,7 +4,7 @@ import asyncio
 import os
 from typing import Callable
 
-from websockets.client import connect
+import websockets
 
 from .request import Request
 from .response import Response
@@ -14,21 +14,25 @@ MAX_WS_URI = os.environ.get("MAX_WS_URI", "wss://max-stream.maicoin.com/ws")
 
 
 class Stream:
-    subscriptions: list[Subscription]
+    requests: list[Request]
+    handlers: list[Callable]
 
     def __init__(
         self,
         api_key: str | None = None,
         api_secret: str | None = None,
     ) -> None:
-        self.api_key = api_key
-        self.api_secret = api_secret
-
-        self.subscriptions = []
+        self.requests = []
         self.handlers = []
 
+        self.auth(api_key, api_secret)
+
     def subscribe(self, subscriptions: list[Subscription]) -> None:
-        self.subscriptions += subscriptions
+        self.requests += [Request.subscribe(subscriptions)]
+
+    def auth(self, api_key: str, api_secret: str) -> None:
+        if api_key and api_secret:
+            self.requests += [Request.auth(api_key, api_secret)]
 
     @classmethod
     def from_env(cls) -> Stream:
@@ -42,27 +46,19 @@ class Stream:
 
         return cls(api_key=api_key, api_secret=api_secret)
 
-    def run(self):
+    def run(self) -> None:
         asyncio.run(self.arun())
 
-    async def arun(self):
-        async with connect(MAX_WS_URI) as ws:
-            if self.api_key and self.api_secret:
-                auth_req = Request.auth(self.api_key, self.api_secret)
-                await ws.send(auth_req.model_dump_json(by_alias=True, exclude_none=True))
-
-            if self.subscriptions:
-                sub_req = Request.subscribe(self.subscriptions)
-                await ws.send(sub_req.model_dump_json(by_alias=True, exclude_none=True))
+    async def arun(self) -> None:
+        async with websockets.connect(MAX_WS_URI) as ws:
+            for req in self.requests:
+                await ws.send(req.message())
 
             while True:
                 data = await ws.recv()
                 resp = Response.model_validate_json(data)
-                self.fire_handlers(resp)
+                for handler in self.handlers:
+                    handler(resp)
 
-    def add_handler(self, handler: Callable):
+    def add_handler(self, handler: Callable) -> None:
         self.handlers.append(handler)
-
-    def fire_handlers(self, response: Response):
-        for handler in self.handlers:
-            handler(response)

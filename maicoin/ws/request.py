@@ -64,3 +64,6 @@ class Request(BaseModel):
             id=str(uuid.uuid4()),
             subscriptions=subscriptions,
         )
+
+    def message(self) -> str:
+        return self.model_dump_json(by_alias=True, exclude_none=True)
