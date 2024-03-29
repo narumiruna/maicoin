@@ -4,7 +4,6 @@ import hmac
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List
 
 from ..enums import ActionType
 from ..enums import Filter
@@ -27,7 +26,7 @@ def create_authorize_action(api_key: str, api_secret: str) -> Action:
     )
 
 
-def create_subscribe_action(subscriptions: List[Subscription]) -> Action:
+def create_subscribe_action(subscriptions: list[Subscription]) -> Action:
     return Action(
         action=ActionType.Subscribe,
         id=str(uuid.uuid4()),
@@ -42,17 +41,17 @@ class Action:
     api_key: str = None
     nonce: int = None
     signature: str = None
-    filters: List[Filter] = None
-    subscriptions: List[Subscription] = None
+    filters: list[Filter] = None
+    subscriptions: list[Subscription] = None
 
     def to_dict(self) -> dict:
-        d = dict(
-            action=self.action.value,
-            apiKey=self.api_key,
-            nonce=self.nonce,
-            signature=self.signature,
-            id=self.id,
-        )
+        d = {
+            "action": self.action.value,
+            "apiKey": self.api_key,
+            "nonce": self.nonce,
+            "signature": self.signature,
+            "id": self.id,
+        }
 
         if self.subscriptions:
             d["subscriptions"] = [s.to_dict() for s in self.subscriptions]

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List
 
 from ..enums import Channel
 from ..enums import EventType
@@ -19,31 +18,31 @@ class Event:
     event: EventType
     created_at: datetime
     id: str = None
-    errors: List[str] = None
-    subscriptions: List[Subscription] = None
+    errors: list[str] = None
+    subscriptions: list[Subscription] = None
     channel: Channel = None
-    balances: List[Balance] = None
+    balances: list[Balance] = None
     market: str = None
-    asks: List[List[float]] = None
-    bids: List[List[float]] = None
-    orders: List[Order] = None
+    asks: list[list[float]] = None
+    bids: list[list[float]] = None
+    orders: list[Order] = None
     ticker: Ticker = None
-    trades: List[Trade] = None
+    trades: list[Trade] = None
 
     def __post_init__(self):
         self.created_at = to_datetime(self.created_at)
 
     @classmethod
     def from_dict(cls, d: dict) -> Event:
-        d = dict(
-            event=EventType(d.get("e")),
-            created_at=d.get("T"),
-            id=d.get("i"),
-            errors=d.get("E"),
-            market=d.get("M"),
-            asks=d.get("a"),
-            bids=d.get("b"),
-        )
+        d = {
+            "event": EventType(d.get("e")),
+            "created_at": d.get("T"),
+            "id": d.get("i"),
+            "errors": d.get("E"),
+            "market": d.get("M"),
+            "asks": d.get("a"),
+            "bids": d.get("b"),
+        }
 
         channel = d.get("c")
         if channel:

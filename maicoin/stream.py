@@ -16,7 +16,7 @@ from .utils import get_api_secret_from_env
 from .utils import get_max_ws_uri
 
 
-class Stream(object):
+class Stream:
     protocol: WebSocketClientProtocol
 
     def __init__(
@@ -62,9 +62,7 @@ class Stream(object):
         return json.loads(response)
 
     async def subscribe(self):
-        await self.send(
-            create_authorize_action(self.api_key, self.api_secret).to_dict()
-        )
+        await self.send(create_authorize_action(self.api_key, self.api_secret).to_dict())
 
     async def authorize(self):
         await self.send(create_subscribe_action(self.subscriptions).to_dict())

@@ -8,10 +8,10 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
-      max-parallel: 2
+      max-parallel: 1
       matrix:
-        python-version: [3.9]
-        poetry-version: [1.6.1]
+        python-version: ["3.9"]
+        poetry-version: ["1.8.2"]
 
     steps:
       - uses: actions/checkout@v2
@@ -29,11 +29,12 @@ jobs:
         run: poetry install
 
       - name: Lint
-        run: poetry run flake8 -v .
+        run: poetry run ruff check .
 
       - name: Test
+        run: poetry run pytest -v -s --cov=maicoin --cov-report=xml tests
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4
         env:
-          CODECOV_TOKEN: ${{secrets.CODECOV_TOKEN}}
-        run: |
-          poetry run coverage run -m pytest -v -s tests
-          poetry run codecov
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
