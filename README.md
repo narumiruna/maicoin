@@ -2,10 +2,15 @@
 
 A Python package for MaiCoin MAX API
 
-## Examples
+## Usage
 
-### WebSocket API
+Create `.env` file
+```
+MAX_API_KEY=
+MAX_API_SECRET=
+```
 
+Example:
 ```python
 from dotenv import find_dotenv
 from dotenv import load_dotenv
