@@ -83,7 +83,14 @@ def test_response_trade_snapshot() -> None:
         "c": "trade",
         "e": "snapshot",
         "M": "btctwd",
-        "t": [{"p": "5337.3", "v": "0.1", "T": 123456789, "tr": "up"}],
+        "t": [
+            {
+                "p": "5337.3",
+                "v": "0.1",
+                "T": 123456789,
+                "tr": "up",
+            },
+        ],
         "T": 123456789,
     }
 
@@ -146,7 +153,7 @@ def test_response_ticker_update() -> None:
 
 
 # https://maicoin.github.io/max-websocket-docs/#/private_channels?id=snapshot
-def test_response_order_snapshot() -> None:
+def test_response_private_order_snapshot() -> None:
     d = {
         "c": "user",
         "e": "order_snapshot",
@@ -177,7 +184,7 @@ def test_response_order_snapshot() -> None:
 
 
 # https://maicoin.github.io/max-websocket-docs/#/private_channels?id=update
-def test_response_order_update() -> None:
+def test_response_private_order_update() -> None:
     d = {
         "c": "user",
         "e": "order_update",
@@ -202,6 +209,74 @@ def test_response_order_update() -> None:
             },
         ],
         "T": 1521726960357,
+    }
+
+    Response.model_validate(d)
+
+
+# https://maicoin.github.io/max-websocket-docs/#/private_channels?id=snapshot-1
+def test_response_private_trade_snapshot() -> None:
+    d = {
+        "c": "user",
+        "e": "trade_snapshot",
+        "t": [
+            {
+                "i": 68444,
+                "M": "ethtwd",
+                "sd": "bid",
+                "p": "21499.0",
+                "v": "0.2658",
+                "f": "3.2",
+                "fc": "twd",
+                "fd": False,
+                "fn": "5714.4342",
+                "T": 1659216053748,
+                "TU": 1659216054046,
+                "m": True,
+                "oi": 3253823664,
+            },
+        ],
+        "T": 1659412100259,
+    }
+
+    Response.model_validate(d)
+
+
+# https://maicoin.github.io/max-websocket-docs/#/private_channels?id=snapshot-2
+def test_response_private_account_snapshot() -> None:
+    d = {
+        "c": "user",
+        "e": "account_snapshot",
+        "B": [
+            {
+                "cu": "btc",
+                "av": "123.4",
+                "l": "0.5",
+                "stk": None,
+                "TU": 1659390246343,
+            },
+        ],
+        "T": 1659412100181,
+    }
+
+    Response.model_validate(d)
+
+
+# https://maicoin.github.io/max-websocket-docs/#/private_channels?id=update-2
+def test_response_private_account_update() -> None:
+    d = {
+        "c": "user",
+        "e": "account_update",
+        "B": [
+            {
+                "cu": "btc",
+                "av": "123.4",
+                "l": "0.5",
+                "stk": None,
+                "TU": 1659390246343,
+            }
+        ],
+        "T": 1659412100181,
     }
 
     Response.model_validate(d)

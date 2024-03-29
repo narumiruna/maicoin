@@ -16,5 +16,5 @@ class Balance(BaseModel):
 
     @field_validator("balance_updated_time", mode="before")
     @classmethod
-    def convert(cls, t: int) -> None:
+    def convert_datetime(cls, t: int) -> datetime:
         return datetime.fromtimestamp(int(t) / 1000)
