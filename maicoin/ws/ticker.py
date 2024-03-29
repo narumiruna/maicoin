@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from pydantic import Field
 
 
+# https://maicoin.github.io/max-websocket-docs/#/public_ticker?id=success-response
 class Ticker(BaseModel):
     market: str = Field(validation_alias="M")
     open: str | float = Field(validation_alias="O")

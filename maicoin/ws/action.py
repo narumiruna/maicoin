@@ -14,6 +14,7 @@ from .subscription import Subscription
 class ActionType(str, Enum):
     Subscribe = "sub"
     Authorize = "auth"
+    Unsubscribe = "unsub"
 
 
 class Filter(str, Enum):
