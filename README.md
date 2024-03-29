@@ -49,7 +49,7 @@ stream.run()
     - [x] Orderbook
     - [x] Trade
     - [x] Ticker
-    - [ ] Kline
+    - [x] Kline
     - [ ] Market Status
   - [x] Authentication
   - [x] Private channels

@@ -30,3 +30,14 @@ def test_subscription_ticker() -> None:
     }
 
     Subscription.model_validate(d)
+
+
+# https://maicoin.github.io/max-websocket-docs/#/public_kline?id=kline-subscription
+def test_subscription_kline() -> None:
+    d = {
+        "channel": "kline",
+        "market": "ethusdt",
+        "resolution": "1m",  # optional
+    }
+
+    Subscription.model_validate(d)

@@ -18,7 +18,9 @@ subscriptions = [
     Subscription(channel=Channel.BOOK, market="btcusdt", depth=5),
     Subscription(channel=Channel.TICKER, market="btcusdt"),
     Subscription(channel=Channel.TRADE, market="btcusdt"),
+    Subscription(channel=Channel.KLINE, market="btcusdt"),
 ]
+
 
 stream = Stream.from_env()
 stream.subscribe(subscriptions)

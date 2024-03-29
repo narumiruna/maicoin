@@ -6,3 +6,4 @@ class Channel(str, Enum):
     TRADE = "trade"
     TICKER = "ticker"
     USER = "user"
+    KLINE = "kline"

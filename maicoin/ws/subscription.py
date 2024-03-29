@@ -9,3 +9,4 @@ class Subscription(BaseModel):
     channel: Channel
     market: str
     depth: int | None = None
+    resolution: str | None = None
