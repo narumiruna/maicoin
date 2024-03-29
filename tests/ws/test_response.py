@@ -1,6 +1,17 @@
 from maicoin.ws.response import Response
 
 
+# https://maicoin.github.io/max-websocket-docs/#/authentication?id=success-response
+def test_response_auth_success() -> None:
+    d = {
+        "e": "authenticated",
+        "i": "client-id",
+        "T": 1591686735192,
+    }
+
+    Response.model_validate(d)
+
+
 # https://maicoin.github.io/max-websocket-docs/#/?id=error-response
 def test_response_error() -> None:
     data = {"e": "error", "E": ["E-1004: invalid action"], "i": "client1", "T": 1678096431125}
@@ -134,44 +145,63 @@ def test_response_ticker_update() -> None:
     Response.model_validate(d)
 
 
-def test_trade_response() -> None:
-    data = {
+# https://maicoin.github.io/max-websocket-docs/#/private_channels?id=snapshot
+def test_response_order_snapshot() -> None:
+    d = {
         "c": "user",
-        "e": "trade_snapshot",
-        "t": [
+        "e": "order_snapshot",
+        "o": [
             {
-                "i": 77485757,
-                "sa": "5cae57",
-                "M": "usdcusdt",
-                "sd": "ask",
-                "p": "0.9995",
-                "v": "8.01",
-                "fn": "8.005995",
-                "f": "0.01474438",
-                "fc": "max",
-                "fd": True,
-                "T": 1711706400334,
-                "TU": 1711706400649,
-                "m": False,
-                "oi": 7653999812,
-            },
-            {
-                "i": 77457644,
-                "sa": "5cae57",
-                "M": "usdcusdt",
+                "i": 87,
                 "sd": "bid",
-                "p": "1.0001",
-                "v": "8.01",
-                "fn": "8.010801",
-                "f": "0.01475307",
-                "fc": "max",
-                "fd": True,
-                "T": 1711684800324,
-                "TU": 1711684800582,
-                "m": False,
-                "oi": 7650784793,
+                "ot": "limit",
+                "p": "21499.0",
+                "sp": "21499.0",
+                "ap": "21499.0",
+                "v": "0.2658",
+                "rv": "0.0",
+                "ev": "0.2658",
+                "S": "done",
+                "M": "ethtwd",
+                "tc": 1,
+                "T": 1659419048000,
+                "TU": 1659419048406,
+                "gi": 123,
+                "ci": "client-oid-1",
             },
         ],
-        "T": 1711708692581,
+        "T": 1521726960357,
     }
-    Response.model_validate(data)
+
+    Response.model_validate(d)
+
+
+# https://maicoin.github.io/max-websocket-docs/#/private_channels?id=update
+def test_response_order_update() -> None:
+    d = {
+        "c": "user",
+        "e": "order_update",
+        "o": [
+            {
+                "i": 87,
+                "sd": "bid",
+                "ot": "limit",
+                "p": "21499.0",
+                "sp": "21499.0",
+                "ap": "21499.0",
+                "S": "done",
+                "M": "ethtwd",
+                "T": 1521726960123,
+                "TU": 1521726960123,
+                "v": "0.2658",
+                "rv": "0.0",
+                "ev": "0.2658",
+                "tc": 1,
+                "ci": "client-oid-1",
+                "gi": 123,
+            },
+        ],
+        "T": 1521726960357,
+    }
+
+    Response.model_validate(d)

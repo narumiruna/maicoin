@@ -28,3 +28,30 @@ def test_action_unsubscribe() -> None:
         "id": "client1",
     }
     Action.model_validate(d)
+
+
+# https://maicoin.github.io/max-websocket-docs/#/authentication?id=subscription
+def test_action_auth() -> None:
+    d = {
+        "action": "auth",
+        "apiKey": "...",
+        "nonce": 1591690054859,
+        "signature": "....",
+        "id": "client-id",
+    }
+
+    Action.model_validate(d)
+
+
+# https://maicoin.github.io/max-websocket-docs/#/authentication?id=subscription-with-filters
+def test_action_auth_filters() -> None:
+    d = {
+        "action": "auth",
+        "apiKey": "...",
+        "nonce": 1591690054859,
+        "signature": "....",
+        "id": "client-id",
+        "filters": ["order", "trade"],  # ignore account update
+    }
+
+    Action.model_validate(d)
