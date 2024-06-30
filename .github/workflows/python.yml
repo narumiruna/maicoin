@@ -1,39 +1,35 @@
 name: Python
 
 on:
+  workflow_dispatch:
   push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     strategy:
-      max-parallel: 1
       matrix:
         python-version: ["3.10"]
         poetry-version: ["1.8.2"]
-
     steps:
       - uses: actions/checkout@v4
-
-      - uses: abatilo/actions-poetry@v2
-        with:
-          poetry-version: ${{ matrix.poetry-version }}
-
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: poetry
-
+      - uses: narumiruna/setup-poetry@v1
+        with:
+          poetry-version: ${{ matrix.poetry-version }}
       - name: Install dependencies
         run: poetry install
-
       - name: Lint
         run: poetry run ruff check .
-
       - name: Test
         run: poetry run pytest -v -s --cov=maicoin --cov-report=xml tests
-
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
         env:
