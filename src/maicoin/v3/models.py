@@ -43,6 +43,23 @@ def _optional_int(payload: Mapping[str, object], key: str) -> int | None:
     raise TypeError(msg)
 
 
+def _optional_str(payload: Mapping[str, object], key: str) -> str | None:
+    value = payload.get(key)
+    if value is None:
+        return None
+    return str(value)
+
+
+def _optional_bool(payload: Mapping[str, object], key: str) -> bool | None:
+    value = payload.get(key)
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return value
+    msg = f"expected bool {key}, got {type(value).__name__}"
+    raise TypeError(msg)
+
+
 def _required_float(payload: Mapping[str, object], key: str) -> float:
     value = payload[key]
     if isinstance(value, int | str | float):
@@ -195,13 +212,26 @@ class PublicTrade:
         )
 
 
-class Account(MaxBaseModel):
+@dataclass(slots=True, frozen=True)
+class Account:
     currency: str
     balance: str
     locked: str
     staked: str | None = None
     principal: str | None = None
     interest: str | None = None
+
+    @classmethod
+    def model_validate(cls, payload: object) -> Account:
+        data = _expect_mapping(payload)
+        return cls(
+            currency=_required_str(data, "currency"),
+            balance=_required_str(data, "balance"),
+            locked=_required_str(data, "locked"),
+            staked=_optional_str(data, "staked"),
+            principal=_optional_str(data, "principal"),
+            interest=_optional_str(data, "interest"),
+        )
 
 
 class OrderSide(StrEnum):
@@ -225,27 +255,52 @@ class OrderType(StrEnum):
     IOC_LIMIT = "ioc_limit"
 
 
-class Order(MaxBaseModel):
+@dataclass(slots=True, frozen=True)
+class Order:
     id: int
     wallet_type: str
     market: str
     client_oid: str | None = None
     group_id: int | None = None
-    side: OrderSide
-    state: OrderState
-    ord_type: OrderType
+    side: OrderSide = OrderSide.BUY
+    state: OrderState = OrderState.WAIT
+    ord_type: OrderType = OrderType.LIMIT
     price: str | None = None
     stop_price: str | None = None
-    avg_price: str
-    volume: str
-    remaining_volume: str
-    executed_volume: str
-    trades_count: int
-    created_at: int
-    updated_at: int
+    avg_price: str = ""
+    volume: str = ""
+    remaining_volume: str = ""
+    executed_volume: str = ""
+    trades_count: int = 0
+    created_at: int = 0
+    updated_at: int = 0
+
+    @classmethod
+    def model_validate(cls, payload: object) -> Order:
+        data = _expect_mapping(payload)
+        return cls(
+            id=_required_int(data, "id"),
+            wallet_type=_required_str(data, "wallet_type"),
+            market=_required_str(data, "market"),
+            client_oid=_optional_str(data, "client_oid"),
+            group_id=_optional_int(data, "group_id"),
+            side=OrderSide(data["side"]),
+            state=OrderState(data["state"]),
+            ord_type=OrderType(data["ord_type"]),
+            price=_optional_str(data, "price"),
+            stop_price=_optional_str(data, "stop_price"),
+            avg_price=_required_str(data, "avg_price"),
+            volume=_required_str(data, "volume"),
+            remaining_volume=_required_str(data, "remaining_volume"),
+            executed_volume=_required_str(data, "executed_volume"),
+            trades_count=_required_int(data, "trades_count"),
+            created_at=_required_int(data, "created_at"),
+            updated_at=_required_int(data, "updated_at"),
+        )
 
 
-class PrivateTrade(MaxBaseModel):
+@dataclass(slots=True, frozen=True)
+class PrivateTrade:
     id: int
     order_id: int
     wallet_type: str
@@ -262,24 +317,73 @@ class PrivateTrade(MaxBaseModel):
     self_trade_bid_fee_currency: str | None = None
     self_trade_bid_fee_discounted: bool | None = None
     self_trade_bid_order_id: int | None = None
-    liquidity: str
-    created_at: int
+    liquidity: str = ""
+    created_at: int = 0
+
+    @classmethod
+    def model_validate(cls, payload: object) -> PrivateTrade:
+        data = _expect_mapping(payload)
+        return cls(
+            id=_required_int(data, "id"),
+            order_id=_required_int(data, "order_id"),
+            wallet_type=_required_str(data, "wallet_type"),
+            price=_required_str(data, "price"),
+            volume=_required_str(data, "volume"),
+            funds=_required_str(data, "funds"),
+            market=_required_str(data, "market"),
+            market_name=_required_str(data, "market_name"),
+            side=_required_str(data, "side"),
+            fee=_optional_str(data, "fee"),
+            fee_currency=_optional_str(data, "fee_currency"),
+            fee_discounted=_optional_bool(data, "fee_discounted"),
+            self_trade_bid_fee=_optional_str(data, "self_trade_bid_fee"),
+            self_trade_bid_fee_currency=_optional_str(data, "self_trade_bid_fee_currency"),
+            self_trade_bid_fee_discounted=_optional_bool(data, "self_trade_bid_fee_discounted"),
+            self_trade_bid_order_id=_optional_int(data, "self_trade_bid_order_id"),
+            liquidity=_required_str(data, "liquidity"),
+            created_at=_required_int(data, "created_at"),
+        )
 
 
-class VipLevel(MaxBaseModel):
+@dataclass(slots=True, frozen=True)
+class VipLevel:
     level: int
     minimum_trading_volume: int
     minimum_staking_volume: int
     maker_fee: float
     taker_fee: float
 
+    @classmethod
+    def model_validate(cls, payload: object) -> VipLevel:
+        data = _expect_mapping(payload)
+        return cls(
+            level=_required_int(data, "level"),
+            minimum_trading_volume=_required_int(data, "minimum_trading_volume"),
+            minimum_staking_volume=_required_int(data, "minimum_staking_volume"),
+            maker_fee=_required_float(data, "maker_fee"),
+            taker_fee=_required_float(data, "taker_fee"),
+        )
 
-class UserInfo(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class UserInfo:
     email: str
     level: int
     current_vip_level: VipLevel
     next_vip_level: VipLevel | None
     m_wallet_enabled: bool | None = None
+
+    @classmethod
+    def model_validate(cls, payload: object) -> UserInfo:
+        data = _expect_mapping(payload)
+        next_vip_level = data.get("next_vip_level")
+        return cls(
+            email=_required_str(data, "email"),
+            level=_required_int(data, "level"),
+            current_vip_level=VipLevel.model_validate(data["current_vip_level"]),
+            next_vip_level=None if next_vip_level is None else VipLevel.model_validate(next_vip_level),
+            m_wallet_enabled=_optional_bool(data, "m_wallet_enabled"),
+        )
 
 
 class Withdrawal(MaxBaseModel):
