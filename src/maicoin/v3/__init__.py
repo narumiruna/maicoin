@@ -7,6 +7,7 @@ from .client import DEFAULT_TIMEOUT
 from .client import Client
 from .errors import MaxAPIError
 from .errors import MaxHTTPError
+from .models import Account
 from .models import Currency
 from .models import CurrencyNetwork
 from .models import Depth
@@ -14,6 +15,8 @@ from .models import HistoricalIndexPrice
 from .models import InterestRate
 from .models import KLine
 from .models import Market
+from .models import Order
+from .models import PrivateTrade
 from .models import PublicTrade
 from .models import Staking
 from .models import Ticker
@@ -22,6 +25,7 @@ from .models import Timestamp
 __all__ = [
     "BASE_URL",
     "DEFAULT_TIMEOUT",
+    "Account",
     "Client",
     "Currency",
     "CurrencyNetwork",
@@ -32,6 +36,8 @@ __all__ = [
     "Market",
     "MaxAPIError",
     "MaxHTTPError",
+    "Order",
+    "PrivateTrade",
     "PublicTrade",
     "Staking",
     "Ticker",

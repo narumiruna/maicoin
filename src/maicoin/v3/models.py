@@ -82,6 +82,56 @@ class PublicTrade(MaxBaseModel):
     created_at: int
 
 
+class Account(MaxBaseModel):
+    currency: str
+    balance: str
+    locked: str
+    staked: str | None = None
+    principal: str | None = None
+    interest: str | None = None
+
+
+class Order(MaxBaseModel):
+    id: int
+    wallet_type: str
+    market: str
+    client_oid: str | None = None
+    group_id: int | None = None
+    side: str
+    state: str
+    ord_type: str
+    price: str | None = None
+    stop_price: str | None = None
+    avg_price: str
+    volume: str
+    remaining_volume: str
+    executed_volume: str
+    trades_count: int
+    created_at: int
+    updated_at: int
+
+
+class PrivateTrade(MaxBaseModel):
+    id: int
+    order_id: int
+    wallet_type: str
+    price: str
+    volume: str
+    funds: str
+    market: str
+    market_name: str
+    side: str
+    fee: str | None = None
+    fee_currency: str | None = None
+    fee_discounted: bool | None = None
+    self_trade_bid_fee: str | None = None
+    self_trade_bid_fee_currency: str | None = None
+    self_trade_bid_fee_discounted: bool | None = None
+    self_trade_bid_order_id: int | None = None
+    liquidity: str
+    created_at: int
+
+
 class Ticker(MaxBaseModel):
     market: str
     at: int

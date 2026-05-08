@@ -22,15 +22,14 @@ Official references:
 - REST API v3 low-level sync `Client.request(...)` using `httpx` with public/private request support.
 - REST API v3 HTTP/API error classes.
 - REST API v3 public endpoint wrappers and Pydantic models for markets, currencies, timestamp, k, depth, trades, tickers, ticker, and m-wallet public rates/limits.
+- REST API v3 private endpoint wrappers and models for accounts, open/closed/history orders, create/cancel order, and order trades.
 - Tests for WebSocket request, response, and subscription model validation.
-- Tests for v3 auth signatures, query/body placement, authenticated headers, error handling, public endpoint request construction, and public response parsing.
+- Tests for v3 auth signatures, query/body placement, authenticated headers, error handling, public/private endpoint request construction, and response parsing.
 
 ### Missing
 
-- REST API v3 high-level private endpoint wrappers.
-- REST API v3 private endpoints: orders, trades, accounts, withdrawals, deposits, fund transactions, convert, and m-wallet loan/repayment/liquidation/interest/transfer endpoints.
-- v3 request/response Pydantic models and error handling.
-- REST API tests for private endpoint wrappers and response parsing.
+- REST API v3 private endpoints: withdrawals, deposits, fund transactions, convert, and m-wallet loan/repayment/liquidation/interest/transfer endpoints.
+- REST API tests for withdrawals, deposits, fund transactions, convert, and m-wallet private endpoint wrappers and response parsing.
 - WebSocket models for newer documented features: MWallet Pool Quota, Fast Trade, MWallet private channels, and book sequence/version fields `fi`, `li`, and `v`.
 
 ## Design Direction
@@ -98,7 +97,7 @@ Complete. Public endpoint wrappers now cover markets, currencies, timestamp, k, 
 
 ### Phase 3: v3 Private Auth, Accounts, and Orders
 
-Implement auth headers, private request path signing, accounts, open/closed/history orders, create/cancel order, and order trades. This is the minimum useful trading scope.
+Complete. Authenticated client wrappers now cover accounts, open/closed/history orders, order lookup, create/cancel order, cancel all orders, and order trades with Pydantic parsing tests.
 
 ### Phase 4: Transaction and Funds Features
 
