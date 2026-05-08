@@ -283,6 +283,18 @@ class FundTransactionTransfer(MaxBaseModel):
     to: FundTransactionSource
 
 
+class ConvertOrder(MaxBaseModel):
+    sn: str
+    from_currency: str
+    from_amount: str
+    to_currency: str
+    to_amount: str
+    fee: str
+    fee_currency: str
+    fee_in_twd: str
+    created_at: int
+
+
 class Ticker(MaxBaseModel):
     market: str
     at: int
