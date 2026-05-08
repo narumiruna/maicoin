@@ -25,9 +25,20 @@ python example.py
 
 ## REST API v3
 
-REST v3 support has started with the foundation client, authentication helpers, and error handling. Public endpoint wrappers and typed response models are next.
+REST v3 support includes the foundation client, authentication helpers, error handling, public endpoint wrappers, and typed public response models.
 
-### Low-level public request
+### Public requests
+
+```python
+from maicoin.v3 import Client
+
+client = Client()
+markets = client.markets()
+ticker = client.ticker("btctwd")
+klines = client.kline("btctwd", period=1, limit=30)
+```
+
+Use `Client.request(...)` for low-level access when a high-level wrapper is not available yet:
 
 ```python
 from maicoin.v3 import Client
@@ -72,5 +83,5 @@ Do not run state-changing private requests, such as order creation or withdrawal
     - [x] Account
 - [ ] [HTTP API v3](https://max-api.maicoin.com/doc/v3.html)
   - [x] Foundation client, authentication helpers, and errors
-  - [ ] Public endpoint wrappers and models
+  - [x] Public endpoint wrappers and models
   - [ ] Private endpoint wrappers and models
