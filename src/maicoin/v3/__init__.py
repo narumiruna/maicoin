@@ -23,6 +23,15 @@ from maicoin.v3.models import InterestRate
 from maicoin.v3.models import InternalTransfer
 from maicoin.v3.models import KLine
 from maicoin.v3.models import Market
+from maicoin.v3.models import MWalletADRatio
+from maicoin.v3.models import MWalletForcedLiquidation
+from maicoin.v3.models import MWalletInterest
+from maicoin.v3.models import MWalletLiquidation
+from maicoin.v3.models import MWalletLiquidationDetail
+from maicoin.v3.models import MWalletLiquidationRepayment
+from maicoin.v3.models import MWalletLoan
+from maicoin.v3.models import MWalletRepayment
+from maicoin.v3.models import MWalletTransfer
 from maicoin.v3.models import Order
 from maicoin.v3.models import OrderSide
 from maicoin.v3.models import OrderState
@@ -57,6 +66,15 @@ __all__ = [
     "InterestRate",
     "InternalTransfer",
     "KLine",
+    "MWalletADRatio",
+    "MWalletForcedLiquidation",
+    "MWalletInterest",
+    "MWalletLiquidation",
+    "MWalletLiquidationDetail",
+    "MWalletLiquidationRepayment",
+    "MWalletLoan",
+    "MWalletRepayment",
+    "MWalletTransfer",
     "Market",
     "MaxAPIError",
     "MaxHTTPError",
