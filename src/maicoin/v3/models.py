@@ -7,7 +7,6 @@ from typing import cast
 
 from pydantic import BaseModel
 from pydantic import ConfigDict
-from pydantic import Field
 
 
 class MaxBaseModel(BaseModel):
@@ -386,7 +385,8 @@ class UserInfo:
         )
 
 
-class Withdrawal(MaxBaseModel):
+@dataclass(slots=True, frozen=True)
+class Withdrawal:
     uuid: str
     currency: str
     network_protocol: str | None
@@ -400,8 +400,27 @@ class Withdrawal(MaxBaseModel):
     state: str
     transaction_type: str
 
+    @classmethod
+    def model_validate(cls, payload: object) -> Withdrawal:
+        data = _expect_mapping(payload)
+        return cls(
+            uuid=_required_str(data, "uuid"),
+            currency=_required_str(data, "currency"),
+            network_protocol=_optional_str(data, "network_protocol"),
+            amount=_required_str(data, "amount"),
+            fee=_required_str(data, "fee"),
+            fee_currency=_required_str(data, "fee_currency"),
+            to_address=_required_str(data, "to_address"),
+            label=_required_str(data, "label"),
+            txid=_optional_str(data, "txid"),
+            created_at=_required_int(data, "created_at"),
+            state=_required_str(data, "state"),
+            transaction_type=_required_str(data, "transaction_type"),
+        )
 
-class WithdrawAddress(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class WithdrawAddress:
     uuid: str
     currency: str
     network_protocol: str | None
@@ -412,8 +431,24 @@ class WithdrawAddress(MaxBaseModel):
     is_internal: bool
     network_congested: bool
 
+    @classmethod
+    def model_validate(cls, payload: object) -> WithdrawAddress:
+        data = _expect_mapping(payload)
+        return cls(
+            uuid=_required_str(data, "uuid"),
+            currency=_required_str(data, "currency"),
+            network_protocol=_optional_str(data, "network_protocol"),
+            address=_required_str(data, "address"),
+            extra_label=_required_str(data, "extra_label"),
+            created_at=_required_int(data, "created_at"),
+            activated_at=_optional_int(data, "activated_at"),
+            is_internal=_required_bool(data, "is_internal"),
+            network_congested=_required_bool(data, "network_congested"),
+        )
 
-class Deposit(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class Deposit:
     uuid: str
     currency: str
     network_protocol: str
@@ -425,25 +460,67 @@ class Deposit(MaxBaseModel):
     state: str
     state_reason: str
 
+    @classmethod
+    def model_validate(cls, payload: object) -> Deposit:
+        data = _expect_mapping(payload)
+        return cls(
+            uuid=_required_str(data, "uuid"),
+            currency=_required_str(data, "currency"),
+            network_protocol=_required_str(data, "network_protocol"),
+            amount=_required_str(data, "amount"),
+            to_address=_required_str(data, "to_address"),
+            txid=_required_str(data, "txid"),
+            created_at=_required_int(data, "created_at"),
+            confirmations=_required_int(data, "confirmations"),
+            state=_required_str(data, "state"),
+            state_reason=_required_str(data, "state_reason"),
+        )
 
-class DepositAddress(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class DepositAddress:
     currency: str
     network_protocol: str
     currency_version: str
     address: str | None
 
+    @classmethod
+    def model_validate(cls, payload: object) -> DepositAddress:
+        data = _expect_mapping(payload)
+        return cls(
+            currency=_required_str(data, "currency"),
+            network_protocol=_required_str(data, "network_protocol"),
+            currency_version=_required_str(data, "currency_version"),
+            address=_optional_str(data, "address"),
+        )
 
-class InternalTransfer(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class InternalTransfer:
     uuid: str
     currency: str
     amount: str
     created_at: int
-    from_: str = Field(validation_alias="from", serialization_alias="from")
+    from_: str
     to: str
     state: str
 
+    @classmethod
+    def model_validate(cls, payload: object) -> InternalTransfer:
+        data = _expect_mapping(payload)
+        return cls(
+            uuid=_required_str(data, "uuid"),
+            currency=_required_str(data, "currency"),
+            amount=_required_str(data, "amount"),
+            created_at=_required_int(data, "created_at"),
+            from_=_required_str(data, "from"),
+            to=_required_str(data, "to"),
+            state=_required_str(data, "state"),
+        )
 
-class Reward(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class Reward:
     uuid: str
     currency: str
     amount: str
@@ -451,8 +528,21 @@ class Reward(MaxBaseModel):
     type: str
     note: str
 
+    @classmethod
+    def model_validate(cls, payload: object) -> Reward:
+        data = _expect_mapping(payload)
+        return cls(
+            uuid=_required_str(data, "uuid"),
+            currency=_required_str(data, "currency"),
+            amount=_required_str(data, "amount"),
+            created_at=_required_int(data, "created_at"),
+            type=_required_str(data, "type"),
+            note=_required_str(data, "note"),
+        )
 
-class FundTransactionDeposit(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class FundTransactionDeposit:
     sn: str
     is_internal: bool
     currency: str
@@ -462,10 +552,27 @@ class FundTransactionDeposit(MaxBaseModel):
     network_protocol: str | None
     to_address: str | None
     txid: str | None
-    from_: str | None = Field(validation_alias="from", serialization_alias="from")
+    from_: str | None
+
+    @classmethod
+    def model_validate(cls, payload: object) -> FundTransactionDeposit:
+        data = _expect_mapping(payload)
+        return cls(
+            sn=_required_str(data, "sn"),
+            is_internal=_required_bool(data, "is_internal"),
+            currency=_required_str(data, "currency"),
+            amount=_required_str(data, "amount"),
+            state=_required_str(data, "state"),
+            created_at=_required_int(data, "created_at"),
+            network_protocol=_optional_str(data, "network_protocol"),
+            to_address=_optional_str(data, "to_address"),
+            txid=_optional_str(data, "txid"),
+            from_=_optional_str(data, "from"),
+        )
 
 
-class FundTransactionWithdrawal(MaxBaseModel):
+@dataclass(slots=True, frozen=True)
+class FundTransactionWithdrawal:
     sn: str
     is_internal: bool
     currency: str
@@ -480,21 +587,64 @@ class FundTransactionWithdrawal(MaxBaseModel):
     txid: str | None
     to: str | None
 
+    @classmethod
+    def model_validate(cls, payload: object) -> FundTransactionWithdrawal:
+        data = _expect_mapping(payload)
+        return cls(
+            sn=_required_str(data, "sn"),
+            is_internal=_required_bool(data, "is_internal"),
+            currency=_required_str(data, "currency"),
+            amount=_required_str(data, "amount"),
+            state=_required_str(data, "state"),
+            created_at=_required_int(data, "created_at"),
+            network_protocol=_optional_str(data, "network_protocol"),
+            fee=_optional_str(data, "fee"),
+            fee_currency=_optional_str(data, "fee_currency"),
+            to_address=_optional_str(data, "to_address"),
+            label=_optional_str(data, "label"),
+            txid=_optional_str(data, "txid"),
+            to=_optional_str(data, "to"),
+        )
 
-class FundTransactionSource(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class FundTransactionSource:
     platform: str
     sn: object
     wallet_type: str
 
+    @classmethod
+    def model_validate(cls, payload: object) -> FundTransactionSource:
+        data = _expect_mapping(payload)
+        return cls(
+            platform=_required_str(data, "platform"),
+            sn=data["sn"],
+            wallet_type=_required_str(data, "wallet_type"),
+        )
 
-class FundTransactionTransfer(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class FundTransactionTransfer:
     sn: str
     currency: str
     amount: str
     state: str
     created_at: int
-    from_: FundTransactionSource = Field(validation_alias="from", serialization_alias="from")
+    from_: FundTransactionSource
     to: FundTransactionSource
+
+    @classmethod
+    def model_validate(cls, payload: object) -> FundTransactionTransfer:
+        data = _expect_mapping(payload)
+        return cls(
+            sn=_required_str(data, "sn"),
+            currency=_required_str(data, "currency"),
+            amount=_required_str(data, "amount"),
+            state=_required_str(data, "state"),
+            created_at=_required_int(data, "created_at"),
+            from_=FundTransactionSource.model_validate(data["from"]),
+            to=FundTransactionSource.model_validate(data["to"]),
+        )
 
 
 class ConvertOrder(MaxBaseModel):
