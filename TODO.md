@@ -89,16 +89,16 @@ The main missing areas are **REST API v3 transaction, wallet funds, convert, and
 
 ## Phase 6: REST v3 M-Wallet Private Endpoints
 
-- [ ] `POST /api/v3/wallet/m/loan`: submit loan.
-- [ ] `GET /api/v3/wallet/m/loans`: loan history.
-- [ ] `POST /api/v3/wallet/m/transfer`: spot wallet to/from m-wallet transfer.
-- [ ] `GET /api/v3/wallet/m/transfers`: m-wallet transfer history.
-- [ ] `POST /api/v3/wallet/m/repayment`: submit repayment.
-- [ ] `GET /api/v3/wallet/m/repayments`: repayment history.
-- [ ] `GET /api/v3/wallet/m/liquidations`: liquidation history.
-- [ ] `GET /api/v3/wallet/m/liquidation`: liquidation detail.
-- [ ] `GET /api/v3/wallet/m/interests`: interest history.
-- [ ] `GET /api/v3/wallet/m/ad_ratio`: latest AD ratio.
+- [x] `POST /api/v3/wallet/m/loan`: submit loan.
+- [x] `GET /api/v3/wallet/m/loans`: loan history.
+- [x] `POST /api/v3/wallet/m/transfer`: spot wallet to/from m-wallet transfer.
+- [x] `GET /api/v3/wallet/m/transfers`: m-wallet transfer history.
+- [x] `POST /api/v3/wallet/m/repayment`: submit repayment.
+- [x] `GET /api/v3/wallet/m/repayments`: repayment history.
+- [x] `GET /api/v3/wallet/m/liquidations`: liquidation history.
+- [x] `GET /api/v3/wallet/m/liquidation`: liquidation detail.
+- [x] `GET /api/v3/wallet/m/interests`: interest history.
+- [x] `GET /api/v3/wallet/m/ad_ratio`: latest AD ratio.
 
 ## Phase 7: WebSocket Gap Cleanup
 
