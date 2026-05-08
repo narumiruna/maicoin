@@ -16,9 +16,15 @@ from maicoin.v3.errors import raise_for_api_error
 from maicoin.v3.errors import raise_for_response_status
 from maicoin.v3.models import Account
 from maicoin.v3.models import Currency
+from maicoin.v3.models import Deposit
+from maicoin.v3.models import DepositAddress
 from maicoin.v3.models import Depth
+from maicoin.v3.models import FundTransactionDeposit
+from maicoin.v3.models import FundTransactionTransfer
+from maicoin.v3.models import FundTransactionWithdrawal
 from maicoin.v3.models import HistoricalIndexPrice
 from maicoin.v3.models import InterestRate
+from maicoin.v3.models import InternalTransfer
 from maicoin.v3.models import KLine
 from maicoin.v3.models import Market
 from maicoin.v3.models import Order
@@ -26,9 +32,12 @@ from maicoin.v3.models import OrderSide
 from maicoin.v3.models import OrderType
 from maicoin.v3.models import PrivateTrade
 from maicoin.v3.models import PublicTrade
+from maicoin.v3.models import Reward
 from maicoin.v3.models import Ticker
 from maicoin.v3.models import Timestamp
 from maicoin.v3.models import UserInfo
+from maicoin.v3.models import WithdrawAddress
+from maicoin.v3.models import Withdrawal
 
 BASE_URL = "https://max-api.maicoin.com"
 DEFAULT_TIMEOUT = 10
@@ -324,6 +333,175 @@ class Client:
             auth=True,
         )
         return [PrivateTrade.model_validate(item) for item in cast("list[object]", payload)]
+
+    def withdrawal(self, uuid: str) -> Withdrawal:
+        payload = self.request("GET", "/api/v3/withdrawal", params={"uuid": uuid}, auth=True)
+        return Withdrawal.model_validate(payload)
+
+    def create_withdrawal(self, *, withdraw_address_uuid: str, amount: str) -> Withdrawal:
+        payload = self.request(
+            "POST",
+            "/api/v3/withdrawal",
+            params={"withdraw_address_uuid": withdraw_address_uuid, "amount": amount},
+            auth=True,
+        )
+        return Withdrawal.model_validate(payload)
+
+    def create_twd_withdrawal(self, amount: str) -> Withdrawal:
+        payload = self.request("POST", "/api/v3/withdrawal/twd", params={"amount": amount}, auth=True)
+        return Withdrawal.model_validate(payload)
+
+    def withdrawals(
+        self,
+        *,
+        currency: str | None = None,
+        state: str | None = None,
+        timestamp: int | None = None,
+        order: str | None = None,
+        limit: int | None = None,
+    ) -> list[Withdrawal]:
+        payload = self.request(
+            "GET",
+            "/api/v3/withdrawals",
+            params=_compact(
+                {"currency": currency, "state": state, "timestamp": timestamp, "order": order, "limit": limit}
+            ),
+            auth=True,
+        )
+        return [Withdrawal.model_validate(item) for item in cast("list[object]", payload)]
+
+    def withdraw_addresses(
+        self,
+        currency: str,
+        *,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> list[WithdrawAddress]:
+        payload = self.request(
+            "GET",
+            "/api/v3/withdraw_addresses",
+            params=_compact({"currency": currency, "limit": limit, "offset": offset}),
+            auth=True,
+        )
+        return [WithdrawAddress.model_validate(item) for item in cast("list[object]", payload)]
+
+    def deposit(self, *, txid: str | None = None, uuid: str | None = None) -> Deposit:
+        payload = self.request("GET", "/api/v3/deposit", params=_compact({"txid": txid, "uuid": uuid}), auth=True)
+        return Deposit.model_validate(payload)
+
+    def deposits(
+        self,
+        *,
+        currency: str | None = None,
+        timestamp: int | None = None,
+        order: str | None = None,
+        limit: int | None = None,
+    ) -> list[Deposit]:
+        payload = self.request(
+            "GET",
+            "/api/v3/deposits",
+            params=_compact({"currency": currency, "timestamp": timestamp, "order": order, "limit": limit}),
+            auth=True,
+        )
+        return [Deposit.model_validate(item) for item in cast("list[object]", payload)]
+
+    def deposit_address(self, currency_version: str) -> DepositAddress:
+        payload = self.request(
+            "GET",
+            "/api/v3/deposit_address",
+            params={"currency_version": currency_version},
+            auth=True,
+        )
+        return DepositAddress.model_validate(payload)
+
+    def internal_transfers(
+        self,
+        side: str,
+        *,
+        currency: str | None = None,
+        timestamp: int | None = None,
+        order: str | None = None,
+        limit: int | None = None,
+    ) -> list[InternalTransfer]:
+        payload = self.request(
+            "GET",
+            "/api/v3/internal_transfers",
+            params=_compact(
+                {"side": side, "currency": currency, "timestamp": timestamp, "order": order, "limit": limit}
+            ),
+            auth=True,
+        )
+        return [InternalTransfer.model_validate(item) for item in cast("list[object]", payload)]
+
+    def rewards(
+        self,
+        *,
+        reward_type: str | None = None,
+        currency: str | None = None,
+        timestamp: int | None = None,
+        order: str | None = None,
+        limit: int | None = None,
+    ) -> list[Reward]:
+        payload = self.request(
+            "GET",
+            "/api/v3/rewards",
+            params=_compact(
+                {
+                    "reward_type": reward_type,
+                    "currency": currency,
+                    "timestamp": timestamp,
+                    "order": order,
+                    "limit": limit,
+                }
+            ),
+            auth=True,
+        )
+        return [Reward.model_validate(item) for item in cast("list[object]", payload)]
+
+    def fund_transaction_deposits(
+        self, *, timestamp: int | None = None, order: str | None = None, limit: int | None = None
+    ) -> list[FundTransactionDeposit]:
+        payload = self.request(
+            "GET",
+            "/api/v3/fund_transactions/deposits",
+            params=_compact({"timestamp": timestamp, "order": order, "limit": limit}),
+            auth=True,
+        )
+        return [FundTransactionDeposit.model_validate(item) for item in cast("list[object]", payload)]
+
+    def fund_transaction_deposit(self, sn: str) -> FundTransactionDeposit:
+        payload = self.request("GET", "/api/v3/fund_transactions/deposit", params={"sn": sn}, auth=True)
+        return FundTransactionDeposit.model_validate(payload)
+
+    def fund_transaction_withdrawals(
+        self, *, timestamp: int | None = None, order: str | None = None, limit: int | None = None
+    ) -> list[FundTransactionWithdrawal]:
+        payload = self.request(
+            "GET",
+            "/api/v3/fund_transactions/withdrawals",
+            params=_compact({"timestamp": timestamp, "order": order, "limit": limit}),
+            auth=True,
+        )
+        return [FundTransactionWithdrawal.model_validate(item) for item in cast("list[object]", payload)]
+
+    def fund_transaction_withdrawal(self, sn: str) -> FundTransactionWithdrawal:
+        payload = self.request("GET", "/api/v3/fund_transactions/withdrawal", params={"sn": sn}, auth=True)
+        return FundTransactionWithdrawal.model_validate(payload)
+
+    def fund_transaction_transfers(
+        self, *, timestamp: int | None = None, order: str | None = None, limit: int | None = None
+    ) -> list[FundTransactionTransfer]:
+        payload = self.request(
+            "GET",
+            "/api/v3/fund_transactions/transfers",
+            params=_compact({"timestamp": timestamp, "order": order, "limit": limit}),
+            auth=True,
+        )
+        return [FundTransactionTransfer.model_validate(item) for item in cast("list[object]", payload)]
+
+    def fund_transaction_transfer(self, sn: str) -> FundTransactionTransfer:
+        payload = self.request("GET", "/api/v3/fund_transactions/transfer", params={"sn": sn}, auth=True)
+        return FundTransactionTransfer.model_validate(payload)
 
     def m_wallet_index_prices(self) -> dict[str, str]:
         payload = self.request("GET", "/api/v3/wallet/m/index_prices")

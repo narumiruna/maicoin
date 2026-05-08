@@ -62,22 +62,22 @@ The main missing areas are **REST API v3 transaction, wallet funds, convert, and
 
 ## Phase 4: REST v3 Transaction and Wallet Funds
 
-- [ ] `GET /api/v3/withdrawal`: withdrawal detail.
-- [ ] `POST /api/v3/withdrawal`: crypto withdrawal.
-- [ ] `POST /api/v3/withdrawal/twd`: TWD withdrawal.
-- [ ] `GET /api/v3/withdrawals`: withdrawal list.
-- [ ] `GET /api/v3/withdraw_addresses`: withdraw addresses.
-- [ ] `GET /api/v3/deposit`: deposit detail.
-- [ ] `GET /api/v3/deposits`: deposit list.
-- [ ] `GET /api/v3/deposit_address`: deposit address by currency/version.
-- [ ] `GET /api/v3/internal_transfers`: internal transfers.
-- [ ] `GET /api/v3/rewards`: rewards.
-- [ ] `GET /api/v3/fund_transactions/deposits`.
-- [ ] `GET /api/v3/fund_transactions/deposit`.
-- [ ] `GET /api/v3/fund_transactions/withdrawals`.
-- [ ] `GET /api/v3/fund_transactions/withdrawal`.
-- [ ] `GET /api/v3/fund_transactions/transfers`.
-- [ ] `GET /api/v3/fund_transactions/transfer`.
+- [x] `GET /api/v3/withdrawal`: withdrawal detail.
+- [x] `POST /api/v3/withdrawal`: crypto withdrawal.
+- [x] `POST /api/v3/withdrawal/twd`: TWD withdrawal.
+- [x] `GET /api/v3/withdrawals`: withdrawal list.
+- [x] `GET /api/v3/withdraw_addresses`: withdraw addresses.
+- [x] `GET /api/v3/deposit`: deposit detail.
+- [x] `GET /api/v3/deposits`: deposit list.
+- [x] `GET /api/v3/deposit_address`: deposit address by currency/version.
+- [x] `GET /api/v3/internal_transfers`: internal transfers.
+- [x] `GET /api/v3/rewards`: rewards.
+- [x] `GET /api/v3/fund_transactions/deposits`.
+- [x] `GET /api/v3/fund_transactions/deposit`.
+- [x] `GET /api/v3/fund_transactions/withdrawals`.
+- [x] `GET /api/v3/fund_transactions/withdrawal`.
+- [x] `GET /api/v3/fund_transactions/transfers`.
+- [x] `GET /api/v3/fund_transactions/transfer`.
 
 ## Phase 5: REST v3 Convert
 
