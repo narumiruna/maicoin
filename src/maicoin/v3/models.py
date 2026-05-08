@@ -21,7 +21,59 @@ def _expect_mapping(payload: object) -> Mapping[str, object]:
     return cast("Mapping[str, object]", payload)
 
 
-class Market(MaxBaseModel):
+def _required_str(payload: Mapping[str, object], key: str) -> str:
+    return str(payload[key])
+
+
+def _required_int(payload: Mapping[str, object], key: str) -> int:
+    value = payload[key]
+    if isinstance(value, int | str | float):
+        return int(value)
+    msg = f"expected int-compatible {key}, got {type(value).__name__}"
+    raise TypeError(msg)
+
+
+def _optional_int(payload: Mapping[str, object], key: str) -> int | None:
+    value = payload.get(key)
+    if value is None:
+        return None
+    if isinstance(value, int | str | float):
+        return int(value)
+    msg = f"expected int-compatible {key}, got {type(value).__name__}"
+    raise TypeError(msg)
+
+
+def _required_float(payload: Mapping[str, object], key: str) -> float:
+    value = payload[key]
+    if isinstance(value, int | str | float):
+        return float(value)
+    msg = f"expected float-compatible {key}, got {type(value).__name__}"
+    raise TypeError(msg)
+
+
+def _required_bool(payload: Mapping[str, object], key: str) -> bool:
+    value = payload[key]
+    if isinstance(value, bool):
+        return value
+    msg = f"expected bool {key}, got {type(value).__name__}"
+    raise TypeError(msg)
+
+
+def _price_levels(value: object) -> list[tuple[str, str]]:
+    if not isinstance(value, list):
+        msg = f"expected price levels list, got {type(value).__name__}"
+        raise TypeError(msg)
+    levels: list[tuple[str, str]] = []
+    for level in value:
+        if not isinstance(level, list | tuple) or len(level) != 2:
+            msg = f"expected two-item price level, got {type(level).__name__}"
+            raise TypeError(msg)
+        levels.append((str(level[0]), str(level[1])))
+    return levels
+
+
+@dataclass(slots=True, frozen=True)
+class Market:
     id: str
     status: str
     base_unit: str
@@ -31,6 +83,21 @@ class Market(MaxBaseModel):
     quote_unit_precision: int
     min_quote_amount: float
     m_wallet_supported: bool
+
+    @classmethod
+    def model_validate(cls, payload: object) -> Market:
+        data = _expect_mapping(payload)
+        return cls(
+            id=_required_str(data, "id"),
+            status=_required_str(data, "status"),
+            base_unit=_required_str(data, "base_unit"),
+            base_unit_precision=_required_int(data, "base_unit_precision"),
+            min_base_amount=_required_float(data, "min_base_amount"),
+            quote_unit=_required_str(data, "quote_unit"),
+            quote_unit_precision=_required_int(data, "quote_unit_precision"),
+            min_quote_amount=_required_float(data, "min_quote_amount"),
+            m_wallet_supported=_required_bool(data, "m_wallet_supported"),
+        )
 
 
 class Staking(MaxBaseModel):
@@ -71,11 +138,7 @@ class Timestamp:
     @classmethod
     def model_validate(cls, payload: object) -> Timestamp:
         data = _expect_mapping(payload)
-        timestamp = data["timestamp"]
-        if isinstance(timestamp, int | str | float):
-            return cls(timestamp=int(timestamp))
-        msg = f"expected int-compatible timestamp, got {type(timestamp).__name__}"
-        raise TypeError(msg)
+        return cls(timestamp=_required_int(data, "timestamp"))
 
 
 @dataclass(slots=True, frozen=True)
@@ -88,15 +151,28 @@ class KLine:
     volume: str
 
 
-class Depth(MaxBaseModel):
+@dataclass(slots=True, frozen=True)
+class Depth:
     timestamp: int
     asks: list[tuple[str, str]]
     bids: list[tuple[str, str]]
     last_update_version: int | None = None
     last_update_id: int | None = None
 
+    @classmethod
+    def model_validate(cls, payload: object) -> Depth:
+        data = _expect_mapping(payload)
+        return cls(
+            timestamp=_required_int(data, "timestamp"),
+            asks=_price_levels(data["asks"]),
+            bids=_price_levels(data["bids"]),
+            last_update_version=_optional_int(data, "last_update_version"),
+            last_update_id=_optional_int(data, "last_update_id"),
+        )
 
-class PublicTrade(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class PublicTrade:
     id: int
     price: str
     volume: str
@@ -104,6 +180,19 @@ class PublicTrade(MaxBaseModel):
     market: str
     side: str
     created_at: int
+
+    @classmethod
+    def model_validate(cls, payload: object) -> PublicTrade:
+        data = _expect_mapping(payload)
+        return cls(
+            id=_required_int(data, "id"),
+            price=_required_str(data, "price"),
+            volume=_required_str(data, "volume"),
+            funds=_required_str(data, "funds"),
+            market=_required_str(data, "market"),
+            side=_required_str(data, "side"),
+            created_at=_required_int(data, "created_at"),
+        )
 
 
 class Account(MaxBaseModel):
@@ -316,7 +405,8 @@ class ConvertOrder(MaxBaseModel):
     created_at: int
 
 
-class Ticker(MaxBaseModel):
+@dataclass(slots=True, frozen=True)
+class Ticker:
     market: str
     at: int
     buy: str
@@ -331,15 +421,49 @@ class Ticker(MaxBaseModel):
     vol_in_btc: str
     vol_in_quote: str
 
+    @classmethod
+    def model_validate(cls, payload: object) -> Ticker:
+        data = _expect_mapping(payload)
+        return cls(
+            market=_required_str(data, "market"),
+            at=_required_int(data, "at"),
+            buy=_required_str(data, "buy"),
+            buy_vol=_required_str(data, "buy_vol"),
+            sell=_required_str(data, "sell"),
+            sell_vol=_required_str(data, "sell_vol"),
+            open=_required_str(data, "open"),
+            low=_required_str(data, "low"),
+            high=_required_str(data, "high"),
+            last=_required_str(data, "last"),
+            vol=_required_str(data, "vol"),
+            vol_in_btc=_required_str(data, "vol_in_btc"),
+            vol_in_quote=_required_str(data, "vol_in_quote"),
+        )
 
-class HistoricalIndexPrice(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class HistoricalIndexPrice:
     timestamp: str
     price: str
 
+    @classmethod
+    def model_validate(cls, payload: object) -> HistoricalIndexPrice:
+        data = _expect_mapping(payload)
+        return cls(timestamp=_required_str(data, "timestamp"), price=_required_str(data, "price"))
 
-class InterestRate(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class InterestRate:
     hourly_interest_rate: str
     next_hourly_interest_rate: str
+
+    @classmethod
+    def model_validate(cls, payload: object) -> InterestRate:
+        data = _expect_mapping(payload)
+        return cls(
+            hourly_interest_rate=_required_str(data, "hourly_interest_rate"),
+            next_hourly_interest_rate=_required_str(data, "next_hourly_interest_rate"),
+        )
 
 
 class MWalletLoan(MaxBaseModel):
