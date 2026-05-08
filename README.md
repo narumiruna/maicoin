@@ -7,7 +7,11 @@ A Python package for MaiCoin MAX API.
 Install package:
 
 ```shell
-pip install .
+# uv
+uv add maicoin
+
+# pip
+pip install maicoin
 ```
 
 Create `.env` file for private API examples:
