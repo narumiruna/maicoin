@@ -23,6 +23,12 @@ class Filter(StrEnum):
     TRADE = "trade"
     ACCOUNT = "account"
     TRADE_UPDATE = "trade_update"
+    MWALLET_ORDER = "mwallet_order"
+    MWALLET_TRADE = "mwallet_trade"
+    MWALLET_FAST_TRADE_UPDATE = "mwallet_fast_trade_update"
+    MWALLET_ACCOUNT = "mwallet_account"
+    AD_RATIO = "ad_ratio"
+    BORROWING = "borrowing"
 
 
 class Request(BaseModel):
@@ -33,6 +39,7 @@ class Request(BaseModel):
     signature: str | None = None
     filters: list[Filter] | None = None
     subscriptions: list[Subscription] | None = None
+    subscription: list[Subscription] | None = None
 
     @classmethod
     def auth(cls, api_key: str, api_secret: str) -> Request:
@@ -63,7 +70,7 @@ class Request(BaseModel):
         return cls(
             action=Action.Unsubscribe,
             id=str(uuid.uuid4()),
-            subscriptions=subscriptions,
+            subscription=subscriptions,
         )
 
     def message(self) -> str:

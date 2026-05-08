@@ -102,13 +102,13 @@ The main missing areas are **REST API v3 transaction, wallet funds, convert, and
 
 ## Phase 7: WebSocket Gap Cleanup
 
-- [ ] Add public channel support for MWallet Pool Quota.
-- [ ] Add private channel support for Fast Trade.
-- [ ] Add MWallet private channels: order, trade, fast trade, account, AD ratio, and borrowing.
-- [ ] Add book response fields: `fi`, `li`, and `v`.
-- [ ] Add a `market_status` subscription test.
-- [ ] Check whether `Request.unsubscribe()` serialization should support the documentation's `subscription` versus `subscriptions` difference.
-- [ ] Check whether timestamp, price, and volume fields should preserve string precision instead of always converting to float.
+- [x] Add public channel support for MWallet Pool Quota.
+- [x] Add private channel support for Fast Trade.
+- [x] Add MWallet private channels: order, trade, fast trade, account, AD ratio, and borrowing.
+- [x] Add book response fields: `fi`, `li`, and `v`.
+- [x] Add a `market_status` subscription test.
+- [x] Check whether `Request.unsubscribe()` serialization should support the documentation's `subscription` versus `subscriptions` difference.
+- [x] Check whether timestamp, price, and volume fields should preserve string precision instead of always converting to float.
 
 ## Documentation
 

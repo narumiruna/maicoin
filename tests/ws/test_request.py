@@ -1,3 +1,8 @@
+import json
+
+from maicoin.ws import Channel
+from maicoin.ws import Filter
+from maicoin.ws import Subscription
 from maicoin.ws.request import Request
 
 
@@ -30,6 +35,14 @@ def test_action_unsubscribe() -> None:
     Request.model_validate(d)
 
 
+def test_unsubscribe_message_uses_documented_singular_subscription_key() -> None:
+    request = Request.unsubscribe([Subscription(channel=Channel.BOOK, market="btctwd", depth=1)])
+    message = json.loads(request.message())
+
+    assert "subscription" in message
+    assert "subscriptions" not in message
+
+
 # https://maicoin.github.io/max-websocket-docs/#/authentication?id=subscription
 def test_action_auth() -> None:
     d = {
@@ -55,3 +68,32 @@ def test_action_auth_filters() -> None:
     }
 
     Request.model_validate(d)
+
+
+def test_action_auth_mwallet_filters() -> None:
+    d = {
+        "action": "auth",
+        "apiKey": "...",
+        "nonce": 1591690054859,
+        "signature": "....",
+        "id": "client-id",
+        "filters": [
+            "mwallet_order",
+            "mwallet_trade",
+            "mwallet_fast_trade_update",
+            "mwallet_account",
+            "ad_ratio",
+            "borrowing",
+        ],
+    }
+
+    request = Request.model_validate(d)
+
+    assert request.filters == [
+        Filter.MWALLET_ORDER,
+        Filter.MWALLET_TRADE,
+        Filter.MWALLET_FAST_TRADE_UPDATE,
+        Filter.MWALLET_ACCOUNT,
+        Filter.AD_RATIO,
+        Filter.BORROWING,
+    ]

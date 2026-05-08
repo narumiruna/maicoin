@@ -1,6 +1,10 @@
 from maicoin.ws.balance import Balance
 from maicoin.ws.channel import Channel
 from maicoin.ws.kline import KLine
+from maicoin.ws.m_wallet import MWalletADRatio
+from maicoin.ws.m_wallet import MWalletBorrowing
+from maicoin.ws.m_wallet import MWalletIndexPrice
+from maicoin.ws.m_wallet import PoolQuota
 from maicoin.ws.order import Order
 from maicoin.ws.order import OrderState
 from maicoin.ws.order import OrderType
@@ -22,9 +26,13 @@ __all__ = [
     "Event",
     "Filter",
     "KLine",
+    "MWalletADRatio",
+    "MWalletBorrowing",
+    "MWalletIndexPrice",
     "Order",
     "OrderState",
     "OrderType",
+    "PoolQuota",
     "Request",
     "Response",
     "Side",

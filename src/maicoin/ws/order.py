@@ -33,27 +33,23 @@ class Order(BaseModel):
     order_id: int = Field(validation_alias="i")
     side: Side = Field(validation_alias="sd")
     order_type: OrderType = Field(validation_alias="ot")
-    price: float = Field(validation_alias="p")
-    stop_price: float | None = Field(default=None, validation_alias="sp")
-    average_price: float = Field(validation_alias="ap")
+    price: str = Field(validation_alias="p")
+    stop_price: str | None = Field(default=None, validation_alias="sp")
+    average_price: str = Field(validation_alias="ap")
     state: OrderState = Field(validation_alias="S")
     market: str = Field(validation_alias="M")
     created_at: datetime = Field(validation_alias="T")
-    volume: float = Field(validation_alias="v")
-    remaining_volume: float = Field(validation_alias="rv")
-    executed_volume: float = Field(validation_alias="ev")
+    updated_at: datetime | None = Field(default=None, validation_alias="TU")
+    volume: str = Field(validation_alias="v")
+    remaining_volume: str = Field(validation_alias="rv")
+    executed_volume: str = Field(validation_alias="ev")
     trade_count: int = Field(validation_alias="tc")
-    client_order_id: str = Field(validation_alias="ci")
+    client_order_id: str | None = Field(validation_alias="ci")
     group_id: int | None = Field(default=None, validation_alias="gi")
 
-    @field_validator("created_at", mode="before")
+    @field_validator("created_at", "updated_at", mode="before")
     @classmethod
-    def convert_datetime(cls, t: int) -> datetime:
+    def convert_datetime(cls, t: int | None) -> datetime | None:
+        if t is None:
+            return None
         return datetime.fromtimestamp(int(t) / 1000, tz=UTC)
-
-    @field_validator(
-        "price", "average_price", "stop_price", "volume", "remaining_volume", "executed_volume", mode="before"
-    )
-    @classmethod
-    def convert_float(cls, s: str) -> float:
-        return float(s)
