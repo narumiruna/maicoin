@@ -1,122 +1,70 @@
-# maicoin
+# maicoin 🪙
 
-A Python package for MaiCoin MAX API.
+Python client for the [MaiCoin MAX](https://max.maicoin.com/) exchange. Provides a typed REST v3 client and a WebSocket stream client built on `httpx`, `websockets`, and `pydantic`.
 
-## Usage
-
-Install package:
+## 📦 Installation
 
 ```shell
-# uv
 uv add maicoin
-
-# pip
+# or
 pip install maicoin
 ```
 
-Create `.env` file for private API examples:
+Requires Python 3.12+.
+
+## 🚀 Quick start
+
+Set credentials in your environment (or a `.env` file):
 
 ```dotenv
-MAX_API_KEY=
-MAX_API_SECRET=
+MAX_API_KEY=your_key
+MAX_API_SECRET=your_secret
 ```
 
-Run [example.py](example.py):
-
-```shell
-python example.py
-```
-
-## REST API v3
-
-REST v3 support includes the foundation client, authentication helpers, error handling, public/private endpoint wrappers,
-and typed response models.
-
-### Public requests
+### 🌐 REST
 
 ```python
 from maicoin.v3 import Client
 
-client = Client()
-markets = client.markets()
-ticker = client.ticker("btctwd")
-klines = client.kline("btctwd", period=1, limit=30)
-```
+client = Client()                  # public endpoints
+client = Client(api_key=..., api_secret=...)  # private endpoints (signed)
 
-Use `Client.request(...)` for low-level access when a high-level wrapper is not available yet:
-
-```python
-from maicoin.v3 import Client
-
-client = Client()
-markets = client.request("GET", "/api/v3/markets")
-```
-
-### Private requests
-
-Private requests require MAX credentials and are signed with `X-MAX-ACCESSKEY`, `X-MAX-PAYLOAD`, and
-`X-MAX-SIGNATURE` headers.
-
-```python
-import os
-
-from maicoin.v3 import Client
-
-client = Client(
-    api_key=os.environ["MAX_API_KEY"],
-    api_secret=os.environ["MAX_API_SECRET"],
-)
-
-accounts = client.accounts()
-open_orders = client.open_orders(market="btctwd")
-withdrawals = client.withdrawals(currency="btc", limit=10)
-```
-
-Use `Client.request(...)` for low-level private access when a high-level wrapper is not available:
-
-```python
-import os
-
-from maicoin.v3 import Client
-
-client = Client(
-    api_key=os.environ["MAX_API_KEY"],
-    api_secret=os.environ["MAX_API_SECRET"],
-)
-accounts = client.request("GET", "/api/v3/wallet/spot/accounts", auth=True)
+client.ticker("btctwd")
+client.accounts()
+client.request("GET", "/api/v3/...", auth=True)  # raw escape hatch
 ```
 
 > [!WARNING]
-> Some private methods create real account actions, including orders, withdrawals, loans, transfers, repayments,
-> and converts. Review parameters carefully before calling state-changing methods.
+> ⚠️ Private methods can place orders, transfer funds, take loans, and trigger withdrawals. Double-check arguments before calling state-changing methods against a live account.
 
-## WebSocket API
-
-Use `Stream` with one or more subscriptions to receive typed WebSocket responses:
+### 📡 WebSocket
 
 ```python
-from maicoin.ws import Channel
-from maicoin.ws import Response
-from maicoin.ws import Stream
-from maicoin.ws import Subscription
+from maicoin.ws import Channel, Stream, Subscription
 
-
-def handle_response(response: Response) -> None:
-    print(response.model_dump(exclude_none=True))
-
-
-stream = Stream()
-stream.subscribe(
-    [
-        Subscription(channel=Channel.BOOK, market="btcusdt", depth=5),
-        Subscription(channel=Channel.TICKER, market="btcusdt"),
-        Subscription(channel=Channel.TRADE, market="btcusdt"),
-        Subscription(channel=Channel.MARKET_STATUS),
-    ]
-)
-stream.add_handler(handle_response)
+stream = Stream()                  # or Stream.from_env() for private channels
+stream.subscribe([Subscription(channel=Channel.TICKER, market="btcusdt")])
+stream.add_handler(lambda r: print(r.model_dump(exclude_none=True)))
 stream.run()
 ```
 
-For authenticated private WebSocket channels, create the stream with credentials or use `Stream.from_env()` with
-`MAX_API_KEY` and `MAX_API_SECRET`.
+Full runnable scripts: [`examples/rest.py`](examples/rest.py), [`examples/websocket.py`](examples/websocket.py).
+
+## 🛠️ Development
+
+This repo uses [uv](https://docs.astral.sh/uv/) and [just](https://github.com/casey/just):
+
+```shell
+uv sync
+just         # format, lint, type-check, test
+just test    # pytest with coverage
+```
+
+## 📚 References
+
+- HTTP API v3: <https://max-api.maicoin.com/doc/v3.html>
+- WebSocket API: <https://maicoin.github.io/max-websocket-docs/>
+
+## 📄 License
+
+[MIT](LICENSE)
