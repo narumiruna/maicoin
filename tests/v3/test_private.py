@@ -112,7 +112,7 @@ def test_accounts_constructs_authenticated_request_and_parses_accounts() -> None
     assert accounts == [Account(currency="twd", balance="100000.0", locked="5566.0", staked=None)]
     assert session.calls[-1]["method"] == "GET"
     assert session.calls[-1]["url"] == "https://example.test/api/v3/wallet/spot/accounts"
-    assert last_kwargs(session)["params"] == {"currency": "twd"}
+    assert last_kwargs(session)["params"] == {"nonce": 123456, "currency": "twd"}
     assert last_payload(session) == {
         "nonce": 123456,
         "currency": "twd",
@@ -126,7 +126,7 @@ def test_open_closed_and_history_orders_parse_order_models() -> None:
     open_session = FakeSession([order_payload()])
     assert authenticated_client(open_session).open_orders(market="ethtwd", limit=1) == [expected_order]
     assert open_session.calls[-1]["url"] == "https://example.test/api/v3/wallet/spot/orders/open"
-    assert last_kwargs(open_session)["params"] == {"market": "ethtwd", "limit": 1}
+    assert last_kwargs(open_session)["params"] == {"nonce": 123456, "market": "ethtwd", "limit": 1}
 
     closed_session = FakeSession([order_payload(state="done")])
     assert authenticated_client(closed_session).closed_orders(wallet_type="m")[0].state == "done"
@@ -135,7 +135,7 @@ def test_open_closed_and_history_orders_parse_order_models() -> None:
     history_session = FakeSession([order_payload()])
     history = authenticated_client(history_session).order_history("ethtwd", from_id=10, limit=50)
     assert history == [expected_order]
-    assert last_kwargs(history_session)["params"] == {"market": "ethtwd", "from_id": 10, "limit": 50}
+    assert last_kwargs(history_session)["params"] == {"nonce": 123456, "market": "ethtwd", "from_id": 10, "limit": 50}
 
 
 def test_wallet_trades_constructs_authenticated_request_and_parses_private_trades() -> None:
@@ -160,7 +160,13 @@ def test_wallet_trades_constructs_authenticated_request_and_parses_private_trade
 
     assert trades == [PrivateTrade.model_validate(trade_payload)]
     assert session.calls[-1]["url"] == "https://example.test/api/v3/wallet/spot/trades"
-    assert last_kwargs(session)["params"] == {"market": "ethtwd", "from_id": 68444, "order": "asc", "limit": 1}
+    assert last_kwargs(session)["params"] == {
+        "nonce": 123456,
+        "market": "ethtwd",
+        "from_id": 68444,
+        "order": "asc",
+        "limit": 1,
+    }
     assert last_payload(session)["path"] == "/api/v3/wallet/spot/trades"
 
 
@@ -173,7 +179,7 @@ def test_order_lookup_and_order_trades_construct_requests() -> None:
     assert order.state is OrderState.WAIT
     assert order.ord_type is OrderType.LIMIT
     assert order_session.calls[-1]["url"] == "https://example.test/api/v3/order"
-    assert last_kwargs(order_session)["params"] == {"id": 87}
+    assert last_kwargs(order_session)["params"] == {"nonce": 123456, "id": 87}
 
     trade_payload = {
         "id": 68444,
@@ -196,7 +202,7 @@ def test_order_lookup_and_order_trades_construct_requests() -> None:
 
     assert trades == [PrivateTrade.model_validate(trade_payload)]
     assert trade_session.calls[-1]["url"] == "https://example.test/api/v3/order/trades"
-    assert last_kwargs(trade_session)["params"] == {"client_oid": "client-1"}
+    assert last_kwargs(trade_session)["params"] == {"nonce": 123456, "client_oid": "client-1"}
 
 
 def test_create_and_cancel_order_send_authenticated_json_body() -> None:
@@ -214,6 +220,7 @@ def test_create_and_cancel_order_send_authenticated_json_body() -> None:
     assert create_session.calls[-1]["method"] == "POST"
     assert create_session.calls[-1]["url"] == "https://example.test/api/v3/wallet/spot/order"
     assert last_kwargs(create_session)["json"] == {
+        "nonce": 123456,
         "market": "ethtwd",
         "side": "buy",
         "volume": "0.2658",
@@ -227,10 +234,10 @@ def test_create_and_cancel_order_send_authenticated_json_body() -> None:
     assert authenticated_client(cancel_session).cancel_order(order_id=87).state == "cancel"
     assert cancel_session.calls[-1]["method"] == "DELETE"
     assert cancel_session.calls[-1]["url"] == "https://example.test/api/v3/order"
-    assert last_kwargs(cancel_session)["json"] == {"id": 87}
+    assert last_kwargs(cancel_session)["json"] == {"nonce": 123456, "id": 87}
 
     cancel_all_session = FakeSession([order_payload(state="cancel")])
     cancelled = authenticated_client(cancel_all_session).cancel_orders(market="ethtwd", side="buy")
     assert cancelled[0].state == "cancel"
     assert cancel_all_session.calls[-1]["url"] == "https://example.test/api/v3/wallet/spot/orders"
-    assert last_kwargs(cancel_all_session)["json"] == {"market": "ethtwd", "side": "buy"}
+    assert last_kwargs(cancel_all_session)["json"] == {"nonce": 123456, "market": "ethtwd", "side": "buy"}

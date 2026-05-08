@@ -86,7 +86,7 @@ def test_currencies_returns_currency_models() -> None:
                 "min_borrow_amount": "0.001",
                 "networks": [
                     {
-                        "token_contract_address": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+                        "token_contract_address": None,
                         "precision": 8,
                         "id": "trc20usdt",
                         "network_protocol": "tron-trc20",

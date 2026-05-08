@@ -95,13 +95,15 @@ class Client:
             if self.api_key is None or self.api_secret is None:
                 msg = "api_key and api_secret are required for authenticated requests"
                 raise ValueError(msg)
+            nonce = self.nonce_factory()
+            request_params = {"nonce": nonce, **request_params}
             headers.update(
                 build_auth_headers(
                     api_key=self.api_key,
                     api_secret=self.api_secret,
                     path=normalized_path,
                     params=request_params,
-                    nonce=self.nonce_factory(),
+                    nonce=nonce,
                 )
             )
 

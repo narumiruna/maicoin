@@ -78,6 +78,7 @@ def test_create_convert_constructs_authenticated_post_and_parses_payload() -> No
     assert session.calls[-1]["method"] == "POST"
     assert session.calls[-1]["url"] == "https://example.test/api/v3/convert"
     assert last_kwargs(session)["json"] == {
+        "nonce": 123456,
         "from_currency": "btc",
         "to_currency": "usdt",
         "from_amount": "0.01",
@@ -92,7 +93,7 @@ def test_convert_detail_constructs_authenticated_get_and_parses_payload() -> Non
     assert convert.sn == "6322d9bd-736b-4f19-b862-829e75cae1ce"
     assert session.calls[-1]["method"] == "GET"
     assert session.calls[-1]["url"] == "https://example.test/api/v3/convert"
-    assert last_kwargs(session)["params"] == {"sn": "6322d9bd-736b-4f19-b862-829e75cae1ce"}
+    assert last_kwargs(session)["params"] == {"nonce": 123456, "sn": "6322d9bd-736b-4f19-b862-829e75cae1ce"}
 
 
 def test_converts_constructs_authenticated_get_and_parses_list() -> None:
@@ -102,4 +103,4 @@ def test_converts_constructs_authenticated_get_and_parses_list() -> None:
     assert converts == [ConvertOrder.model_validate(convert_payload())]
     assert session.calls[-1]["method"] == "GET"
     assert session.calls[-1]["url"] == "https://example.test/api/v3/converts"
-    assert last_kwargs(session)["params"] == {"timestamp": 1704937708, "order": "desc", "limit": 1}
+    assert last_kwargs(session)["params"] == {"nonce": 123456, "timestamp": 1704937708, "order": "desc", "limit": 1}

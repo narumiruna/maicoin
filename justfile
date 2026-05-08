@@ -1,3 +1,5 @@
+set dotenv-load := true
+
 [default]
 all: format lint type test
 
@@ -16,6 +18,10 @@ type:
 # Run tests using pytest with coverage
 test:
     uv run pytest -v -s --cov=src tests
+
+# Run live integration tests against the real MAX API
+live-test:
+    RUN_LIVE_TESTS=1 uv run pytest -v -s -m live tests/live
 
 # Build and publish the package to PyPI
 publish:

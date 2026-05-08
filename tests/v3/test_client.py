@@ -89,6 +89,7 @@ def test_authenticated_request_adds_max_headers() -> None:
     )
     assert headers["X-MAX-SIGNATURE"] == "4347a83e4172fdf36e00c954deacfe143e77a360daef361106ff1ea852cceabe"
     assert headers["Content-Type"] == "application/json"
+    assert last_kwargs(session)["params"] == {"nonce": 123456, "currency": "btc"}
 
 
 def test_http_error_response_raises() -> None:
