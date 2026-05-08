@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import base64
 import hmac
-import json
 from collections.abc import Mapping
 from datetime import UTC
 from datetime import datetime
+
+import orjson
 
 
 def generate_nonce() -> int:
@@ -18,8 +19,8 @@ def encode_payload(path: str, params: Mapping[str, object] | None = None, nonce:
         payload.update(params)
     payload["path"] = path
 
-    json_payload = json.dumps(payload, separators=(",", ":"))
-    return base64.b64encode(json_payload.encode()).decode()
+    json_payload = orjson.dumps(payload)
+    return base64.b64encode(json_payload).decode()
 
 
 def sign_payload(api_secret: str, payload: str) -> str:
