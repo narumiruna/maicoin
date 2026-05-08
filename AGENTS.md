@@ -2,38 +2,40 @@
 
 ## Project Structure & Module Organization
 
-This repository is a Python package for the MaiCoin MAX API. Core package code lives under `maicoin/`:
+This repository is a Python package for the MaiCoin MAX API. Core package code lives under `src/maicoin/`:
 
-- `maicoin/ws/` contains WebSocket models, requests, responses, subscriptions, and stream helpers.
-- `maicoin/v2/` contains HTTP API-related modules.
-- `tests/` mirrors package areas, with current coverage focused on `tests/ws/`.
+- `src/maicoin/ws/` contains WebSocket models, requests, responses, subscriptions, and stream helpers.
+- `src/maicoin/v2/` and `src/maicoin/v3/` contain HTTP API-related modules.
+- `tests/` mirrors package areas, with current coverage focused on `tests/ws/` and `tests/v3/`.
 - `example.py` demonstrates loading MAX credentials from `.env` and running the package locally.
 
 ## Build, Test, and Development Commands
 
-Use Poetry for dependency management:
+Use uv for dependency management and `just` for project tasks. The default recipe runs the full local gate:
 
 ```shell
-poetry install
-poetry run pytest
-poetry run pytest --cov=maicoin
-poetry run ruff check .
+uv sync
+just          # runs format, lint, type, and test
+just format   # uv run ruff format
+just lint     # uv run ruff check --fix
+just type     # uv run ty check
+just test     # uv run pytest -v -s --cov=src tests
+just publish  # uv build; uv publish
 ```
 
 For a quick local package check, run:
 
 ```shell
-pip install .
-python example.py
+uv run python example.py
 ```
 
 ## Coding Style & Naming Conventions
 
-Target Python 3.10+. Ruff is the primary linter; keep lines at or below 120 characters. Ruff enforces pycodestyle, pyflakes, isort, pep8-naming, pyupgrade, flake8-bugbear, and flake8-comprehensions rules. Imports should be sorted with one import per line. Keep public models and request/response classes named clearly after MAX API concepts, matching existing files such as `ticker.py`, `order.py`, and `subscription.py`.
+Target Python 3.12+. Ruff is the primary linter; keep lines at or below 120 characters. Ruff enforces pycodestyle, pyflakes, isort, pep8-naming, pyupgrade, flake8-bugbear, and flake8-comprehensions rules. Imports should be sorted with one import per line. Keep public models and request/response classes named clearly after MAX API concepts, matching existing files such as `ticker.py`, `order.py`, and `subscription.py`.
 
 ## Testing Guidelines
 
-Use pytest. Place tests under `tests/` using `test_*.py` filenames and mirror the package path when adding new modules. Prefer deterministic unit tests for serialization, parsing, validation, and request construction. Run `poetry run pytest` before submitting changes; use `poetry run pytest --cov=maicoin` when changing core API behavior.
+Use pytest. Place tests under `tests/` using `test_*.py` filenames and mirror the package path when adding new modules. Prefer deterministic unit tests for serialization, parsing, validation, and request construction. Run `just test` for the standard coverage command, or `just` before submitting broader changes.
 
 ## API Reference Links
 

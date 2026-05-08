@@ -2,7 +2,7 @@
 
 ## Goal
 
-Add the missing MAX REST API v3 support while preserving the existing WebSocket API behavior. The current codebase is centered on `maicoin/ws/`; REST support only contains the single `GET /api/v2/k` K-line endpoint in `maicoin/v2/kline.py`. The README also still marks the HTTP API as unfinished, so the next implementation target should be a new `maicoin/v3/` package.
+Add the missing MAX REST API v3 support while preserving the existing WebSocket API behavior. The current codebase is centered on `src/maicoin/ws/`; REST support includes the legacy `GET /api/v2/k` K-line endpoint in `src/maicoin/v2/kline.py` and the newer v3 package under `src/maicoin/v3/`.
 
 Official references:
 
@@ -19,7 +19,7 @@ Official references:
 - REST v2: only `GET /api/v2/k` K-line lookup.
 - REST v3 foundation package under `maicoin/v3/`.
 - REST API v3 authentication helpers for `X-MAX-ACCESSKEY`, `X-MAX-PAYLOAD`, and `X-MAX-SIGNATURE`.
-- REST API v3 low-level sync `Client.request(...)` using `requests` with public/private request support.
+- REST API v3 low-level sync `Client.request(...)` using `httpx` with public/private request support.
 - REST API v3 HTTP/API error classes.
 - REST API v3 public endpoint wrappers and Pydantic models for markets, currencies, timestamp, k, depth, trades, tickers, ticker, and m-wallet public rates/limits.
 - Tests for WebSocket request, response, and subscription model validation.
@@ -30,19 +30,19 @@ Official references:
 - REST API v3 high-level private endpoint wrappers.
 - REST API v3 private endpoints: orders, trades, accounts, withdrawals, deposits, fund transactions, convert, and m-wallet loan/repayment/liquidation/interest/transfer endpoints.
 - v3 request/response Pydantic models and error handling.
-- REST API tests for auth signatures, query/body placement, and response parsing.
+- REST API tests for private endpoint wrappers and response parsing.
 - WebSocket models for newer documented features: MWallet Pool Quota, Fast Trade, MWallet private channels, and book sequence/version fields `fi`, `li`, and `v`.
 
 ## Design Direction
 
 ### Package Layout
 
-Add `maicoin/v3/` without replacing `maicoin/v2/`, so existing imports remain compatible.
+Add `src/maicoin/v3/` without replacing `src/maicoin/v2/`, so existing imports remain compatible.
 
 Suggested structure:
 
 ```text
-maicoin/v3/
+src/maicoin/v3/
   __init__.py
   auth.py          # payload/signature/header generation
   client.py        # sync HTTP client and shared request logic
@@ -56,7 +56,7 @@ maicoin/v3/
   convert.py       # convert endpoints
 ```
 
-Start with a synchronous client using the existing `requests` dependency. Add an async client later only if needed.
+Use a synchronous client backed by `httpx`. Add an async client later only if needed.
 
 ### Client API
 
@@ -117,8 +117,9 @@ Add WebSocket support for MWallet Pool Quota, Fast Trade, MWallet private channe
 Before completing each phase, run at least:
 
 ```shell
-poetry run ruff check .
-poetry run pytest -v -s --cov=maicoin --cov-report=xml tests
+uv run ruff check .
+uv run ty check .
+uv run pytest -v -s --cov=src --cov-report=xml tests
 ```
 
 REST private endpoint tests should use mocked transport/session objects. Do not use real API keys or send real order/withdrawal requests.
