@@ -1,10 +1,10 @@
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel
 from pydantic import Field
 
 
-class Status(str, Enum):
+class Status(StrEnum):
     ACTIVE = "active"
     SUSPENDED = "suspended"
     CANCEL_ONLY = "cancel-only"

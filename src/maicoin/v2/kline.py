@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import UTC
 from datetime import datetime
 from urllib.parse import urljoin
 
@@ -24,7 +25,7 @@ class KLine(BaseModel):
     @field_validator("timestamp", mode="before")
     @classmethod
     def convert_datetime(cls, v: int) -> datetime:
-        return datetime.fromtimestamp(v)
+        return datetime.fromtimestamp(v, tz=UTC)
 
 
 class KLineRequest(BaseModel):

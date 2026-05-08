@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from datetime import UTC
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel
 from pydantic import Field
@@ -17,7 +18,7 @@ from .ticker import Ticker
 from .trade import Trade
 
 
-class Event(str, Enum):
+class Event(StrEnum):
     ERROR = "error"
     SUBSCRIBED = "subscribed"
     UNSUBSCRIBED = "unsubscribed"
@@ -53,5 +54,5 @@ class Response(BaseModel):
 
     @field_validator("created_at", mode="before")
     @classmethod
-    def convert(cls, t: int) -> None:
-        return datetime.fromtimestamp(int(t) / 1000)
+    def convert(cls, t: int) -> datetime:
+        return datetime.fromtimestamp(int(t) / 1000, tz=UTC)
