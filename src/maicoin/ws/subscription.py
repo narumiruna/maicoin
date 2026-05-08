@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import cast
 
 from maicoin.ws.channel import Channel
 
@@ -15,13 +16,14 @@ class Subscription:
     currency: str | None = None
 
     @classmethod
-    def model_validate(cls, payload: Mapping[str, object]) -> Subscription:
+    def model_validate(cls, payload: object) -> Subscription:
+        data = _expect_mapping(payload)
         return cls(
-            channel=Channel(payload["channel"]),
-            market=_optional_str(payload.get("market")),
-            depth=_optional_int(payload.get("depth")),
-            resolution=_optional_str(payload.get("resolution")),
-            currency=_optional_str(payload.get("currency")),
+            channel=Channel(data["channel"]),
+            market=_optional_str(data.get("market")),
+            depth=_optional_int(data.get("depth")),
+            resolution=_optional_str(data.get("resolution")),
+            currency=_optional_str(data.get("currency")),
         )
 
     def model_dump(self, *, exclude_none: bool = False) -> dict[str, object]:
@@ -35,6 +37,13 @@ class Subscription:
         if exclude_none:
             return {key: value for key, value in payload.items() if value is not None}
         return payload
+
+
+def _expect_mapping(payload: object) -> Mapping[str, object]:
+    if not isinstance(payload, Mapping):
+        msg = f"expected mapping, got {type(payload).__name__}"
+        raise TypeError(msg)
+    return cast("Mapping[str, object]", payload)
 
 
 def _optional_str(value: object) -> str | None:
