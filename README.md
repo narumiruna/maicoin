@@ -60,6 +60,18 @@ just         # format, lint, type-check, test
 just test    # pytest with coverage
 ```
 
+### Live integration tests
+
+Live tests call the real MAX API and are skipped unless explicitly enabled:
+
+```shell
+RUN_LIVE_TESTS=1 uv run pytest -v -s -m live tests/live
+# or
+just live-test
+```
+
+Private read-only live tests also require `MAX_API_KEY` and `MAX_API_SECRET`; `just` loads these from `.env` automatically. Set `MAX_LIVE_MARKET` to override the default public test market (`btctwd`). Destructive live tests are intentionally not implemented yet.
+
 ## 📚 References
 
 - HTTP API v3: <https://max-api.maicoin.com/doc/v3.html>

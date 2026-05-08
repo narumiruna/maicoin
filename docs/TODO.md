@@ -4,12 +4,12 @@
 
 Plan: [`docs/live-integration-tests-plan.md`](live-integration-tests-plan.md)
 
-- [ ] Register `live` and `destructive` pytest markers in `pyproject.toml`.
-- [ ] Create `tests/live/` with shared fixtures and skip logic.
-- [ ] Implement public live tests for read-only MAX REST v3 public endpoints.
-- [ ] Add a `just live-test` recipe.
-- [ ] Implement private read-only live tests that use `MAX_API_KEY` and `MAX_API_SECRET` when available.
-- [ ] Update `README.md` with a short section explaining how to run live integration tests.
+- [x] Register `live` and `destructive` pytest markers in `pyproject.toml`.
+- [x] Create `tests/live/` with shared fixtures and skip logic.
+- [x] Implement public live tests for read-only MAX REST v3 public endpoints.
+- [x] Add a `just live-test` recipe.
+- [x] Implement private read-only live tests that use `MAX_API_KEY` and `MAX_API_SECRET` when available.
+- [x] Update `README.md` with a short section explaining how to run live integration tests.
 - [ ] Leave destructive live tests for a separate design pass; do not include them in the first implementation.
 
 ## Completed Milestones

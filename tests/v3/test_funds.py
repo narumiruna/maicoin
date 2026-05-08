@@ -151,18 +151,22 @@ def test_withdrawal_methods_construct_authenticated_requests_and_parse_payloads(
 
     assert withdrawal == Withdrawal.model_validate(withdrawal_payload())
     assert detail_session.calls[-1]["url"] == "https://example.test/api/v3/withdrawal"
-    assert last_kwargs(detail_session)["params"] == {"uuid": "18022603540001"}
+    assert last_kwargs(detail_session)["params"] == {"nonce": 123456, "uuid": "18022603540001"}
 
     create_session = FakeSession(withdrawal_payload())
     authenticated_client(create_session).create_withdrawal(withdraw_address_uuid="addr-1", amount="0.019")
     assert create_session.calls[-1]["method"] == "POST"
-    assert last_kwargs(create_session)["json"] == {"withdraw_address_uuid": "addr-1", "amount": "0.019"}
+    assert last_kwargs(create_session)["json"] == {
+        "nonce": 123456,
+        "withdraw_address_uuid": "addr-1",
+        "amount": "0.019",
+    }
     assert last_payload(create_session)["path"] == "/api/v3/withdrawal"
 
     twd_session = FakeSession(withdrawal_payload(currency="twd", network_protocol=None, amount="100"))
     authenticated_client(twd_session).create_twd_withdrawal("100")
     assert twd_session.calls[-1]["url"] == "https://example.test/api/v3/withdrawal/twd"
-    assert last_kwargs(twd_session)["json"] == {"amount": "100"}
+    assert last_kwargs(twd_session)["json"] == {"nonce": 123456, "amount": "100"}
 
 
 def test_withdrawals_and_withdraw_addresses_parse_lists() -> None:
@@ -171,7 +175,12 @@ def test_withdrawals_and_withdraw_addresses_parse_lists() -> None:
 
     assert withdrawals == [Withdrawal.model_validate(withdrawal_payload())]
     assert withdrawals_session.calls[-1]["url"] == "https://example.test/api/v3/withdrawals"
-    assert last_kwargs(withdrawals_session)["params"] == {"currency": "usdt", "state": "done", "limit": 1}
+    assert last_kwargs(withdrawals_session)["params"] == {
+        "nonce": 123456,
+        "currency": "usdt",
+        "state": "done",
+        "limit": 1,
+    }
 
     address_payload = {
         "uuid": "508c9af6-ccc1-4122-b38f-a407e3bac96c",
@@ -189,7 +198,7 @@ def test_withdrawals_and_withdraw_addresses_parse_lists() -> None:
 
     assert addresses == [WithdrawAddress.model_validate(address_payload)]
     assert address_session.calls[-1]["url"] == "https://example.test/api/v3/withdraw_addresses"
-    assert last_kwargs(address_session)["params"] == {"currency": "usdt", "limit": 10, "offset": 20}
+    assert last_kwargs(address_session)["params"] == {"nonce": 123456, "currency": "usdt", "limit": 10, "offset": 20}
 
 
 def test_deposit_methods_construct_authenticated_requests_and_parse_payloads() -> None:
@@ -198,12 +207,12 @@ def test_deposit_methods_construct_authenticated_requests_and_parse_payloads() -
 
     assert deposit == Deposit.model_validate(deposit_payload())
     assert detail_session.calls[-1]["url"] == "https://example.test/api/v3/deposit"
-    assert last_kwargs(detail_session)["params"] == {"uuid": "18022603540001"}
+    assert last_kwargs(detail_session)["params"] == {"nonce": 123456, "uuid": "18022603540001"}
 
     deposits_session = FakeSession([deposit_payload()])
     deposits = authenticated_client(deposits_session).deposits(currency="usdt", order="asc", limit=1)
     assert deposits == [Deposit.model_validate(deposit_payload())]
-    assert last_kwargs(deposits_session)["params"] == {"currency": "usdt", "order": "asc", "limit": 1}
+    assert last_kwargs(deposits_session)["params"] == {"nonce": 123456, "currency": "usdt", "order": "asc", "limit": 1}
 
     address_payload = {
         "currency": "usdt",
@@ -215,7 +224,7 @@ def test_deposit_methods_construct_authenticated_requests_and_parse_payloads() -
     address = authenticated_client(address_session).deposit_address("trc20usdt")
     assert address == DepositAddress.model_validate(address_payload)
     assert address_session.calls[-1]["url"] == "https://example.test/api/v3/deposit_address"
-    assert last_kwargs(address_session)["params"] == {"currency_version": "trc20usdt"}
+    assert last_kwargs(address_session)["params"] == {"nonce": 123456, "currency_version": "trc20usdt"}
 
 
 def test_internal_transfers_and_rewards_construct_requests_and_parse_payloads() -> None:
@@ -233,7 +242,7 @@ def test_internal_transfers_and_rewards_construct_requests_and_parse_payloads() 
 
     assert transfers == [InternalTransfer.model_validate(transfer_payload)]
     assert transfers[0].from_ == "pr***@***.com"
-    assert last_kwargs(transfer_session)["params"] == {"side": "in", "currency": "eth", "limit": 1}
+    assert last_kwargs(transfer_session)["params"] == {"nonce": 123456, "side": "in", "currency": "eth", "limit": 1}
 
     reward_payload = {
         "uuid": "18032011380001",
@@ -248,7 +257,7 @@ def test_internal_transfers_and_rewards_construct_requests_and_parse_payloads() 
 
     assert rewards == [Reward.model_validate(reward_payload)]
     assert reward_session.calls[-1]["url"] == "https://example.test/api/v3/rewards"
-    assert last_kwargs(reward_session)["params"] == {"reward_type": "airdrop_reward", "limit": 1}
+    assert last_kwargs(reward_session)["params"] == {"nonce": 123456, "reward_type": "airdrop_reward", "limit": 1}
 
 
 def test_fund_transaction_deposit_methods_parse_list_and_detail() -> None:
@@ -260,12 +269,17 @@ def test_fund_transaction_deposit_methods_parse_list_and_detail() -> None:
     assert deposits == [FundTransactionDeposit.model_validate(fund_deposit_payload())]
     assert deposits[0].from_ is None
     assert list_session.calls[-1]["url"] == "https://example.test/api/v3/fund_transactions/deposits"
-    assert last_kwargs(list_session)["params"] == {"timestamp": 1521726960123, "order": "desc", "limit": 1}
+    assert last_kwargs(list_session)["params"] == {
+        "nonce": 123456,
+        "timestamp": 1521726960123,
+        "order": "desc",
+        "limit": 1,
+    }
 
     detail_session = FakeSession(fund_deposit_payload())
     assert authenticated_client(detail_session).fund_transaction_deposit("18022603540001").sn == "18022603540001"
     assert detail_session.calls[-1]["url"] == "https://example.test/api/v3/fund_transactions/deposit"
-    assert last_kwargs(detail_session)["params"] == {"sn": "18022603540001"}
+    assert last_kwargs(detail_session)["params"] == {"nonce": 123456, "sn": "18022603540001"}
 
 
 def test_fund_transaction_withdrawal_methods_parse_list_and_detail() -> None:
@@ -274,12 +288,12 @@ def test_fund_transaction_withdrawal_methods_parse_list_and_detail() -> None:
 
     assert withdrawals == [FundTransactionWithdrawal.model_validate(fund_withdrawal_payload())]
     assert list_session.calls[-1]["url"] == "https://example.test/api/v3/fund_transactions/withdrawals"
-    assert last_kwargs(list_session)["params"] == {"limit": 1}
+    assert last_kwargs(list_session)["params"] == {"nonce": 123456, "limit": 1}
 
     detail_session = FakeSession(fund_withdrawal_payload())
     assert authenticated_client(detail_session).fund_transaction_withdrawal("18022603540001").sn == "18022603540001"
     assert detail_session.calls[-1]["url"] == "https://example.test/api/v3/fund_transactions/withdrawal"
-    assert last_kwargs(detail_session)["params"] == {"sn": "18022603540001"}
+    assert last_kwargs(detail_session)["params"] == {"nonce": 123456, "sn": "18022603540001"}
 
 
 def test_fund_transaction_transfer_methods_parse_list_and_detail() -> None:
@@ -289,9 +303,9 @@ def test_fund_transaction_transfer_methods_parse_list_and_detail() -> None:
     assert transfers == [FundTransactionTransfer.model_validate(fund_transfer_payload())]
     assert transfers[0].from_.wallet_type == "spot"
     assert list_session.calls[-1]["url"] == "https://example.test/api/v3/fund_transactions/transfers"
-    assert last_kwargs(list_session)["params"] == {"limit": 1}
+    assert last_kwargs(list_session)["params"] == {"nonce": 123456, "limit": 1}
 
     detail_session = FakeSession(fund_transfer_payload())
     assert authenticated_client(detail_session).fund_transaction_transfer("18022603540001").sn == "18022603540001"
     assert detail_session.calls[-1]["url"] == "https://example.test/api/v3/fund_transactions/transfer"
-    assert last_kwargs(detail_session)["params"] == {"sn": "18022603540001"}
+    assert last_kwargs(detail_session)["params"] == {"nonce": 123456, "sn": "18022603540001"}

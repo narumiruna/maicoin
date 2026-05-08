@@ -29,7 +29,7 @@ class Staking(MaxBaseModel):
 
 
 class CurrencyNetwork(MaxBaseModel):
-    token_contract_address: str
+    token_contract_address: str | None
     precision: int
     id: str
     network_protocol: str
