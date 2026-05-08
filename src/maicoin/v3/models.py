@@ -1,17 +1,88 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
+from dataclasses import dataclass
 from enum import StrEnum
-
-from pydantic import BaseModel
-from pydantic import ConfigDict
-from pydantic import Field
+from typing import cast
 
 
-class MaxBaseModel(BaseModel):
-    model_config = ConfigDict(extra="allow", populate_by_name=True)
+def _expect_mapping(payload: object) -> Mapping[str, object]:
+    if not isinstance(payload, Mapping):
+        msg = f"expected mapping, got {type(payload).__name__}"
+        raise TypeError(msg)
+    return cast("Mapping[str, object]", payload)
 
 
-class Market(MaxBaseModel):
+def _required_str(payload: Mapping[str, object], key: str) -> str:
+    return str(payload[key])
+
+
+def _required_int(payload: Mapping[str, object], key: str) -> int:
+    value = payload[key]
+    if isinstance(value, int | str | float):
+        return int(value)
+    msg = f"expected int-compatible {key}, got {type(value).__name__}"
+    raise TypeError(msg)
+
+
+def _optional_int(payload: Mapping[str, object], key: str) -> int | None:
+    value = payload.get(key)
+    if value is None:
+        return None
+    if isinstance(value, int | str | float):
+        return int(value)
+    msg = f"expected int-compatible {key}, got {type(value).__name__}"
+    raise TypeError(msg)
+
+
+def _optional_str(payload: Mapping[str, object], key: str) -> str | None:
+    value = payload.get(key)
+    if value is None:
+        return None
+    return str(value)
+
+
+def _optional_bool(payload: Mapping[str, object], key: str) -> bool | None:
+    value = payload.get(key)
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return value
+    msg = f"expected bool {key}, got {type(value).__name__}"
+    raise TypeError(msg)
+
+
+def _required_float(payload: Mapping[str, object], key: str) -> float:
+    value = payload[key]
+    if isinstance(value, int | str | float):
+        return float(value)
+    msg = f"expected float-compatible {key}, got {type(value).__name__}"
+    raise TypeError(msg)
+
+
+def _required_bool(payload: Mapping[str, object], key: str) -> bool:
+    value = payload[key]
+    if isinstance(value, bool):
+        return value
+    msg = f"expected bool {key}, got {type(value).__name__}"
+    raise TypeError(msg)
+
+
+def _price_levels(value: object) -> list[tuple[str, str]]:
+    if not isinstance(value, list):
+        msg = f"expected price levels list, got {type(value).__name__}"
+        raise TypeError(msg)
+    levels: list[tuple[str, str]] = []
+    for level in value:
+        if not isinstance(level, list | tuple) or len(level) != 2:
+            msg = f"expected two-item price level, got {type(level).__name__}"
+            raise TypeError(msg)
+        levels.append((str(level[0]), str(level[1])))
+    return levels
+
+
+@dataclass(slots=True, frozen=True)
+class Market:
     id: str
     status: str
     base_unit: str
@@ -22,13 +93,38 @@ class Market(MaxBaseModel):
     min_quote_amount: float
     m_wallet_supported: bool
 
+    @classmethod
+    def model_validate(cls, payload: object) -> Market:
+        data = _expect_mapping(payload)
+        return cls(
+            id=_required_str(data, "id"),
+            status=_required_str(data, "status"),
+            base_unit=_required_str(data, "base_unit"),
+            base_unit_precision=_required_int(data, "base_unit_precision"),
+            min_base_amount=_required_float(data, "min_base_amount"),
+            quote_unit=_required_str(data, "quote_unit"),
+            quote_unit_precision=_required_int(data, "quote_unit_precision"),
+            min_quote_amount=_required_float(data, "min_quote_amount"),
+            m_wallet_supported=_required_bool(data, "m_wallet_supported"),
+        )
 
-class Staking(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class Staking:
     stake_flag: bool
     unstake_flag: bool
 
+    @classmethod
+    def model_validate(cls, payload: object) -> Staking:
+        data = _expect_mapping(payload)
+        return cls(
+            stake_flag=_required_bool(data, "stake_flag"),
+            unstake_flag=_required_bool(data, "unstake_flag"),
+        )
 
-class CurrencyNetwork(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class CurrencyNetwork:
     token_contract_address: str | None
     precision: int
     id: str
@@ -41,8 +137,27 @@ class CurrencyNetwork(MaxBaseModel):
     deposit_enabled: bool
     need_memo: bool
 
+    @classmethod
+    def model_validate(cls, payload: object) -> CurrencyNetwork:
+        data = _expect_mapping(payload)
+        network_congested = data["network_congested"]
+        return cls(
+            token_contract_address=_optional_str(data, "token_contract_address"),
+            precision=_required_int(data, "precision"),
+            id=_required_str(data, "id"),
+            network_protocol=_required_str(data, "network_protocol"),
+            network_congested=network_congested if isinstance(network_congested, bool) else str(network_congested),
+            deposit_confirmations=_required_int(data, "deposit_confirmations"),
+            withdrawal_fee=_required_float(data, "withdrawal_fee"),
+            min_withdrawal_amount=_required_float(data, "min_withdrawal_amount"),
+            withdrawal_enabled=_required_bool(data, "withdrawal_enabled"),
+            deposit_enabled=_required_bool(data, "deposit_enabled"),
+            need_memo=_required_bool(data, "need_memo"),
+        )
 
-class Currency(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class Currency:
     currency: str
     type: str
     precision: int
@@ -53,12 +168,39 @@ class Currency(MaxBaseModel):
     networks: list[CurrencyNetwork]
     staking: Staking | None
 
+    @classmethod
+    def model_validate(cls, payload: object) -> Currency:
+        data = _expect_mapping(payload)
+        networks = data["networks"]
+        if not isinstance(networks, list):
+            msg = f"expected networks list, got {type(networks).__name__}"
+            raise TypeError(msg)
+        staking = data.get("staking")
+        return cls(
+            currency=_required_str(data, "currency"),
+            type=_required_str(data, "type"),
+            precision=_required_int(data, "precision"),
+            m_wallet_supported=_required_bool(data, "m_wallet_supported"),
+            m_wallet_mortgageable=_required_bool(data, "m_wallet_mortgageable"),
+            m_wallet_borrowable=_required_bool(data, "m_wallet_borrowable"),
+            min_borrow_amount=_required_str(data, "min_borrow_amount"),
+            networks=[CurrencyNetwork.model_validate(network) for network in networks],
+            staking=None if staking is None else Staking.model_validate(staking),
+        )
 
-class Timestamp(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class Timestamp:
     timestamp: int
 
+    @classmethod
+    def model_validate(cls, payload: object) -> Timestamp:
+        data = _expect_mapping(payload)
+        return cls(timestamp=_required_int(data, "timestamp"))
 
-class KLine(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class KLine:
     timestamp: int
     open: str
     high: str
@@ -67,15 +209,28 @@ class KLine(MaxBaseModel):
     volume: str
 
 
-class Depth(MaxBaseModel):
+@dataclass(slots=True, frozen=True)
+class Depth:
     timestamp: int
     asks: list[tuple[str, str]]
     bids: list[tuple[str, str]]
     last_update_version: int | None = None
     last_update_id: int | None = None
 
+    @classmethod
+    def model_validate(cls, payload: object) -> Depth:
+        data = _expect_mapping(payload)
+        return cls(
+            timestamp=_required_int(data, "timestamp"),
+            asks=_price_levels(data["asks"]),
+            bids=_price_levels(data["bids"]),
+            last_update_version=_optional_int(data, "last_update_version"),
+            last_update_id=_optional_int(data, "last_update_id"),
+        )
 
-class PublicTrade(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class PublicTrade:
     id: int
     price: str
     volume: str
@@ -84,14 +239,40 @@ class PublicTrade(MaxBaseModel):
     side: str
     created_at: int
 
+    @classmethod
+    def model_validate(cls, payload: object) -> PublicTrade:
+        data = _expect_mapping(payload)
+        return cls(
+            id=_required_int(data, "id"),
+            price=_required_str(data, "price"),
+            volume=_required_str(data, "volume"),
+            funds=_required_str(data, "funds"),
+            market=_required_str(data, "market"),
+            side=_required_str(data, "side"),
+            created_at=_required_int(data, "created_at"),
+        )
 
-class Account(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class Account:
     currency: str
     balance: str
     locked: str
     staked: str | None = None
     principal: str | None = None
     interest: str | None = None
+
+    @classmethod
+    def model_validate(cls, payload: object) -> Account:
+        data = _expect_mapping(payload)
+        return cls(
+            currency=_required_str(data, "currency"),
+            balance=_required_str(data, "balance"),
+            locked=_required_str(data, "locked"),
+            staked=_optional_str(data, "staked"),
+            principal=_optional_str(data, "principal"),
+            interest=_optional_str(data, "interest"),
+        )
 
 
 class OrderSide(StrEnum):
@@ -115,27 +296,52 @@ class OrderType(StrEnum):
     IOC_LIMIT = "ioc_limit"
 
 
-class Order(MaxBaseModel):
+@dataclass(slots=True, frozen=True)
+class Order:
     id: int
     wallet_type: str
     market: str
     client_oid: str | None = None
     group_id: int | None = None
-    side: OrderSide
-    state: OrderState
-    ord_type: OrderType
+    side: OrderSide = OrderSide.BUY
+    state: OrderState = OrderState.WAIT
+    ord_type: OrderType = OrderType.LIMIT
     price: str | None = None
     stop_price: str | None = None
-    avg_price: str
-    volume: str
-    remaining_volume: str
-    executed_volume: str
-    trades_count: int
-    created_at: int
-    updated_at: int
+    avg_price: str = ""
+    volume: str = ""
+    remaining_volume: str = ""
+    executed_volume: str = ""
+    trades_count: int = 0
+    created_at: int = 0
+    updated_at: int = 0
+
+    @classmethod
+    def model_validate(cls, payload: object) -> Order:
+        data = _expect_mapping(payload)
+        return cls(
+            id=_required_int(data, "id"),
+            wallet_type=_required_str(data, "wallet_type"),
+            market=_required_str(data, "market"),
+            client_oid=_optional_str(data, "client_oid"),
+            group_id=_optional_int(data, "group_id"),
+            side=OrderSide(data["side"]),
+            state=OrderState(data["state"]),
+            ord_type=OrderType(data["ord_type"]),
+            price=_optional_str(data, "price"),
+            stop_price=_optional_str(data, "stop_price"),
+            avg_price=_required_str(data, "avg_price"),
+            volume=_required_str(data, "volume"),
+            remaining_volume=_required_str(data, "remaining_volume"),
+            executed_volume=_required_str(data, "executed_volume"),
+            trades_count=_required_int(data, "trades_count"),
+            created_at=_required_int(data, "created_at"),
+            updated_at=_required_int(data, "updated_at"),
+        )
 
 
-class PrivateTrade(MaxBaseModel):
+@dataclass(slots=True, frozen=True)
+class PrivateTrade:
     id: int
     order_id: int
     wallet_type: str
@@ -152,27 +358,77 @@ class PrivateTrade(MaxBaseModel):
     self_trade_bid_fee_currency: str | None = None
     self_trade_bid_fee_discounted: bool | None = None
     self_trade_bid_order_id: int | None = None
-    liquidity: str
-    created_at: int
+    liquidity: str = ""
+    created_at: int = 0
+
+    @classmethod
+    def model_validate(cls, payload: object) -> PrivateTrade:
+        data = _expect_mapping(payload)
+        return cls(
+            id=_required_int(data, "id"),
+            order_id=_required_int(data, "order_id"),
+            wallet_type=_required_str(data, "wallet_type"),
+            price=_required_str(data, "price"),
+            volume=_required_str(data, "volume"),
+            funds=_required_str(data, "funds"),
+            market=_required_str(data, "market"),
+            market_name=_required_str(data, "market_name"),
+            side=_required_str(data, "side"),
+            fee=_optional_str(data, "fee"),
+            fee_currency=_optional_str(data, "fee_currency"),
+            fee_discounted=_optional_bool(data, "fee_discounted"),
+            self_trade_bid_fee=_optional_str(data, "self_trade_bid_fee"),
+            self_trade_bid_fee_currency=_optional_str(data, "self_trade_bid_fee_currency"),
+            self_trade_bid_fee_discounted=_optional_bool(data, "self_trade_bid_fee_discounted"),
+            self_trade_bid_order_id=_optional_int(data, "self_trade_bid_order_id"),
+            liquidity=_required_str(data, "liquidity"),
+            created_at=_required_int(data, "created_at"),
+        )
 
 
-class VipLevel(MaxBaseModel):
+@dataclass(slots=True, frozen=True)
+class VipLevel:
     level: int
     minimum_trading_volume: int
     minimum_staking_volume: int
     maker_fee: float
     taker_fee: float
 
+    @classmethod
+    def model_validate(cls, payload: object) -> VipLevel:
+        data = _expect_mapping(payload)
+        return cls(
+            level=_required_int(data, "level"),
+            minimum_trading_volume=_required_int(data, "minimum_trading_volume"),
+            minimum_staking_volume=_required_int(data, "minimum_staking_volume"),
+            maker_fee=_required_float(data, "maker_fee"),
+            taker_fee=_required_float(data, "taker_fee"),
+        )
 
-class UserInfo(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class UserInfo:
     email: str
     level: int
     current_vip_level: VipLevel
     next_vip_level: VipLevel | None
     m_wallet_enabled: bool | None = None
 
+    @classmethod
+    def model_validate(cls, payload: object) -> UserInfo:
+        data = _expect_mapping(payload)
+        next_vip_level = data.get("next_vip_level")
+        return cls(
+            email=_required_str(data, "email"),
+            level=_required_int(data, "level"),
+            current_vip_level=VipLevel.model_validate(data["current_vip_level"]),
+            next_vip_level=None if next_vip_level is None else VipLevel.model_validate(next_vip_level),
+            m_wallet_enabled=_optional_bool(data, "m_wallet_enabled"),
+        )
 
-class Withdrawal(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class Withdrawal:
     uuid: str
     currency: str
     network_protocol: str | None
@@ -186,8 +442,27 @@ class Withdrawal(MaxBaseModel):
     state: str
     transaction_type: str
 
+    @classmethod
+    def model_validate(cls, payload: object) -> Withdrawal:
+        data = _expect_mapping(payload)
+        return cls(
+            uuid=_required_str(data, "uuid"),
+            currency=_required_str(data, "currency"),
+            network_protocol=_optional_str(data, "network_protocol"),
+            amount=_required_str(data, "amount"),
+            fee=_required_str(data, "fee"),
+            fee_currency=_required_str(data, "fee_currency"),
+            to_address=_required_str(data, "to_address"),
+            label=_required_str(data, "label"),
+            txid=_optional_str(data, "txid"),
+            created_at=_required_int(data, "created_at"),
+            state=_required_str(data, "state"),
+            transaction_type=_required_str(data, "transaction_type"),
+        )
 
-class WithdrawAddress(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class WithdrawAddress:
     uuid: str
     currency: str
     network_protocol: str | None
@@ -198,8 +473,24 @@ class WithdrawAddress(MaxBaseModel):
     is_internal: bool
     network_congested: bool
 
+    @classmethod
+    def model_validate(cls, payload: object) -> WithdrawAddress:
+        data = _expect_mapping(payload)
+        return cls(
+            uuid=_required_str(data, "uuid"),
+            currency=_required_str(data, "currency"),
+            network_protocol=_optional_str(data, "network_protocol"),
+            address=_required_str(data, "address"),
+            extra_label=_required_str(data, "extra_label"),
+            created_at=_required_int(data, "created_at"),
+            activated_at=_optional_int(data, "activated_at"),
+            is_internal=_required_bool(data, "is_internal"),
+            network_congested=_required_bool(data, "network_congested"),
+        )
 
-class Deposit(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class Deposit:
     uuid: str
     currency: str
     network_protocol: str
@@ -211,25 +502,67 @@ class Deposit(MaxBaseModel):
     state: str
     state_reason: str
 
+    @classmethod
+    def model_validate(cls, payload: object) -> Deposit:
+        data = _expect_mapping(payload)
+        return cls(
+            uuid=_required_str(data, "uuid"),
+            currency=_required_str(data, "currency"),
+            network_protocol=_required_str(data, "network_protocol"),
+            amount=_required_str(data, "amount"),
+            to_address=_required_str(data, "to_address"),
+            txid=_required_str(data, "txid"),
+            created_at=_required_int(data, "created_at"),
+            confirmations=_required_int(data, "confirmations"),
+            state=_required_str(data, "state"),
+            state_reason=_required_str(data, "state_reason"),
+        )
 
-class DepositAddress(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class DepositAddress:
     currency: str
     network_protocol: str
     currency_version: str
     address: str | None
 
+    @classmethod
+    def model_validate(cls, payload: object) -> DepositAddress:
+        data = _expect_mapping(payload)
+        return cls(
+            currency=_required_str(data, "currency"),
+            network_protocol=_required_str(data, "network_protocol"),
+            currency_version=_required_str(data, "currency_version"),
+            address=_optional_str(data, "address"),
+        )
 
-class InternalTransfer(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class InternalTransfer:
     uuid: str
     currency: str
     amount: str
     created_at: int
-    from_: str = Field(validation_alias="from", serialization_alias="from")
+    from_: str
     to: str
     state: str
 
+    @classmethod
+    def model_validate(cls, payload: object) -> InternalTransfer:
+        data = _expect_mapping(payload)
+        return cls(
+            uuid=_required_str(data, "uuid"),
+            currency=_required_str(data, "currency"),
+            amount=_required_str(data, "amount"),
+            created_at=_required_int(data, "created_at"),
+            from_=_required_str(data, "from"),
+            to=_required_str(data, "to"),
+            state=_required_str(data, "state"),
+        )
 
-class Reward(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class Reward:
     uuid: str
     currency: str
     amount: str
@@ -237,8 +570,21 @@ class Reward(MaxBaseModel):
     type: str
     note: str
 
+    @classmethod
+    def model_validate(cls, payload: object) -> Reward:
+        data = _expect_mapping(payload)
+        return cls(
+            uuid=_required_str(data, "uuid"),
+            currency=_required_str(data, "currency"),
+            amount=_required_str(data, "amount"),
+            created_at=_required_int(data, "created_at"),
+            type=_required_str(data, "type"),
+            note=_required_str(data, "note"),
+        )
 
-class FundTransactionDeposit(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class FundTransactionDeposit:
     sn: str
     is_internal: bool
     currency: str
@@ -248,10 +594,27 @@ class FundTransactionDeposit(MaxBaseModel):
     network_protocol: str | None
     to_address: str | None
     txid: str | None
-    from_: str | None = Field(validation_alias="from", serialization_alias="from")
+    from_: str | None
+
+    @classmethod
+    def model_validate(cls, payload: object) -> FundTransactionDeposit:
+        data = _expect_mapping(payload)
+        return cls(
+            sn=_required_str(data, "sn"),
+            is_internal=_required_bool(data, "is_internal"),
+            currency=_required_str(data, "currency"),
+            amount=_required_str(data, "amount"),
+            state=_required_str(data, "state"),
+            created_at=_required_int(data, "created_at"),
+            network_protocol=_optional_str(data, "network_protocol"),
+            to_address=_optional_str(data, "to_address"),
+            txid=_optional_str(data, "txid"),
+            from_=_optional_str(data, "from"),
+        )
 
 
-class FundTransactionWithdrawal(MaxBaseModel):
+@dataclass(slots=True, frozen=True)
+class FundTransactionWithdrawal:
     sn: str
     is_internal: bool
     currency: str
@@ -266,24 +629,68 @@ class FundTransactionWithdrawal(MaxBaseModel):
     txid: str | None
     to: str | None
 
+    @classmethod
+    def model_validate(cls, payload: object) -> FundTransactionWithdrawal:
+        data = _expect_mapping(payload)
+        return cls(
+            sn=_required_str(data, "sn"),
+            is_internal=_required_bool(data, "is_internal"),
+            currency=_required_str(data, "currency"),
+            amount=_required_str(data, "amount"),
+            state=_required_str(data, "state"),
+            created_at=_required_int(data, "created_at"),
+            network_protocol=_optional_str(data, "network_protocol"),
+            fee=_optional_str(data, "fee"),
+            fee_currency=_optional_str(data, "fee_currency"),
+            to_address=_optional_str(data, "to_address"),
+            label=_optional_str(data, "label"),
+            txid=_optional_str(data, "txid"),
+            to=_optional_str(data, "to"),
+        )
 
-class FundTransactionSource(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class FundTransactionSource:
     platform: str
     sn: object
     wallet_type: str
 
+    @classmethod
+    def model_validate(cls, payload: object) -> FundTransactionSource:
+        data = _expect_mapping(payload)
+        return cls(
+            platform=_required_str(data, "platform"),
+            sn=data["sn"],
+            wallet_type=_required_str(data, "wallet_type"),
+        )
 
-class FundTransactionTransfer(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class FundTransactionTransfer:
     sn: str
     currency: str
     amount: str
     state: str
     created_at: int
-    from_: FundTransactionSource = Field(validation_alias="from", serialization_alias="from")
+    from_: FundTransactionSource
     to: FundTransactionSource
 
+    @classmethod
+    def model_validate(cls, payload: object) -> FundTransactionTransfer:
+        data = _expect_mapping(payload)
+        return cls(
+            sn=_required_str(data, "sn"),
+            currency=_required_str(data, "currency"),
+            amount=_required_str(data, "amount"),
+            state=_required_str(data, "state"),
+            created_at=_required_int(data, "created_at"),
+            from_=FundTransactionSource.model_validate(data["from"]),
+            to=FundTransactionSource.model_validate(data["to"]),
+        )
 
-class ConvertOrder(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class ConvertOrder:
     sn: str
     from_currency: str
     from_amount: str
@@ -294,8 +701,24 @@ class ConvertOrder(MaxBaseModel):
     fee_in_twd: str
     created_at: int
 
+    @classmethod
+    def model_validate(cls, payload: object) -> ConvertOrder:
+        data = _expect_mapping(payload)
+        return cls(
+            sn=_required_str(data, "sn"),
+            from_currency=_required_str(data, "from_currency"),
+            from_amount=_required_str(data, "from_amount"),
+            to_currency=_required_str(data, "to_currency"),
+            to_amount=_required_str(data, "to_amount"),
+            fee=_required_str(data, "fee"),
+            fee_currency=_required_str(data, "fee_currency"),
+            fee_in_twd=_required_str(data, "fee_in_twd"),
+            created_at=_required_int(data, "created_at"),
+        )
 
-class Ticker(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class Ticker:
     market: str
     at: int
     buy: str
@@ -310,18 +733,53 @@ class Ticker(MaxBaseModel):
     vol_in_btc: str
     vol_in_quote: str
 
+    @classmethod
+    def model_validate(cls, payload: object) -> Ticker:
+        data = _expect_mapping(payload)
+        return cls(
+            market=_required_str(data, "market"),
+            at=_required_int(data, "at"),
+            buy=_required_str(data, "buy"),
+            buy_vol=_required_str(data, "buy_vol"),
+            sell=_required_str(data, "sell"),
+            sell_vol=_required_str(data, "sell_vol"),
+            open=_required_str(data, "open"),
+            low=_required_str(data, "low"),
+            high=_required_str(data, "high"),
+            last=_required_str(data, "last"),
+            vol=_required_str(data, "vol"),
+            vol_in_btc=_required_str(data, "vol_in_btc"),
+            vol_in_quote=_required_str(data, "vol_in_quote"),
+        )
 
-class HistoricalIndexPrice(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class HistoricalIndexPrice:
     timestamp: str
     price: str
 
+    @classmethod
+    def model_validate(cls, payload: object) -> HistoricalIndexPrice:
+        data = _expect_mapping(payload)
+        return cls(timestamp=_required_str(data, "timestamp"), price=_required_str(data, "price"))
 
-class InterestRate(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class InterestRate:
     hourly_interest_rate: str
     next_hourly_interest_rate: str
 
+    @classmethod
+    def model_validate(cls, payload: object) -> InterestRate:
+        data = _expect_mapping(payload)
+        return cls(
+            hourly_interest_rate=_required_str(data, "hourly_interest_rate"),
+            next_hourly_interest_rate=_required_str(data, "next_hourly_interest_rate"),
+        )
 
-class MWalletLoan(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class MWalletLoan:
     sn: str
     currency: str
     amount: str
@@ -329,8 +787,21 @@ class MWalletLoan(MaxBaseModel):
     created_at: int
     interest_rate: str
 
+    @classmethod
+    def model_validate(cls, payload: object) -> MWalletLoan:
+        data = _expect_mapping(payload)
+        return cls(
+            sn=_required_str(data, "sn"),
+            currency=_required_str(data, "currency"),
+            amount=_required_str(data, "amount"),
+            state=_required_str(data, "state"),
+            created_at=_required_int(data, "created_at"),
+            interest_rate=_required_str(data, "interest_rate"),
+        )
 
-class MWalletTransfer(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class MWalletTransfer:
     sn: str
     side: str
     currency: str
@@ -338,8 +809,21 @@ class MWalletTransfer(MaxBaseModel):
     created_at: int
     state: str
 
+    @classmethod
+    def model_validate(cls, payload: object) -> MWalletTransfer:
+        data = _expect_mapping(payload)
+        return cls(
+            sn=_required_str(data, "sn"),
+            side=_required_str(data, "side"),
+            currency=_required_str(data, "currency"),
+            amount=_required_str(data, "amount"),
+            created_at=_required_int(data, "created_at"),
+            state=_required_str(data, "state"),
+        )
 
-class MWalletRepayment(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class MWalletRepayment:
     currency: str
     amount: str
     principal: str
@@ -348,24 +832,62 @@ class MWalletRepayment(MaxBaseModel):
     sn: str
     created_at: int
 
+    @classmethod
+    def model_validate(cls, payload: object) -> MWalletRepayment:
+        data = _expect_mapping(payload)
+        return cls(
+            currency=_required_str(data, "currency"),
+            amount=_required_str(data, "amount"),
+            principal=_required_str(data, "principal"),
+            interest=_required_str(data, "interest"),
+            state=_required_str(data, "state"),
+            sn=_required_str(data, "sn"),
+            created_at=_required_int(data, "created_at"),
+        )
 
-class MWalletLiquidation(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class MWalletLiquidation:
     sn: str
     ad_ratio: str
     expected_ad_ratio: str
     created_at: int
     state: str
 
+    @classmethod
+    def model_validate(cls, payload: object) -> MWalletLiquidation:
+        data = _expect_mapping(payload)
+        return cls(
+            sn=_required_str(data, "sn"),
+            ad_ratio=_required_str(data, "ad_ratio"),
+            expected_ad_ratio=_required_str(data, "expected_ad_ratio"),
+            created_at=_required_int(data, "created_at"),
+            state=_required_str(data, "state"),
+        )
 
-class MWalletLiquidationRepayment(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class MWalletLiquidationRepayment:
     currency: str
     amount: str
     principal: str
     interest: str
     state: str
 
+    @classmethod
+    def model_validate(cls, payload: object) -> MWalletLiquidationRepayment:
+        data = _expect_mapping(payload)
+        return cls(
+            currency=_required_str(data, "currency"),
+            amount=_required_str(data, "amount"),
+            principal=_required_str(data, "principal"),
+            interest=_required_str(data, "interest"),
+            state=_required_str(data, "state"),
+        )
 
-class MWalletForcedLiquidation(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class MWalletForcedLiquidation:
     market: str
     type: str
     price: str
@@ -374,21 +896,83 @@ class MWalletForcedLiquidation(MaxBaseModel):
     fee_currency: str
     repayment: MWalletLiquidationRepayment
 
+    @classmethod
+    def model_validate(cls, payload: object) -> MWalletForcedLiquidation:
+        data = _expect_mapping(payload)
+        return cls(
+            market=_required_str(data, "market"),
+            type=_required_str(data, "type"),
+            price=_required_str(data, "price"),
+            volume=_required_str(data, "volume"),
+            fee=_required_str(data, "fee"),
+            fee_currency=_required_str(data, "fee_currency"),
+            repayment=MWalletLiquidationRepayment.model_validate(data["repayment"]),
+        )
 
-class MWalletLiquidationDetail(MWalletLiquidation):
+
+@dataclass(slots=True, frozen=True)
+class MWalletLiquidationDetail:
+    sn: str
+    ad_ratio: str
+    expected_ad_ratio: str
+    created_at: int
+    state: str
     repayments: list[MWalletLiquidationRepayment]
     liquidations: list[MWalletForcedLiquidation]
 
+    @classmethod
+    def model_validate(cls, payload: object) -> MWalletLiquidationDetail:
+        data = _expect_mapping(payload)
+        repayments = data["repayments"]
+        liquidations = data["liquidations"]
+        if not isinstance(repayments, list):
+            msg = f"expected repayments list, got {type(repayments).__name__}"
+            raise TypeError(msg)
+        if not isinstance(liquidations, list):
+            msg = f"expected liquidations list, got {type(liquidations).__name__}"
+            raise TypeError(msg)
+        return cls(
+            sn=_required_str(data, "sn"),
+            ad_ratio=_required_str(data, "ad_ratio"),
+            expected_ad_ratio=_required_str(data, "expected_ad_ratio"),
+            created_at=_required_int(data, "created_at"),
+            state=_required_str(data, "state"),
+            repayments=[MWalletLiquidationRepayment.model_validate(item) for item in repayments],
+            liquidations=[MWalletForcedLiquidation.model_validate(item) for item in liquidations],
+        )
 
-class MWalletInterest(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class MWalletInterest:
     currency: str
     amount: str
     interest_rate: str
     principal: str
     created_at: int
 
+    @classmethod
+    def model_validate(cls, payload: object) -> MWalletInterest:
+        data = _expect_mapping(payload)
+        return cls(
+            currency=_required_str(data, "currency"),
+            amount=_required_str(data, "amount"),
+            interest_rate=_required_str(data, "interest_rate"),
+            principal=_required_str(data, "principal"),
+            created_at=_required_int(data, "created_at"),
+        )
 
-class MWalletADRatio(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class MWalletADRatio:
     ad_ratio: str
     asset_in_usdt: str
     debt_in_usdt: str
+
+    @classmethod
+    def model_validate(cls, payload: object) -> MWalletADRatio:
+        data = _expect_mapping(payload)
+        return cls(
+            ad_ratio=_required_str(data, "ad_ratio"),
+            asset_in_usdt=_required_str(data, "asset_in_usdt"),
+            debt_in_usdt=_required_str(data, "debt_in_usdt"),
+        )

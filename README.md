@@ -1,6 +1,6 @@
 # maicoin 🪙
 
-Python client for the [MaiCoin MAX](https://max.maicoin.com/) exchange. Provides a typed REST v3 client and a WebSocket stream client built on `httpx`, `websockets`, and `pydantic`.
+Python client for the [MaiCoin MAX](https://max.maicoin.com/) exchange. Provides typed dataclass REST v3 models and a WebSocket stream client built on `httpx`, `websockets`, and `orjson`.
 
 ## 📦 Installation
 
