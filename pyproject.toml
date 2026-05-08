@@ -8,6 +8,7 @@ authors         = [{ name = "narumi", email = "toucans-cutouts0f@icloud.com" }]
 dependencies    = [
   "httpx>=0.28.1",
   "orjson>=3.11.9",
+  "pydantic>=2.13.4",
   "websockets>=16.0",
 ]
 
