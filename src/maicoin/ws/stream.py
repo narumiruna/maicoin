@@ -6,9 +6,9 @@ from collections.abc import Callable
 
 import websockets
 
-from .request import Request
-from .response import Response
-from .subscription import Subscription
+from maicoin.ws.request import Request
+from maicoin.ws.response import Response
+from maicoin.ws.subscription import Subscription
 
 MAX_WS_URI = os.getenv("MAX_WS_URI", "wss://max-stream.maicoin.com/ws")
 
