@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
+from dataclasses import dataclass
 from enum import StrEnum
+from typing import cast
 
 from pydantic import BaseModel
 from pydantic import ConfigDict
@@ -9,6 +12,13 @@ from pydantic import Field
 
 class MaxBaseModel(BaseModel):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
+
+
+def _expect_mapping(payload: object) -> Mapping[str, object]:
+    if not isinstance(payload, Mapping):
+        msg = f"expected mapping, got {type(payload).__name__}"
+        raise TypeError(msg)
+    return cast("Mapping[str, object]", payload)
 
 
 class Market(MaxBaseModel):
@@ -54,11 +64,22 @@ class Currency(MaxBaseModel):
     staking: Staking | None
 
 
-class Timestamp(MaxBaseModel):
+@dataclass(slots=True, frozen=True)
+class Timestamp:
     timestamp: int
 
+    @classmethod
+    def model_validate(cls, payload: object) -> Timestamp:
+        data = _expect_mapping(payload)
+        timestamp = data["timestamp"]
+        if isinstance(timestamp, int | str | float):
+            return cls(timestamp=int(timestamp))
+        msg = f"expected int-compatible timestamp, got {type(timestamp).__name__}"
+        raise TypeError(msg)
 
-class KLine(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class KLine:
     timestamp: int
     open: str
     high: str
