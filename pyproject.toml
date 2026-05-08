@@ -7,7 +7,6 @@ requires-python = ">=3.12"
 authors         = [{ name = "narumi", email = "toucans-cutouts0f@icloud.com" }]
 dependencies    = [
   "httpx>=0.28.1",
-  "loguru>=0.7.3",
   "pydantic>=2.13.4",
   "python-dotenv>=1.2.2",
   "websockets>=16.0",
@@ -17,6 +16,7 @@ dependencies    = [
 dev = [
   "pytest>=9.0.3",
   "pytest-cov>=7.1.0",
+  "rich>=15.0.0",
   "ruff>=0.15.12",
   "ty>=0.0.34",
 ]

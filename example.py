@@ -1,6 +1,6 @@
 from dotenv import find_dotenv
 from dotenv import load_dotenv
-from loguru import logger
+from rich import print
 
 from maicoin.ws import Channel
 from maicoin.ws import Response
@@ -9,7 +9,7 @@ from maicoin.ws import Subscription
 
 
 def log_response(response: Response) -> None:
-    logger.info(response.model_dump(exclude_none=True))
+    print(response.model_dump(exclude_none=True))
 
 
 def main() -> None:
