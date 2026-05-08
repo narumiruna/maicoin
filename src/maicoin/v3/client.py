@@ -22,10 +22,13 @@ from maicoin.v3.models import InterestRate
 from maicoin.v3.models import KLine
 from maicoin.v3.models import Market
 from maicoin.v3.models import Order
+from maicoin.v3.models import OrderSide
+from maicoin.v3.models import OrderType
 from maicoin.v3.models import PrivateTrade
 from maicoin.v3.models import PublicTrade
 from maicoin.v3.models import Ticker
 from maicoin.v3.models import Timestamp
+from maicoin.v3.models import UserInfo
 
 BASE_URL = "https://max-api.maicoin.com"
 DEFAULT_TIMEOUT = 10
@@ -164,6 +167,10 @@ class Client:
         payload = self.request("GET", "/api/v3/ticker", params={"market": market})
         return Ticker.model_validate(payload)
 
+    def info(self) -> UserInfo:
+        payload = self.request("GET", "/api/v3/info", auth=True)
+        return UserInfo.model_validate(payload)
+
     def accounts(self, *, wallet_type: str = "spot", currency: str | None = None) -> list[Account]:
         payload = self.request(
             "GET",
@@ -172,6 +179,26 @@ class Client:
             auth=True,
         )
         return [Account.model_validate(item) for item in cast("list[object]", payload)]
+
+    def wallet_trades(
+        self,
+        *,
+        wallet_type: str = "spot",
+        market: str | None = None,
+        timestamp: int | None = None,
+        from_id: int | None = None,
+        order: str | None = None,
+        limit: int | None = None,
+    ) -> list[PrivateTrade]:
+        payload = self.request(
+            "GET",
+            f"/api/v3/wallet/{wallet_type}/trades",
+            params=_compact(
+                {"market": market, "timestamp": timestamp, "from_id": from_id, "order": order, "limit": limit}
+            ),
+            auth=True,
+        )
+        return [PrivateTrade.model_validate(item) for item in cast("list[object]", payload)]
 
     def open_orders(
         self,
@@ -235,14 +262,14 @@ class Client:
     def create_order(
         self,
         market: str,
-        side: str,
+        side: OrderSide | str,
         volume: str,
         *,
         wallet_type: str = "spot",
         price: str | None = None,
         client_oid: str | None = None,
         stop_price: str | None = None,
-        ord_type: str | None = None,
+        ord_type: OrderType | str | None = None,
         group_id: int | None = None,
     ) -> Order:
         payload = self.request(
@@ -278,7 +305,7 @@ class Client:
         *,
         wallet_type: str = "spot",
         market: str | None = None,
-        side: str | None = None,
+        side: OrderSide | str | None = None,
         group_id: int | None = None,
     ) -> list[Order]:
         payload = self.request(

@@ -2,7 +2,7 @@
 
 ## Priority Conclusion
 
-The main missing area is **REST API v3 private endpoints**. The repository currently has broad WebSocket support, plus legacy `src/maicoin/v2/kline.py` for `GET /api/v2/k` and a v3 foundation/public client under `src/maicoin/v3/`.
+The main missing areas are **REST API v3 transaction, wallet funds, convert, and M-Wallet private endpoints**. The repository currently has broad WebSocket support, plus legacy `src/maicoin/v2/kline.py` for `GET /api/v2/k` and v3 public/private order, trade, and account wrappers under `src/maicoin/v3/`.
 
 ## Phase 1: Build the v3 Foundation
 
@@ -46,19 +46,19 @@ The main missing area is **REST API v3 private endpoints**. The repository curre
 
 ## Phase 3: REST v3 Order, Trade, and Account
 
-- [ ] `GET /api/v3/info`: user info.
-- [ ] `GET /api/v3/wallet/{path_wallet_type}/accounts`: wallet balances.
-- [ ] `GET /api/v3/wallet/{path_wallet_type}/trades`: trade history.
-- [ ] `GET /api/v3/wallet/{path_wallet_type}/orders/open`: open orders.
-- [ ] `GET /api/v3/wallet/{path_wallet_type}/orders/closed`: closed orders.
-- [ ] `GET /api/v3/wallet/{path_wallet_type}/orders/history`: order history by order id.
-- [ ] `POST /api/v3/wallet/{path_wallet_type}/order`: submit a sell/buy order.
-- [ ] `DELETE /api/v3/wallet/{path_wallet_type}/orders`: cancel all orders.
-- [ ] `GET /api/v3/order`: order detail.
-- [ ] `DELETE /api/v3/order`: cancel one order.
-- [ ] `GET /api/v3/order/trades`: order trade detail.
-- [ ] Add order side/type/state enums.
-- [ ] Add create/cancel order tests using mocks only; do not send real trading requests.
+- [x] `GET /api/v3/info`: user info.
+- [x] `GET /api/v3/wallet/{path_wallet_type}/accounts`: wallet balances.
+- [x] `GET /api/v3/wallet/{path_wallet_type}/trades`: trade history.
+- [x] `GET /api/v3/wallet/{path_wallet_type}/orders/open`: open orders.
+- [x] `GET /api/v3/wallet/{path_wallet_type}/orders/closed`: closed orders.
+- [x] `GET /api/v3/wallet/{path_wallet_type}/orders/history`: order history by order id.
+- [x] `POST /api/v3/wallet/{path_wallet_type}/order`: submit a sell/buy order.
+- [x] `DELETE /api/v3/wallet/{path_wallet_type}/orders`: cancel all orders.
+- [x] `GET /api/v3/order`: order detail.
+- [x] `DELETE /api/v3/order`: cancel one order.
+- [x] `GET /api/v3/order/trades`: order trade detail.
+- [x] Add order side/type/state enums.
+- [x] Add create/cancel order tests using mocks only; do not send real trading requests.
 
 ## Phase 4: REST v3 Transaction and Wallet Funds
 

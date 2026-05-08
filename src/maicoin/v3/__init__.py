@@ -16,11 +16,16 @@ from maicoin.v3.models import InterestRate
 from maicoin.v3.models import KLine
 from maicoin.v3.models import Market
 from maicoin.v3.models import Order
+from maicoin.v3.models import OrderSide
+from maicoin.v3.models import OrderState
+from maicoin.v3.models import OrderType
 from maicoin.v3.models import PrivateTrade
 from maicoin.v3.models import PublicTrade
 from maicoin.v3.models import Staking
 from maicoin.v3.models import Ticker
 from maicoin.v3.models import Timestamp
+from maicoin.v3.models import UserInfo
+from maicoin.v3.models import VipLevel
 
 __all__ = [
     "BASE_URL",
@@ -37,11 +42,16 @@ __all__ = [
     "MaxAPIError",
     "MaxHTTPError",
     "Order",
+    "OrderSide",
+    "OrderState",
+    "OrderType",
     "PrivateTrade",
     "PublicTrade",
     "Staking",
     "Ticker",
     "Timestamp",
+    "UserInfo",
+    "VipLevel",
     "build_auth_headers",
     "encode_payload",
     "generate_nonce",
