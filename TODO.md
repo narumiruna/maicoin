@@ -6,26 +6,26 @@ The main missing area is **REST API v3**. The repository currently has broad Web
 
 ## Phase 1: Build the v3 Foundation
 
-- [ ] Add `maicoin/v3/__init__.py`.
-- [ ] Add `maicoin/v3/auth.py`.
-  - [ ] Generate nonce values.
-  - [ ] Build payload content with `nonce`, request params, and `path`.
-  - [ ] JSON-stringify and Base64-encode the payload.
-  - [ ] Generate an HMAC-SHA256 hex signature.
-  - [ ] Generate `X-MAX-ACCESSKEY`, `X-MAX-PAYLOAD`, and `X-MAX-SIGNATURE` headers.
-- [ ] Add `maicoin/v3/client.py`.
-  - [ ] Set `BASE_URL = "https://max-api.maicoin.com"`.
-  - [ ] Set a default timeout.
-  - [ ] Support GET query params.
-  - [ ] Support POST/DELETE/PUT JSON bodies.
-  - [ ] Support public and private requests.
-- [ ] Add `maicoin/v3/errors.py`.
-  - [ ] Handle HTTP status errors.
-  - [ ] Handle MAX API error responses.
-- [ ] Add auth and client unit tests.
-  - [ ] Test signatures with a fixed nonce.
-  - [ ] Test GET params are sent as query params.
-  - [ ] Test POST/DELETE params are sent as JSON bodies.
+- [x] Add `maicoin/v3/__init__.py`.
+- [x] Add `maicoin/v3/auth.py`.
+  - [x] Generate nonce values.
+  - [x] Build payload content with `nonce`, request params, and `path`.
+  - [x] JSON-stringify and Base64-encode the payload.
+  - [x] Generate an HMAC-SHA256 hex signature.
+  - [x] Generate `X-MAX-ACCESSKEY`, `X-MAX-PAYLOAD`, and `X-MAX-SIGNATURE` headers.
+- [x] Add `maicoin/v3/client.py`.
+  - [x] Set `BASE_URL = "https://max-api.maicoin.com"`.
+  - [x] Set a default timeout.
+  - [x] Support GET query params.
+  - [x] Support POST/DELETE/PUT JSON bodies.
+  - [x] Support public and private requests.
+- [x] Add `maicoin/v3/errors.py`.
+  - [x] Handle HTTP status errors.
+  - [x] Handle MAX API error responses.
+- [x] Add auth and client unit tests.
+  - [x] Test signatures with a fixed nonce.
+  - [x] Test GET params are sent as query params.
+  - [x] Test POST/DELETE params are sent as JSON bodies.
 
 ## Phase 2: REST v3 Public Endpoints
 
@@ -112,9 +112,9 @@ The main missing area is **REST API v3**. The repository currently has broad Web
 
 ## Documentation
 
-- [ ] Update `README.md` so the HTTP API link points to v3.
-- [ ] Add a REST v3 public client example to README.
-- [ ] Add a REST v3 private auth example to README without real keys.
+- [x] Update `README.md` so the HTTP API link points to v3.
+- [x] Add a REST v3 public client example to README.
+- [x] Add a REST v3 private auth example to README without real keys.
 - [ ] Keep official documentation links in `AGENTS.md`:
   - [ ] https://max-api.maicoin.com/doc/v3.html
   - [ ] https://maicoin.github.io/max-websocket-docs/

@@ -17,12 +17,16 @@ Official references:
 - Basic WebSocket private response models for order, trade, and account events.
 - WebSocket auth, subscribe, unsubscribe request models, and stream helper.
 - REST v2: only `GET /api/v2/k` K-line lookup.
-- Tests focused on WebSocket request, response, and subscription model validation.
+- REST v3 foundation package under `maicoin/v3/`.
+- REST API v3 authentication helpers for `X-MAX-ACCESSKEY`, `X-MAX-PAYLOAD`, and `X-MAX-SIGNATURE`.
+- REST API v3 low-level sync `Client.request(...)` using `requests` with public/private request support.
+- REST API v3 HTTP/API error classes.
+- Tests for WebSocket request, response, and subscription model validation.
+- Tests for v3 auth signatures, query/body placement, authenticated headers, and error handling.
 
 ### Missing
 
-- REST API v3 package and public/private client.
-- REST API v3 authentication with `X-MAX-ACCESSKEY`, `X-MAX-PAYLOAD`, and `X-MAX-SIGNATURE`.
+- REST API v3 high-level public/private endpoint wrappers.
 - REST API v3 public endpoints: markets, currencies, timestamp, k, depth, trades, tickers, ticker, index prices, and m-wallet public rates/limits.
 - REST API v3 private endpoints: orders, trades, accounts, withdrawals, deposits, fund transactions, convert, and m-wallet loan/repayment/liquidation/interest/transfer endpoints.
 - v3 request/response Pydantic models and error handling.
@@ -86,7 +90,7 @@ GET parameters go in the query string. DELETE/POST/PUT parameters go in the JSON
 
 ### Phase 1: v3 Foundation
 
-Create `maicoin/v3/`, auth helpers, sync client, error classes, and basic tests. After this phase, public endpoints should be callable without API credentials.
+Complete. `maicoin/v3/` now contains auth helpers, a sync low-level client, error classes, and unit tests. Public endpoints are callable through `Client.request(...)` without API credentials.
 
 ### Phase 2: v3 Public Endpoints
 
