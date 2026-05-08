@@ -27,3 +27,11 @@ live-test:
 publish:
     uv build
     uv publish
+
+# Serve the documentation locally with live reload
+docs-serve:
+    uv run --group docs mkdocs serve
+
+# Build the static documentation site into ./site
+docs-build:
+    uv run --group docs mkdocs build --strict
