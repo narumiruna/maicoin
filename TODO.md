@@ -29,20 +29,20 @@ The main missing area is **REST API v3**. The repository currently has broad Web
 
 ## Phase 2: REST v3 Public Endpoints
 
-- [x] `GET /api/v3/markets`: all available markets.
-- [x] `GET /api/v3/currencies`: currencies.
-- [x] `GET /api/v3/timestamp`: server timestamp.
-- [x] `GET /api/v3/k`: K-lines; replace or align with the existing v2 `KLineRequest`.
-- [x] `GET /api/v3/depth`: order book depth.
-- [x] `GET /api/v3/trades`: public trades.
-- [x] `GET /api/v3/tickers`: all tickers.
-- [x] `GET /api/v3/ticker`: single ticker.
-- [x] `GET /api/v3/wallet/m/index_prices`: m-wallet index prices.
-- [x] `GET /api/v3/wallet/m/historical_index_prices`: historical index prices.
-- [x] `GET /api/v3/wallet/m/limits`: available loan amount.
-- [x] `GET /api/v3/wallet/m/interest_rates`: interest rates.
-- [x] Add request construction tests for the endpoints above.
-- [x] Add Pydantic parsing tests for common responses.
+- [ ] `GET /api/v3/markets`: all available markets.
+- [ ] `GET /api/v3/currencies`: currencies.
+- [ ] `GET /api/v3/timestamp`: server timestamp.
+- [ ] `GET /api/v3/k`: K-lines; replace or align with the existing v2 `KLineRequest`.
+- [ ] `GET /api/v3/depth`: order book depth.
+- [ ] `GET /api/v3/trades`: public trades.
+- [ ] `GET /api/v3/tickers`: all tickers.
+- [ ] `GET /api/v3/ticker`: single ticker.
+- [ ] `GET /api/v3/wallet/m/index_prices`: m-wallet index prices.
+- [ ] `GET /api/v3/wallet/m/historical_index_prices`: historical index prices.
+- [ ] `GET /api/v3/wallet/m/limits`: available loan amount.
+- [ ] `GET /api/v3/wallet/m/interest_rates`: interest rates.
+- [ ] Add request construction tests for the endpoints above.
+- [ ] Add Pydantic parsing tests for common responses.
 
 ## Phase 3: REST v3 Order, Trade, and Account
 

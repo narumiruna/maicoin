@@ -21,13 +21,13 @@ Official references:
 - REST API v3 authentication helpers for `X-MAX-ACCESSKEY`, `X-MAX-PAYLOAD`, and `X-MAX-SIGNATURE`.
 - REST API v3 low-level sync `Client.request(...)` using `requests` with public/private request support.
 - REST API v3 HTTP/API error classes.
-- REST API v3 public endpoint wrappers and Pydantic models for markets, currencies, timestamp, k, depth, trades, tickers, ticker, and m-wallet public rates/limits.
 - Tests for WebSocket request, response, and subscription model validation.
-- Tests for v3 auth signatures, query/body placement, authenticated headers, error handling, public endpoint request construction, and public response parsing.
+- Tests for v3 auth signatures, query/body placement, authenticated headers, and error handling.
 
 ### Missing
 
-- REST API v3 high-level private endpoint wrappers.
+- REST API v3 high-level public/private endpoint wrappers.
+- REST API v3 public endpoints: markets, currencies, timestamp, k, depth, trades, tickers, ticker, index prices, and m-wallet public rates/limits.
 - REST API v3 private endpoints: orders, trades, accounts, withdrawals, deposits, fund transactions, convert, and m-wallet loan/repayment/liquidation/interest/transfer endpoints.
 - v3 request/response Pydantic models and error handling.
 - REST API tests for auth signatures, query/body placement, and response parsing.
@@ -94,7 +94,7 @@ Complete. `maicoin/v3/` now contains auth helpers, a sync low-level client, erro
 
 ### Phase 2: v3 Public Endpoints
 
-Complete. Public endpoint wrappers now cover markets, currencies, timestamp, k, depth, trades, tickers, ticker, and m-wallet public index/limit/rate endpoints with Pydantic parsing tests.
+Implement public endpoints first because they can be tested without real credentials. Prioritize markets, currencies, timestamp, k, depth, trades, tickers, and ticker.
 
 ### Phase 3: v3 Private Auth, Accounts, and Orders
 
