@@ -111,6 +111,38 @@ Add m-wallet public/private endpoints: index prices, limits, interest rates, loa
 
 Add WebSocket support for MWallet Pool Quota, Fast Trade, MWallet private channels, and book sequence/version fields.
 
+### Phase 7: Revisit Shared REST v3 / WebSocket Domain Models
+
+Defer shared model design until REST v3 coverage is complete. Do not prematurely merge v3 and WebSocket raw payload models: their field names, aliases, numeric formats, side values, and timestamp handling differ.
+
+After v3 is complete, audit overlapping concepts across REST and WebSocket, especially:
+
+- orders
+- trades
+- balances/accounts
+- tickers
+- k-lines
+- market status / market metadata
+- order book depth
+
+For each overlap, decide whether to:
+
+1. Keep transport-specific raw models only.
+2. Extract shared enums/value objects only, such as order state/type or side normalization.
+3. Add high-level normalized domain models, for example `NormalizedOrder`, with explicit converters such as `v3.Order.to_normalized()` and `ws.Order.to_normalized()`.
+
+Prefer option 3 only when there is real cross-transport use in callers or tests. Raw API models should continue matching official payloads closely, while normalized models can use stable package-level terminology.
+
+Evaluation checklist:
+
+- Preserve backward compatibility for existing `maicoin.v3` and `maicoin.ws` imports.
+- Keep raw models close to their API documentation and aliases.
+- Avoid lossy conversion unless the target model documents it clearly.
+- Normalize bid/ask vs buy/sell intentionally.
+- Decide timestamp policy consistently: raw int/string vs parsed `datetime` vs normalized `datetime`.
+- Decide numeric policy consistently: API string decimals vs Python `float` vs `Decimal`.
+- Add tests that parse both v3 and WebSocket payloads and compare their normalized output.
+
 ## Acceptance Criteria
 
 Before completing each phase, run at least:
