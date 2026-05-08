@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import UTC
 from datetime import datetime
 
 from pydantic import BaseModel
@@ -29,7 +30,7 @@ class Trade(BaseModel):
     @field_validator("created_at", "updated_at", mode="before")
     @classmethod
     def convert_datetime(cls, t: int) -> datetime:
-        return datetime.fromtimestamp(int(t) / 1000)
+        return datetime.fromtimestamp(int(t) / 1000, tz=UTC)
 
     @field_validator("price", "volume", "fee", mode="before")
     @classmethod

@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class Channel(str, Enum):
+class Channel(StrEnum):
     BOOK = "book"
     TRADE = "trade"
     TICKER = "ticker"

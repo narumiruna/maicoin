@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import os
-from typing import Callable
+from collections.abc import Callable
 
 import websockets
 
@@ -10,7 +10,7 @@ from .request import Request
 from .response import Response
 from .subscription import Subscription
 
-MAX_WS_URI = os.environ.get("MAX_WS_URI", "wss://max-stream.maicoin.com/ws")
+MAX_WS_URI = os.getenv("MAX_WS_URI", "wss://max-stream.maicoin.com/ws")
 
 
 class Stream:
@@ -30,7 +30,7 @@ class Stream:
     def subscribe(self, subscriptions: list[Subscription]) -> None:
         self.requests += [Request.subscribe(subscriptions)]
 
-    def auth(self, api_key: str, api_secret: str) -> None:
+    def auth(self, api_key: str | None, api_secret: str | None) -> None:
         if api_key and api_secret:
             self.requests += [Request.auth(api_key, api_secret)]
 

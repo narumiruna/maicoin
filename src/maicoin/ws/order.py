@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from datetime import UTC
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel
 from pydantic import Field
@@ -10,7 +11,7 @@ from pydantic import field_validator
 from .side import Side
 
 
-class OrderType(str, Enum):
+class OrderType(StrEnum):
     MARKET = "market"
     LIMIT = "limit"
     STOP_MARKET = "stop_market"
@@ -19,7 +20,7 @@ class OrderType(str, Enum):
     IOC_LIMIT = "ioc_limit"
 
 
-class OrderState(str, Enum):
+class OrderState(StrEnum):
     CANCEL = "cancel"
     WAIT = "wait"
     DONE = "done"
@@ -48,7 +49,7 @@ class Order(BaseModel):
     @field_validator("created_at", mode="before")
     @classmethod
     def convert_datetime(cls, t: int) -> datetime:
-        return datetime.fromtimestamp(int(t) / 1000)
+        return datetime.fromtimestamp(int(t) / 1000, tz=UTC)
 
     @field_validator(
         "price", "average_price", "stop_price", "volume", "remaining_volume", "executed_volume", mode="before"

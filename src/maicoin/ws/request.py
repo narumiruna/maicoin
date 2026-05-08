@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import hmac
 import uuid
+from datetime import UTC
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel
 from pydantic import Field
@@ -11,13 +12,13 @@ from pydantic import Field
 from .subscription import Subscription
 
 
-class Action(str, Enum):
+class Action(StrEnum):
     Subscribe = "sub"
     Authorize = "auth"
     Unsubscribe = "unsub"
 
 
-class Filter(str, Enum):
+class Filter(StrEnum):
     ORDER = "order"
     TRADE = "trade"
     ACCOUNT = "account"
@@ -35,7 +36,7 @@ class Request(BaseModel):
 
     @classmethod
     def auth(cls, api_key: str, api_secret: str) -> Request:
-        nonce = int(datetime.now().timestamp() * 1000)
+        nonce = int(datetime.now(tz=UTC).timestamp() * 1000)
 
         signature = hmac.new(api_secret.encode(), digestmod="sha256")
         signature.update(str(nonce).encode())

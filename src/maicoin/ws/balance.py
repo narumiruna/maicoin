@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import UTC
 from datetime import datetime
 
 from pydantic import BaseModel
@@ -17,4 +18,4 @@ class Balance(BaseModel):
     @field_validator("balance_updated_time", mode="before")
     @classmethod
     def convert_datetime(cls, t: int) -> datetime:
-        return datetime.fromtimestamp(int(t) / 1000)
+        return datetime.fromtimestamp(int(t) / 1000, tz=UTC)

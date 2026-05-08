@@ -1,0 +1,38 @@
+name: Bump Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump-type:
+        description: "Bump type"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+
+permissions:
+  contents: write
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v7
+      - name: Bump version
+        id: bump
+        uses: callowayproject/bump-my-version@1.3.0
+        env:
+          BUMPVERSION_TAG: "true"
+        with:
+          args: ${{ inputs.bump-type }}
+          # Use a Personal Access Token (PAT) to ensure the publish workflow is triggered on tag push
+          github-token: ${{ secrets.PAT_TOKEN }}
+      - name: Check
+        if: steps.bump.outputs.bumped == 'true'
+        run: |
+          echo "Version was bumped from ${{ steps.bump.outputs.previous-version }} to ${{ steps.bump.outputs.current-version }}!"

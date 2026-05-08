@@ -1,49 +1,71 @@
-[tool.poetry]
-name = "maicoin"
-version = "0.1.1"
-description = ""
-authors = ["narumi <toucans-cutouts0f@icloud.com>"]
+[project]
+name            = "maicoin"
+version         = "0.1.1"
+description     = ""
+readme          = "README.md"
+requires-python = ">=3.12"
+authors         = [{ name = "narumi", email = "toucans-cutouts0f@icloud.com" }]
+dependencies    = [
+  "loguru>=0.7.3",
+  "pydantic>=2.13.4",
+  "python-dotenv>=1.2.2",
+  "requests>=2.33.1",
+  "websockets>=16.0",
+]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-websockets = "^12.0"
-loguru = ">=0.6,<0.8"
-python-dotenv = "^1.0.0"
-requests = "^2.31.0"
-pydantic = "^2.6.4"
-
-[tool.poetry.group.dev.dependencies]
-pytest = ">=7.4.2,<9.0.0"
-pytest-cov = "^5.0.0"
-ruff = ">=0.3.4,<0.6.0"
-toml = "^0.10.2"
+[dependency-groups]
+dev = [
+  "pytest>=9.0.3",
+  "pytest-cov>=7.1.0",
+  "ruff>=0.15.12",
+  "ty>=0.0.34",
+]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires      = ["uv_build>=0.9.30,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.bumpversion]
+current_version  = "0.0.0"
+tag              = true
+commit           = true
+pre_commit_hooks = ["uv lock", "git add uv.lock"]
 
 [tool.ruff]
-exclude = ["build"]
 line-length = 120
 
 [tool.ruff.lint]
 select = [
-    "B", # flake8-bugbear
-    "C", # flake8-comprehensions
-    "E", # pycodestyle errors
-    "F", # pyflakes
-    "I", # isort
-    "N", # pep8-naming
-    "UP", # pyupgrade
-    "W", # pycodestyle warnings
-
+  "ANN",    # flake8-annotations
+  "ASYNC",  # flake8-async
+  "B",      # flake8-bugbear
+  "BLE",    # flake8-blind-except
+  "C",      # flake8-comprehensions
+  "DTZ",    # flake8-datetimez
+  "E",      # pycodestyle errors
+  "F",      # pyflakes
+  "FURB",   # refurb
+  "I",      # isort
+  "G",      # flake8-logging-format
+  "N",      # pep8-naming
+  "PERF",   # perflint
+  "PIE",    # flake8-pie
+  "PTH",    # flake8-use-pathlib
+  "RET",    # flake8-return
+  "RSE",    # flake8-raise
+  "RUF",    # ruff-specific rules
+  "SIM",    # flake8-simplify
+  "TID",    # flake8-tidy-imports
+  "UP",     # pyupgrade
+  "W",      # pycodestyle warnings
 ]
-
-[tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401", "F403"]
 
 [tool.ruff.lint.isort]
 force-single-line = true
 
-[tool.pytest.ini_options]
-filterwarnings = ["ignore::DeprecationWarning"]
+[tool.tombi.files]
+exclude = ["uv.lock"]
+
+[tool.tombi.format.rules]
+key-value-equals-sign-alignment = true
+trailing-comment-alignment      = true

@@ -1,3 +1,4 @@
+from datetime import UTC
 from datetime import datetime
 from typing import Literal
 
@@ -25,7 +26,7 @@ class KLine(BaseModel):
     @field_validator("start_time", "end_time", mode="before")
     @classmethod
     def convert_datetime(cls, t: int) -> datetime:
-        return datetime.fromtimestamp(int(t) / 1000)
+        return datetime.fromtimestamp(int(t) / 1000, tz=UTC)
 
     @field_validator("open", "high", "low", "close", "volume", mode="before")
     @classmethod
