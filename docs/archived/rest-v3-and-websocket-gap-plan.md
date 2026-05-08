@@ -9,7 +9,7 @@ Remaining follow-up candidates from this plan:
 
 ## Goal
 
-Add the missing MAX REST API v3 support while preserving the existing WebSocket API behavior. The current codebase is centered on `src/maicoin/ws/`; REST support includes the legacy `GET /api/v2/k` K-line endpoint in `src/maicoin/v2/kline.py` and the newer v3 package under `src/maicoin/v3/`.
+Add the missing MAX REST API v3 support while preserving the existing WebSocket API behavior. At the time this plan was written, the codebase was centered on `src/maicoin/ws/`; REST support included the legacy `GET /api/v2/k` K-line endpoint in `src/maicoin/v2/kline.py` and the newer v3 package under `src/maicoin/v3/`. The legacy v2 package has since been removed.
 
 Official references:
 
@@ -23,7 +23,7 @@ Official references:
 - WebSocket public channels: book, trade, ticker, kline, and market_status.
 - Basic WebSocket private response models for order, trade, and account events.
 - WebSocket auth, subscribe, unsubscribe request models, and stream helper.
-- REST v2: only `GET /api/v2/k` K-line lookup.
+- REST v2: only `GET /api/v2/k` K-line lookup. This legacy package has since been removed after v3 covered `/api/v3/k`.
 - REST v3 foundation package under `maicoin/v3/`.
 - REST API v3 authentication helpers for `X-MAX-ACCESSKEY`, `X-MAX-PAYLOAD`, and `X-MAX-SIGNATURE`.
 - REST API v3 low-level sync `Client.request(...)` using `httpx` with public/private request support.
@@ -43,7 +43,7 @@ Official references:
 
 ### Package Layout
 
-Add `src/maicoin/v3/` without replacing `src/maicoin/v2/`, so existing imports remain compatible.
+This plan originally added `src/maicoin/v3/` without replacing `src/maicoin/v2/`, so existing imports stayed compatible during the migration. The legacy v2 package has since been removed as a breaking cleanup.
 
 Suggested structure:
 
