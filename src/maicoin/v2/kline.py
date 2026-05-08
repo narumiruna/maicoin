@@ -4,11 +4,10 @@ from datetime import UTC
 from datetime import datetime
 from urllib.parse import urljoin
 
-import requests
+import httpx
 from pydantic import BaseModel
 from pydantic import Field
 from pydantic import field_validator
-from requests.utils import default_headers
 
 BASE_URL = "https://max-api.maicoin.com"
 DEFAULT_TIMEOUT = 10
@@ -35,10 +34,9 @@ class KLineRequest(BaseModel):
     timestamp: int | None = None
 
     def do(self) -> list[KLine]:
-        resp = requests.get(
+        resp = httpx.get(
             urljoin(BASE_URL, "/api/v2/k"),
             params=self.model_dump(exclude_none=True),
-            headers=default_headers(),
             timeout=DEFAULT_TIMEOUT,
         )
         return [

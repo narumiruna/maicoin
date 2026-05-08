@@ -7,7 +7,7 @@ from typing import Protocol
 from typing import cast
 from urllib.parse import urljoin
 
-import requests
+import httpx
 
 from .auth import build_auth_headers
 from .auth import generate_nonce
@@ -51,7 +51,7 @@ class Client:
         self.api_secret = api_secret
         self.base_url = base_url
         self.timeout = timeout
-        self.session = requests.Session() if session is None else session
+        self.session: RequestSession = cast("RequestSession", httpx.Client()) if session is None else session
         self.nonce_factory = nonce_factory
 
     def request(

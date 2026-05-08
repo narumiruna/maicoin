@@ -2,24 +2,24 @@
 
 ## Priority Conclusion
 
-The main missing area is **REST API v3**. The repository currently has broad WebSocket support, but REST support only contains `maicoin/v2/kline.py` for `GET /api/v2/k`. The official v3 endpoints, authentication flow, client abstraction, models, and tests still need to be implemented.
+The main missing area is **REST API v3 private endpoints**. The repository currently has broad WebSocket support, plus legacy `src/maicoin/v2/kline.py` for `GET /api/v2/k` and a v3 foundation/public client under `src/maicoin/v3/`.
 
 ## Phase 1: Build the v3 Foundation
 
-- [x] Add `maicoin/v3/__init__.py`.
-- [x] Add `maicoin/v3/auth.py`.
+- [x] Add `src/maicoin/v3/__init__.py`.
+- [x] Add `src/maicoin/v3/auth.py`.
   - [x] Generate nonce values.
   - [x] Build payload content with `nonce`, request params, and `path`.
   - [x] JSON-stringify and Base64-encode the payload.
   - [x] Generate an HMAC-SHA256 hex signature.
   - [x] Generate `X-MAX-ACCESSKEY`, `X-MAX-PAYLOAD`, and `X-MAX-SIGNATURE` headers.
-- [x] Add `maicoin/v3/client.py`.
+- [x] Add `src/maicoin/v3/client.py`.
   - [x] Set `BASE_URL = "https://max-api.maicoin.com"`.
   - [x] Set a default timeout.
   - [x] Support GET query params.
   - [x] Support POST/DELETE/PUT JSON bodies.
   - [x] Support public and private requests.
-- [x] Add `maicoin/v3/errors.py`.
+- [x] Add `src/maicoin/v3/errors.py`.
   - [x] Handle HTTP status errors.
   - [x] Handle MAX API error responses.
 - [x] Add auth and client unit tests.
@@ -121,7 +121,8 @@ The main missing area is **REST API v3**. The repository currently has broad Web
 
 ## Quality Gate
 
-- [ ] `poetry run ruff check .`
-- [ ] `poetry run pytest -v -s --cov=maicoin --cov-report=xml tests`
+- [ ] `uv run ruff check .`
+- [ ] `uv run ty check .`
+- [ ] `uv run pytest -v -s --cov=src --cov-report=xml tests`
 - [ ] Confirm tests do not depend on real MAX API credentials.
 - [ ] Confirm `.env`, API keys, secrets, payloads, and signature logs are not committed.

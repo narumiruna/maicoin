@@ -6,10 +6,10 @@ readme          = "README.md"
 requires-python = ">=3.12"
 authors         = [{ name = "narumi", email = "toucans-cutouts0f@icloud.com" }]
 dependencies    = [
+  "httpx>=0.28.1",
   "loguru>=0.7.3",
   "pydantic>=2.13.4",
   "python-dotenv>=1.2.2",
-  "requests>=2.33.1",
   "websockets>=16.0",
 ]
 
