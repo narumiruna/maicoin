@@ -8,6 +8,7 @@ from maicoin.v3.client import Client
 from maicoin.v3.errors import MaxAPIError
 from maicoin.v3.errors import MaxHTTPError
 from maicoin.v3.models import Account
+from maicoin.v3.models import ConvertOrder
 from maicoin.v3.models import Currency
 from maicoin.v3.models import CurrencyNetwork
 from maicoin.v3.models import Deposit
@@ -42,6 +43,7 @@ __all__ = [
     "DEFAULT_TIMEOUT",
     "Account",
     "Client",
+    "ConvertOrder",
     "Currency",
     "CurrencyNetwork",
     "Deposit",

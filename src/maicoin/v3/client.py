@@ -15,6 +15,7 @@ from maicoin.v3.errors import Response
 from maicoin.v3.errors import raise_for_api_error
 from maicoin.v3.errors import raise_for_response_status
 from maicoin.v3.models import Account
+from maicoin.v3.models import ConvertOrder
 from maicoin.v3.models import Currency
 from maicoin.v3.models import Deposit
 from maicoin.v3.models import DepositAddress
@@ -502,6 +503,44 @@ class Client:
     def fund_transaction_transfer(self, sn: str) -> FundTransactionTransfer:
         payload = self.request("GET", "/api/v3/fund_transactions/transfer", params={"sn": sn}, auth=True)
         return FundTransactionTransfer.model_validate(payload)
+
+    def create_convert(
+        self,
+        *,
+        from_currency: str,
+        to_currency: str,
+        from_amount: str | None = None,
+        to_amount: str | None = None,
+    ) -> ConvertOrder:
+        payload = self.request(
+            "POST",
+            "/api/v3/convert",
+            params=_compact(
+                {
+                    "from_currency": from_currency,
+                    "to_currency": to_currency,
+                    "from_amount": from_amount,
+                    "to_amount": to_amount,
+                }
+            ),
+            auth=True,
+        )
+        return ConvertOrder.model_validate(payload)
+
+    def convert(self, sn: str) -> ConvertOrder:
+        payload = self.request("GET", "/api/v3/convert", params={"sn": sn}, auth=True)
+        return ConvertOrder.model_validate(payload)
+
+    def converts(
+        self, *, timestamp: int | None = None, order: str | None = None, limit: int | None = None
+    ) -> list[ConvertOrder]:
+        payload = self.request(
+            "GET",
+            "/api/v3/converts",
+            params=_compact({"timestamp": timestamp, "order": order, "limit": limit}),
+            auth=True,
+        )
+        return [ConvertOrder.model_validate(item) for item in cast("list[object]", payload)]
 
     def m_wallet_index_prices(self) -> dict[str, str]:
         payload = self.request("GET", "/api/v3/wallet/m/index_prices")

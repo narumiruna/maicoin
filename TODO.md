@@ -81,11 +81,11 @@ The main missing areas are **REST API v3 transaction, wallet funds, convert, and
 
 ## Phase 5: REST v3 Convert
 
-- [ ] `POST /api/v3/convert`: create convert.
-- [ ] `GET /api/v3/convert`: convert detail.
-- [ ] `GET /api/v3/converts`: convert list.
-- [ ] Add convert request/response models.
-- [ ] Add mocked tests.
+- [x] `POST /api/v3/convert`: create convert.
+- [x] `GET /api/v3/convert`: convert detail.
+- [x] `GET /api/v3/converts`: convert list.
+- [x] Add convert request/response models.
+- [x] Add mocked tests.
 
 ## Phase 6: REST v3 M-Wallet Private Endpoints
 
