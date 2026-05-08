@@ -8,7 +8,7 @@ from maicoin.ws import Stream
 from maicoin.ws import Subscription
 
 
-def log_response(response: Response) -> None:
+def print_response_details(response: Response) -> None:
     print(response.model_dump(exclude_none=True))
 
 
@@ -25,7 +25,7 @@ def main() -> None:
 
     stream = Stream.from_env()
     stream.subscribe(subscriptions)
-    stream.add_handler(log_response)
+    stream.add_handler(print_response_details)
     stream.run()
 
 
