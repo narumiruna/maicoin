@@ -14,12 +14,15 @@ from .auth import generate_nonce
 from .errors import Response
 from .errors import raise_for_api_error
 from .errors import raise_for_response_status
+from .models import Account
 from .models import Currency
 from .models import Depth
 from .models import HistoricalIndexPrice
 from .models import InterestRate
 from .models import KLine
 from .models import Market
+from .models import Order
+from .models import PrivateTrade
 from .models import PublicTrade
 from .models import Ticker
 from .models import Timestamp
@@ -160,6 +163,140 @@ class Client:
     def ticker(self, market: str) -> Ticker:
         payload = self.request("GET", "/api/v3/ticker", params={"market": market})
         return Ticker.model_validate(payload)
+
+    def accounts(self, *, wallet_type: str = "spot", currency: str | None = None) -> list[Account]:
+        payload = self.request(
+            "GET",
+            f"/api/v3/wallet/{wallet_type}/accounts",
+            params=_compact({"currency": currency}),
+            auth=True,
+        )
+        return [Account.model_validate(item) for item in cast("list[object]", payload)]
+
+    def open_orders(
+        self,
+        *,
+        wallet_type: str = "spot",
+        market: str | None = None,
+        timestamp: int | None = None,
+        order_by: str | None = None,
+        limit: int | None = None,
+    ) -> list[Order]:
+        payload = self.request(
+            "GET",
+            f"/api/v3/wallet/{wallet_type}/orders/open",
+            params=_compact({"market": market, "timestamp": timestamp, "order_by": order_by, "limit": limit}),
+            auth=True,
+        )
+        return [Order.model_validate(item) for item in cast("list[object]", payload)]
+
+    def closed_orders(
+        self,
+        *,
+        wallet_type: str = "spot",
+        market: str | None = None,
+        timestamp: int | None = None,
+        order_by: str | None = None,
+        limit: int | None = None,
+    ) -> list[Order]:
+        payload = self.request(
+            "GET",
+            f"/api/v3/wallet/{wallet_type}/orders/closed",
+            params=_compact({"market": market, "timestamp": timestamp, "order_by": order_by, "limit": limit}),
+            auth=True,
+        )
+        return [Order.model_validate(item) for item in cast("list[object]", payload)]
+
+    def order_history(
+        self,
+        market: str,
+        *,
+        wallet_type: str = "spot",
+        from_id: int | None = None,
+        limit: int | None = None,
+    ) -> list[Order]:
+        payload = self.request(
+            "GET",
+            f"/api/v3/wallet/{wallet_type}/orders/history",
+            params=_compact({"market": market, "from_id": from_id, "limit": limit}),
+            auth=True,
+        )
+        return [Order.model_validate(item) for item in cast("list[object]", payload)]
+
+    def order(self, *, order_id: int | None = None, client_oid: str | None = None) -> Order:
+        payload = self.request(
+            "GET",
+            "/api/v3/order",
+            params=_compact({"id": order_id, "client_oid": client_oid}),
+            auth=True,
+        )
+        return Order.model_validate(payload)
+
+    def create_order(
+        self,
+        market: str,
+        side: str,
+        volume: str,
+        *,
+        wallet_type: str = "spot",
+        price: str | None = None,
+        client_oid: str | None = None,
+        stop_price: str | None = None,
+        ord_type: str | None = None,
+        group_id: int | None = None,
+    ) -> Order:
+        payload = self.request(
+            "POST",
+            f"/api/v3/wallet/{wallet_type}/order",
+            params=_compact(
+                {
+                    "market": market,
+                    "side": side,
+                    "volume": volume,
+                    "price": price,
+                    "client_oid": client_oid,
+                    "stop_price": stop_price,
+                    "ord_type": ord_type,
+                    "group_id": group_id,
+                }
+            ),
+            auth=True,
+        )
+        return Order.model_validate(payload)
+
+    def cancel_order(self, *, order_id: int | None = None, client_oid: str | None = None) -> Order:
+        payload = self.request(
+            "DELETE",
+            "/api/v3/order",
+            params=_compact({"id": order_id, "client_oid": client_oid}),
+            auth=True,
+        )
+        return Order.model_validate(payload)
+
+    def cancel_orders(
+        self,
+        *,
+        wallet_type: str = "spot",
+        market: str | None = None,
+        side: str | None = None,
+        group_id: int | None = None,
+    ) -> list[Order]:
+        payload = self.request(
+            "DELETE",
+            f"/api/v3/wallet/{wallet_type}/orders",
+            params=_compact({"market": market, "side": side, "group_id": group_id}),
+            auth=True,
+        )
+        return [Order.model_validate(item) for item in cast("list[object]", payload)]
+
+    def order_trades(self, *, order_id: int | None = None, client_oid: str | None = None) -> list[PrivateTrade]:
+        payload = self.request(
+            "GET",
+            "/api/v3/order/trades",
+            params=_compact({"order_id": order_id, "client_oid": client_oid}),
+            auth=True,
+        )
+        return [PrivateTrade.model_validate(item) for item in cast("list[object]", payload)]
 
     def m_wallet_index_prices(self) -> dict[str, str]:
         payload = self.request("GET", "/api/v3/wallet/m/index_prices")
