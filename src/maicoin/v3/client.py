@@ -28,6 +28,13 @@ from maicoin.v3.models import InterestRate
 from maicoin.v3.models import InternalTransfer
 from maicoin.v3.models import KLine
 from maicoin.v3.models import Market
+from maicoin.v3.models import MWalletADRatio
+from maicoin.v3.models import MWalletInterest
+from maicoin.v3.models import MWalletLiquidation
+from maicoin.v3.models import MWalletLiquidationDetail
+from maicoin.v3.models import MWalletLoan
+from maicoin.v3.models import MWalletRepayment
+from maicoin.v3.models import MWalletTransfer
 from maicoin.v3.models import Order
 from maicoin.v3.models import OrderSide
 from maicoin.v3.models import OrderType
@@ -569,3 +576,116 @@ class Client:
         return {
             currency: InterestRate.model_validate(rate) for currency, rate in cast("dict[str, object]", payload).items()
         }
+
+    def create_m_wallet_loan(self, *, currency: str, amount: str) -> MWalletLoan:
+        payload = self.request(
+            "POST",
+            "/api/v3/wallet/m/loan",
+            params={"currency": currency, "amount": amount},
+            auth=True,
+        )
+        return MWalletLoan.model_validate(payload)
+
+    def m_wallet_loans(
+        self,
+        currency: str,
+        *,
+        timestamp: int | None = None,
+        order: str | None = None,
+        limit: int | None = None,
+    ) -> list[MWalletLoan]:
+        payload = self.request(
+            "GET",
+            "/api/v3/wallet/m/loans",
+            params=_compact({"currency": currency, "timestamp": timestamp, "order": order, "limit": limit}),
+            auth=True,
+        )
+        return [MWalletLoan.model_validate(item) for item in cast("list[object]", payload)]
+
+    def create_m_wallet_transfer(self, *, currency: str, amount: str, side: str) -> MWalletTransfer:
+        payload = self.request(
+            "POST",
+            "/api/v3/wallet/m/transfer",
+            params={"currency": currency, "amount": amount, "side": side},
+            auth=True,
+        )
+        return MWalletTransfer.model_validate(payload)
+
+    def m_wallet_transfers(
+        self,
+        *,
+        currency: str,
+        side: str,
+        timestamp: int | None = None,
+        order: str | None = None,
+        limit: int | None = None,
+    ) -> list[MWalletTransfer]:
+        payload = self.request(
+            "GET",
+            "/api/v3/wallet/m/transfers",
+            params=_compact(
+                {"currency": currency, "side": side, "timestamp": timestamp, "order": order, "limit": limit}
+            ),
+            auth=True,
+        )
+        return [MWalletTransfer.model_validate(item) for item in cast("list[object]", payload)]
+
+    def create_m_wallet_repayment(self, *, currency: str, amount: str) -> MWalletRepayment:
+        payload = self.request(
+            "POST",
+            "/api/v3/wallet/m/repayment",
+            params={"currency": currency, "amount": amount},
+            auth=True,
+        )
+        return MWalletRepayment.model_validate(payload)
+
+    def m_wallet_repayments(
+        self,
+        currency: str,
+        *,
+        timestamp: int | None = None,
+        order: str | None = None,
+        limit: int | None = None,
+    ) -> list[MWalletRepayment]:
+        payload = self.request(
+            "GET",
+            "/api/v3/wallet/m/repayments",
+            params=_compact({"currency": currency, "timestamp": timestamp, "order": order, "limit": limit}),
+            auth=True,
+        )
+        return [MWalletRepayment.model_validate(item) for item in cast("list[object]", payload)]
+
+    def m_wallet_liquidations(
+        self, *, timestamp: int | None = None, order: str | None = None, limit: int | None = None
+    ) -> list[MWalletLiquidation]:
+        payload = self.request(
+            "GET",
+            "/api/v3/wallet/m/liquidations",
+            params=_compact({"timestamp": timestamp, "order": order, "limit": limit}),
+            auth=True,
+        )
+        return [MWalletLiquidation.model_validate(item) for item in cast("list[object]", payload)]
+
+    def m_wallet_liquidation(self, sn: str) -> MWalletLiquidationDetail:
+        payload = self.request("GET", "/api/v3/wallet/m/liquidation", params={"sn": sn}, auth=True)
+        return MWalletLiquidationDetail.model_validate(payload)
+
+    def m_wallet_interests(
+        self,
+        *,
+        currency: str | None = None,
+        timestamp: int | None = None,
+        order: str | None = None,
+        limit: int | None = None,
+    ) -> list[MWalletInterest]:
+        payload = self.request(
+            "GET",
+            "/api/v3/wallet/m/interests",
+            params=_compact({"currency": currency, "timestamp": timestamp, "order": order, "limit": limit}),
+            auth=True,
+        )
+        return [MWalletInterest.model_validate(item) for item in cast("list[object]", payload)]
+
+    def m_wallet_ad_ratio(self) -> MWalletADRatio:
+        payload = self.request("GET", "/api/v3/wallet/m/ad_ratio", auth=True)
+        return MWalletADRatio.model_validate(payload)
