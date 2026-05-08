@@ -10,3 +10,4 @@ class Subscription(BaseModel):
     market: str | None = None
     depth: int | None = None
     resolution: str | None = None
+    currency: str | None = None

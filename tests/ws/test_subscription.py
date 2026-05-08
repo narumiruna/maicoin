@@ -41,3 +41,22 @@ def test_subscription_kline() -> None:
     }
 
     Subscription.model_validate(d)
+
+
+# https://maicoin.github.io/max-websocket-docs/#/public_market_status?id=market-status-subscription
+def test_subscription_market_status() -> None:
+    d = {
+        "channel": "market_status",
+    }
+
+    Subscription.model_validate(d)
+
+
+# https://maicoin.github.io/max-websocket-docs/#/public_mwallet_pool_quota?id=mwallet-pool-quota-subscription
+def test_subscription_mwallet_pool_quota() -> None:
+    d = {
+        "channel": "pool_quota",
+        "currency": "usdt",
+    }
+
+    Subscription.model_validate(d)

@@ -378,3 +378,226 @@ def test_response_market_status_update() -> None:
     }
 
     Response.model_validate(d)
+
+
+def test_response_book_snapshot_preserves_string_levels_and_parses_update_ids() -> None:
+    d = {
+        "c": "book",
+        "e": "snapshot",
+        "M": "btcusdt",
+        "a": [["5337.3000000000000001", "0.1"]],
+        "b": [["5333.3", "0.5"]],
+        "T": 1591869939634,
+        "fi": 12141725,
+        "li": 12141725,
+        "v": 1725602999632,
+    }
+
+    response = Response.model_validate(d)
+
+    assert response.asks == [["5337.3000000000000001", "0.1"]]
+    assert response.first_update_id == 12141725
+    assert response.last_update_id == 12141725
+    assert response.version == 1725602999632
+
+
+# https://maicoin.github.io/max-websocket-docs/#/public_mwallet_pool_quota?id=success-response
+def test_response_mwallet_pool_quota() -> None:
+    d = {
+        "c": "pool_quota",
+        "e": "snapshot",
+        "qta": {
+            "cu": "usdt",
+            "av": "501353.81385068",
+            "TU": 1641551141618,
+        },
+        "T": 1641772933737,
+    }
+
+    response = Response.model_validate(d)
+
+    assert response.pool_quota is not None
+    assert response.pool_quota.currency == "usdt"
+    assert response.pool_quota.available == "501353.81385068"
+
+
+# https://maicoin.github.io/max-websocket-docs/#/private_channels?id=fast-trade-response
+def test_response_private_fast_trade_update() -> None:
+    d = {
+        "c": "user",
+        "e": "fast_trade_update",
+        "t": [
+            {
+                "i": 68444,
+                "M": "ethtwd",
+                "sd": "bid",
+                "p": "21499.0",
+                "v": "0.2658",
+                "fn": "5714.4342",
+                "T": 1659216053748,
+                "TU": 1659216054046,
+                "m": True,
+                "oi": 3253823664,
+            },
+        ],
+        "T": 1521726960357,
+    }
+
+    response = Response.model_validate(d)
+
+    assert response.trades is not None
+    assert response.trades[0].price == "21499.0"
+
+
+# https://maicoin.github.io/max-websocket-docs/#/private_channels_mwallet?id=mwallet-order-response
+def test_response_mwallet_order_snapshot() -> None:
+    d = {
+        "c": "user",
+        "e": "mwallet_order_snapshot",
+        "o": [
+            {
+                "i": 87,
+                "sd": "bid",
+                "ot": "limit",
+                "p": "3320.49",
+                "sp": None,
+                "ap": "0.0",
+                "v": "0.1",
+                "rv": "0.1",
+                "ev": "0.0",
+                "S": "wait",
+                "M": "ethusdt",
+                "tc": 0,
+                "T": 1633415952000,
+                "TU": 1633415952701,
+                "ci": "client-oid-1",
+                "gi": 123,
+            },
+        ],
+        "T": 1633415952715,
+    }
+
+    response = Response.model_validate(d)
+
+    assert response.orders is not None
+    assert response.orders[0].price == "3320.49"
+
+
+# https://maicoin.github.io/max-websocket-docs/#/private_channels_mwallet?id=mwallet-trade-response
+def test_response_mwallet_trade_update() -> None:
+    d = {
+        "c": "user",
+        "e": "mwallet_trade_update",
+        "t": [
+            {
+                "i": 78,
+                "M": "ethusdt",
+                "sd": "bid",
+                "p": "3320.49",
+                "v": "0.1",
+                "f": "0.00015",
+                "fc": "eth",
+                "fn": "77.38889",
+                "T": 1633359451377,
+                "TU": 1633359451378,
+                "m": False,
+                "oi": 123,
+            },
+        ],
+        "T": 1521726960357,
+    }
+
+    response = Response.model_validate(d)
+
+    assert response.trades is not None
+    assert response.trades[0].fee == "0.00015"
+
+
+# https://maicoin.github.io/max-websocket-docs/#/private_channels_mwallet?id=mwallet-fast-trade-response
+def test_response_mwallet_fast_trade_update() -> None:
+    d = {
+        "c": "user",
+        "e": "mwallet_fast_trade_update",
+        "t": [
+            {
+                "i": 78,
+                "M": "ethusdt",
+                "sd": "bid",
+                "p": "3320.49",
+                "v": "0.1",
+                "fn": "77.38889",
+                "T": 1633359451377,
+                "TU": 1633359451378,
+                "m": False,
+                "oi": 123,
+            },
+        ],
+        "T": 1521726960357,
+    }
+
+    Response.model_validate(d)
+
+
+# https://maicoin.github.io/max-websocket-docs/#/private_channels_mwallet?id=mwallet-account-response
+def test_response_mwallet_account_update_without_balance_update_time() -> None:
+    d = {
+        "c": "user",
+        "e": "mwallet_account_update",
+        "B": [
+            {
+                "cu": "btc",
+                "av": "123.4",
+                "l": "0.5",
+                "stk": None,
+            },
+        ],
+        "T": 1521726960357,
+    }
+
+    response = Response.model_validate(d)
+
+    assert response.balances is not None
+    assert response.balances[0].balance_updated_time is None
+
+
+# https://maicoin.github.io/max-websocket-docs/#/private_channels_mwallet?id=mwallet-ad-ratio-response
+def test_response_mwallet_ad_ratio_update() -> None:
+    d = {
+        "c": "user",
+        "e": "ad_ratio_update",
+        "ad": {
+            "ad": "38.08306432",
+            "as": "132071.22",
+            "db": "3467.97775784",
+            "idxp": [{"M": "btcusdt", "p": "63190.045"}],
+            "TU": 1521726960300,
+        },
+        "T": 1521726960357,
+    }
+
+    response = Response.model_validate(d)
+
+    assert response.m_wallet_ad_ratio is not None
+    assert response.m_wallet_ad_ratio.index_prices[0].price == "63190.045"
+
+
+# https://maicoin.github.io/max-websocket-docs/#/private_channels_mwallet?id=mwallet-borrowing-response
+def test_response_mwallet_borrowing_update() -> None:
+    d = {
+        "c": "user",
+        "e": "borrowing_update",
+        "db": [
+            {
+                "cu": "usdt",
+                "dbp": "500.0",
+                "dbi": "0.00004488",
+                "TU": 1521726960300,
+            },
+        ],
+        "T": 1521726960357,
+    }
+
+    response = Response.model_validate(d)
+
+    assert response.m_wallet_borrowings is not None
+    assert response.m_wallet_borrowings[0].debt_interest == "0.00004488"

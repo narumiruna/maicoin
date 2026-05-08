@@ -15,11 +15,11 @@ class KLine(BaseModel):
     end_time: datetime = Field(validation_alias="ET")
     market: str = Field(validation_alias="M")
     resolution: RESOLUTION = Field(validation_alias="R")
-    open: float = Field(validation_alias="O")
-    high: float = Field(validation_alias="H")
-    low: float = Field(validation_alias="L")
-    close: float = Field(validation_alias="C")
-    volume: float = Field(validation_alias="v")
+    open: str = Field(validation_alias="O")
+    high: str = Field(validation_alias="H")
+    low: str = Field(validation_alias="L")
+    close: str = Field(validation_alias="C")
+    volume: str = Field(validation_alias="v")
     last_trade_id: int = Field(validation_alias="ti")
     closed: bool = Field(validation_alias="x")
 
@@ -27,8 +27,3 @@ class KLine(BaseModel):
     @classmethod
     def convert_datetime(cls, t: int) -> datetime:
         return datetime.fromtimestamp(int(t) / 1000, tz=UTC)
-
-    @field_validator("open", "high", "low", "close", "volume", mode="before")
-    @classmethod
-    def convert_float(cls, s: str) -> float:
-        return float(s)

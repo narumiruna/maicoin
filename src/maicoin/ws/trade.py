@@ -15,9 +15,9 @@ class Trade(BaseModel):
     id: int | None = Field(default=None, validation_alias="i")
     market: str | None = Field(default=None, validation_alias="M")
     side: Side | None = Field(default=None, validation_alias="sd")
-    price: float = Field(validation_alias="p")
-    volume: float = Field(validation_alias="v")
-    fee: float | None = Field(default=None, validation_alias="f")
+    price: str = Field(validation_alias="p")
+    volume: str = Field(validation_alias="v")
+    fee: str | None = Field(default=None, validation_alias="f")
     fee_currency: str | None = Field(default=None, validation_alias="fc")
     fee_discounted: bool | None = Field(default=None, validation_alias="fd")
     funds: str | None = Field(default=None, validation_alias="fn")
@@ -29,10 +29,7 @@ class Trade(BaseModel):
 
     @field_validator("created_at", "updated_at", mode="before")
     @classmethod
-    def convert_datetime(cls, t: int) -> datetime:
+    def convert_datetime(cls, t: int | None) -> datetime | None:
+        if t is None:
+            return None
         return datetime.fromtimestamp(int(t) / 1000, tz=UTC)
-
-    @field_validator("price", "volume", "fee", mode="before")
-    @classmethod
-    def convert_float(cls, s: str) -> float:
-        return float(s)
