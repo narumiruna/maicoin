@@ -7,6 +7,7 @@ This repository is a Python package for the MaiCoin MAX API. Core package code l
 - `src/maicoin/ws/` contains WebSocket models, requests, responses, subscriptions, and stream helpers.
 - `src/maicoin/v2/` and `src/maicoin/v3/` contain HTTP API-related modules.
 - `tests/` mirrors package areas, with current coverage focused on `tests/ws/` and `tests/v3/`.
+- `docs/TODO.md` tracks current follow-up work and completed milestone context.
 - `example.py` demonstrates loading MAX credentials from `.env` and running the package locally.
 
 ## Build, Test, and Development Commands
