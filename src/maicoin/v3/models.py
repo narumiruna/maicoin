@@ -5,13 +5,6 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import cast
 
-from pydantic import BaseModel
-from pydantic import ConfigDict
-
-
-class MaxBaseModel(BaseModel):
-    model_config = ConfigDict(extra="allow", populate_by_name=True)
-
 
 def _expect_mapping(payload: object) -> Mapping[str, object]:
     if not isinstance(payload, Mapping):
@@ -116,12 +109,22 @@ class Market:
         )
 
 
-class Staking(MaxBaseModel):
+@dataclass(slots=True, frozen=True)
+class Staking:
     stake_flag: bool
     unstake_flag: bool
 
+    @classmethod
+    def model_validate(cls, payload: object) -> Staking:
+        data = _expect_mapping(payload)
+        return cls(
+            stake_flag=_required_bool(data, "stake_flag"),
+            unstake_flag=_required_bool(data, "unstake_flag"),
+        )
 
-class CurrencyNetwork(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class CurrencyNetwork:
     token_contract_address: str | None
     precision: int
     id: str
@@ -134,8 +137,27 @@ class CurrencyNetwork(MaxBaseModel):
     deposit_enabled: bool
     need_memo: bool
 
+    @classmethod
+    def model_validate(cls, payload: object) -> CurrencyNetwork:
+        data = _expect_mapping(payload)
+        network_congested = data["network_congested"]
+        return cls(
+            token_contract_address=_optional_str(data, "token_contract_address"),
+            precision=_required_int(data, "precision"),
+            id=_required_str(data, "id"),
+            network_protocol=_required_str(data, "network_protocol"),
+            network_congested=network_congested if isinstance(network_congested, bool) else str(network_congested),
+            deposit_confirmations=_required_int(data, "deposit_confirmations"),
+            withdrawal_fee=_required_float(data, "withdrawal_fee"),
+            min_withdrawal_amount=_required_float(data, "min_withdrawal_amount"),
+            withdrawal_enabled=_required_bool(data, "withdrawal_enabled"),
+            deposit_enabled=_required_bool(data, "deposit_enabled"),
+            need_memo=_required_bool(data, "need_memo"),
+        )
 
-class Currency(MaxBaseModel):
+
+@dataclass(slots=True, frozen=True)
+class Currency:
     currency: str
     type: str
     precision: int
@@ -145,6 +167,26 @@ class Currency(MaxBaseModel):
     min_borrow_amount: str
     networks: list[CurrencyNetwork]
     staking: Staking | None
+
+    @classmethod
+    def model_validate(cls, payload: object) -> Currency:
+        data = _expect_mapping(payload)
+        networks = data["networks"]
+        if not isinstance(networks, list):
+            msg = f"expected networks list, got {type(networks).__name__}"
+            raise TypeError(msg)
+        staking = data.get("staking")
+        return cls(
+            currency=_required_str(data, "currency"),
+            type=_required_str(data, "type"),
+            precision=_required_int(data, "precision"),
+            m_wallet_supported=_required_bool(data, "m_wallet_supported"),
+            m_wallet_mortgageable=_required_bool(data, "m_wallet_mortgageable"),
+            m_wallet_borrowable=_required_bool(data, "m_wallet_borrowable"),
+            min_borrow_amount=_required_str(data, "min_borrow_amount"),
+            networks=[CurrencyNetwork.model_validate(network) for network in networks],
+            staking=None if staking is None else Staking.model_validate(staking),
+        )
 
 
 @dataclass(slots=True, frozen=True)
