@@ -12,6 +12,12 @@ Plan: [`docs/live-integration-tests-plan.md`](live-integration-tests-plan.md)
 - [x] Update `README.md` with a short section explaining how to run live integration tests.
 - [ ] Leave destructive live tests for a separate design pass; do not include them in the first implementation.
 
+## Dataclass Low-Level Models
+
+Plan: [`docs/dataclass-low-level-models-plan.md`](dataclass-low-level-models-plan.md)
+
+- [ ] Add a fast dataclass data layer while keeping Pydantic as the high-level validated API.
+
 ## Completed Milestones
 
 - REST v3 foundation, public endpoints, private order/trade/account endpoints, wallet funds, convert, and M-Wallet private endpoints.
