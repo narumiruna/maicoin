@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from pydantic import Field
 from pydantic import field_validator
 
-from .side import Side
+from maicoin.ws.side import Side
 
 
 class OrderType(StrEnum):

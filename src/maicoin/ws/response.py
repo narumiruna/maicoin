@@ -8,14 +8,14 @@ from pydantic import BaseModel
 from pydantic import Field
 from pydantic import field_validator
 
-from .balance import Balance
-from .channel import Channel
-from .kline import KLine
-from .market_status import MarketStatus
-from .order import Order
-from .subscription import Subscription
-from .ticker import Ticker
-from .trade import Trade
+from maicoin.ws.balance import Balance
+from maicoin.ws.channel import Channel
+from maicoin.ws.kline import KLine
+from maicoin.ws.market_status import MarketStatus
+from maicoin.ws.order import Order
+from maicoin.ws.subscription import Subscription
+from maicoin.ws.ticker import Ticker
+from maicoin.ws.trade import Trade
 
 
 class Event(StrEnum):

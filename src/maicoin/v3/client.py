@@ -9,23 +9,23 @@ from urllib.parse import urljoin
 
 import httpx
 
-from .auth import build_auth_headers
-from .auth import generate_nonce
-from .errors import Response
-from .errors import raise_for_api_error
-from .errors import raise_for_response_status
-from .models import Account
-from .models import Currency
-from .models import Depth
-from .models import HistoricalIndexPrice
-from .models import InterestRate
-from .models import KLine
-from .models import Market
-from .models import Order
-from .models import PrivateTrade
-from .models import PublicTrade
-from .models import Ticker
-from .models import Timestamp
+from maicoin.v3.auth import build_auth_headers
+from maicoin.v3.auth import generate_nonce
+from maicoin.v3.errors import Response
+from maicoin.v3.errors import raise_for_api_error
+from maicoin.v3.errors import raise_for_response_status
+from maicoin.v3.models import Account
+from maicoin.v3.models import Currency
+from maicoin.v3.models import Depth
+from maicoin.v3.models import HistoricalIndexPrice
+from maicoin.v3.models import InterestRate
+from maicoin.v3.models import KLine
+from maicoin.v3.models import Market
+from maicoin.v3.models import Order
+from maicoin.v3.models import PrivateTrade
+from maicoin.v3.models import PublicTrade
+from maicoin.v3.models import Ticker
+from maicoin.v3.models import Timestamp
 
 BASE_URL = "https://max-api.maicoin.com"
 DEFAULT_TIMEOUT = 10

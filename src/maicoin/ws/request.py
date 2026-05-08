@@ -9,7 +9,7 @@ from enum import StrEnum
 from pydantic import BaseModel
 from pydantic import Field
 
-from .subscription import Subscription
+from maicoin.ws.subscription import Subscription
 
 
 class Action(StrEnum):

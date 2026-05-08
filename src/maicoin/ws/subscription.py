@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from .channel import Channel
+from maicoin.ws.channel import Channel
 
 
 class Subscription(BaseModel):
