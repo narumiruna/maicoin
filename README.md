@@ -84,4 +84,4 @@ Do not run state-changing private requests, such as order creation or withdrawal
 - [ ] [HTTP API v3](https://max-api.maicoin.com/doc/v3.html)
   - [x] Foundation client, authentication helpers, and errors
   - [x] Public endpoint wrappers and models
-  - [ ] Private endpoint wrappers and models
+  - [x] Private endpoint wrappers and models
