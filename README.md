@@ -68,24 +68,3 @@ accounts = client.request("GET", "/api/v3/wallet/spot/accounts", auth=True)
 ```
 
 Do not run state-changing private requests, such as order creation or withdrawals, without reviewing the parameters carefully.
-
-## To-Do List
-
-- [x] [WebSocket API](https://maicoin.github.io/max-websocket-docs)
-  - [x] Public channels
-    - [x] Subscribe
-    - [x] Unsubscribe
-    - [x] Orderbook
-    - [x] Trade
-    - [x] Ticker
-    - [x] Kline
-    - [x] Market Status
-  - [x] Authentication
-  - [x] Private channels
-    - [x] Order
-    - [x] Trade
-    - [x] Account
-- [ ] [HTTP API v3](https://max-api.maicoin.com/doc/v3.html)
-  - [x] Foundation client, authentication helpers, and errors
-  - [x] Public endpoint wrappers and models
-  - [x] Private endpoint wrappers and models

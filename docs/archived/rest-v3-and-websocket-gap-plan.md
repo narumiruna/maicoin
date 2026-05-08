@@ -1,4 +1,11 @@
-# PLAN.md
+# Archived PLAN.md
+
+Archived after the REST v3 and WebSocket gap cleanup milestones were implemented. Keep this file as historical planning context; track new work in issues or a fresh plan instead of continuing this checklist.
+
+Remaining follow-up candidates from this plan:
+
+- Optional shared REST v3 / WebSocket domain-model audit, if callers need normalized cross-transport models.
+- Ongoing docs and quality-gate maintenance.
 
 ## Goal
 
