@@ -11,7 +11,7 @@ Plan: [`plans/client-resilience-and-ergonomics-plan.md`](plans/client-resilience
 - [ ] Add WebSocket reconnect, heartbeat configuration, graceful cancellation, and non-blocking handler dispatch.
 - [ ] Add conservative REST retry/rate-limit support.
 - [ ] Add pagination helpers for historical/list endpoints.
-- [ ] Add an async REST client.
+- [ ] Migrate REST `Client` to async-first methods with explicit `_sync` convenience wrappers.
 
 ## Dataclass Low-Level Models
 

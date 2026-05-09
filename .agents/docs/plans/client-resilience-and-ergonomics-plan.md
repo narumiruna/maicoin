@@ -91,23 +91,37 @@ Planned changes:
   - caller-provided `max_items` / `max_pages`
 - Add tests for parameter progression and duplicate prevention.
 
-### Priority 5: Async REST Client
+### Priority 5: Async-First REST Client
 
-Goal: support FastAPI, asyncio bots, and async services natively.
+Goal: support FastAPI, asyncio bots, and async services natively while keeping a simple sync convenience layer.
 
-Planned changes:
+Preferred design:
 
-- Add `AsyncClient` using `httpx.AsyncClient` and an async session protocol.
-- Share request construction, auth signing, error handling, and model parsing with the sync client where practical.
-- Support async context manager lifecycle:
+- Make `Client` async-first instead of adding a separate `AsyncClient` class.
+- Convert the whole typed REST surface to async methods, not just selected endpoints. Examples:
 
 ```python
-async with AsyncClient(api_key="...", api_secret="...") as client:
+async with Client(api_key="...", api_secret="...") as client:
+    markets = await client.markets()
+    currencies = await client.currencies()
     ticker = await client.ticker("btctwd")
+    accounts = await client.accounts()
 ```
 
-- Keep sync `Client` backwards compatible.
-- Add tests using a fake async session, plus type checks for public methods.
+- Apply the same async-first rule to public endpoints, authenticated read endpoints, and authenticated write endpoints such as order creation/cancellation.
+- Use `httpx.AsyncClient` and an async session protocol internally.
+- Add sync convenience wrappers with an explicit `_sync` suffix for the whole REST surface:
+
+```python
+def currencies_sync(self) -> list[Currency]:
+    return asyncio.run(self.currencies())
+```
+
+- For every async method that should remain callable from synchronous scripts, provide the matching `_sync` wrapper, for example `markets_sync()`, `ticker_sync(...)`, `accounts_sync()`, and `create_order_sync(...)`.
+- Treat `_sync` wrappers as convenience APIs for scripts and synchronous applications, not for code already running inside an event loop. Document that `asyncio.run()` raises when called from an existing event loop, so FastAPI/Jupyter/async bot users should call the async methods directly.
+- Preserve request construction, auth signing, nonce injection, error handling, and model parsing behavior while changing the transport to async.
+- Because this changes existing `Client` method call semantics from `client.currencies()` to `await client.currencies()`, plan it as a breaking API change or provide a migration window with deprecation warnings if backwards compatibility is required.
+- Add tests using a fake async session, tests for `_sync` wrappers, and type checks for async public methods.
 
 ### Priority 6: Destructive Live Tests
 
@@ -134,7 +148,7 @@ Planned changes:
 
 ## Acceptance Criteria
 
-- Existing public API remains backwards compatible.
-- New features are opt-in where behavior could surprise users.
+- Existing public API remains backwards compatible except for explicitly planned breaking changes such as an async-first REST client migration.
+- New behavior is opt-in where it could surprise users, or documented as part of a deliberate migration path.
 - Unit tests cover failure paths, cancellation, retries, and pagination edge cases.
-- Documentation explains when to use sync REST, async REST, inline WebSocket handlers, task dispatch, and queue dispatch.
+- Documentation explains when to use async REST methods, `_sync` REST wrappers, inline WebSocket handlers, task dispatch, and queue dispatch.
