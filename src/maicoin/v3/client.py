@@ -125,8 +125,20 @@ class Client:
         self.api_secret = api_secret
         self.base_url = base_url
         self.timeout = timeout
-        self.session: RequestSession = cast("RequestSession", httpx.AsyncClient()) if session is None else session
+        self._owns_session = session is None
+        self._session: RequestSession | None = session
         self.nonce_factory = nonce_factory
+
+    @property
+    def session(self) -> RequestSession:
+        """Underlying async HTTP session, created lazily for default clients."""
+        if self._session is None:
+            self._session = cast("RequestSession", httpx.AsyncClient())
+        return self._session
+
+    @session.setter
+    def session(self, session: RequestSession) -> None:
+        self._session = session
 
     async def __aenter__(self) -> Client:
         return self
@@ -136,14 +148,28 @@ class Client:
 
     async def aclose(self) -> None:
         """Close the underlying async HTTP session when it supports closing."""
-        aclose = getattr(self.session, "aclose", None)
+        if self._session is None:
+            return
+        aclose = getattr(self._session, "aclose", None)
         if aclose is not None:
             await aclose()
+        if self._owns_session:
+            self._session = None
 
     def _run_sync(self, method_name: str, *args: Any, **kwargs: Any) -> Any:
         """Run one async REST method for synchronous scripts."""
         method = getattr(self, method_name)
-        return asyncio.run(method(*args, **kwargs))
+        if not self._owns_session:
+            return asyncio.run(method(*args, **kwargs))
+
+        async def runner() -> Any:
+            self._session = cast("RequestSession", httpx.AsyncClient())
+            try:
+                return await method(*args, **kwargs)
+            finally:
+                await self.aclose()
+
+        return asyncio.run(runner())
 
     def request_sync(self, *args: Any, **kwargs: Any) -> Any:
         """Synchronous convenience wrapper."""
