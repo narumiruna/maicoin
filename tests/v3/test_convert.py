@@ -5,8 +5,12 @@ import json
 from collections.abc import Mapping
 from typing import cast
 
+import pytest
+
 from maicoin.v3 import Client
 from maicoin.v3 import ConvertOrder
+
+pytestmark = pytest.mark.anyio
 
 
 class FakeResponse:
@@ -66,9 +70,9 @@ def convert_payload(**overrides: object) -> dict[str, object]:
     return payload
 
 
-def test_create_convert_constructs_authenticated_post_and_parses_payload() -> None:
+async def test_create_convert_constructs_authenticated_post_and_parses_payload() -> None:
     session = FakeSession(convert_payload())
-    convert = authenticated_client(session).create_convert_sync(
+    convert = await authenticated_client(session).create_convert(
         from_currency="btc",
         to_currency="usdt",
         from_amount="0.01",
@@ -86,9 +90,9 @@ def test_create_convert_constructs_authenticated_post_and_parses_payload() -> No
     assert last_payload(session)["path"] == "/api/v3/convert"
 
 
-def test_convert_detail_constructs_authenticated_get_and_parses_payload() -> None:
+async def test_convert_detail_constructs_authenticated_get_and_parses_payload() -> None:
     session = FakeSession(convert_payload())
-    convert = authenticated_client(session).convert_sync("6322d9bd-736b-4f19-b862-829e75cae1ce")
+    convert = await authenticated_client(session).convert("6322d9bd-736b-4f19-b862-829e75cae1ce")
 
     assert convert.sn == "6322d9bd-736b-4f19-b862-829e75cae1ce"
     assert session.calls[-1]["method"] == "GET"
@@ -96,9 +100,9 @@ def test_convert_detail_constructs_authenticated_get_and_parses_payload() -> Non
     assert last_kwargs(session)["params"] == {"nonce": 123456, "sn": "6322d9bd-736b-4f19-b862-829e75cae1ce"}
 
 
-def test_converts_constructs_authenticated_get_and_parses_list() -> None:
+async def test_converts_constructs_authenticated_get_and_parses_list() -> None:
     session = FakeSession([convert_payload()])
-    converts = authenticated_client(session).converts_sync(timestamp=1704937708, order="desc", limit=1)
+    converts = await authenticated_client(session).converts(timestamp=1704937708, order="desc", limit=1)
 
     assert converts == [ConvertOrder.model_validate(convert_payload())]
     assert session.calls[-1]["method"] == "GET"
