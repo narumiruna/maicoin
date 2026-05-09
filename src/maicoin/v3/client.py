@@ -5,11 +5,15 @@ credentials. Every other method is authenticated and requires `api_key` /
 `api_secret` to sign the request.
 """
 
+# ruff: noqa: ANN401
+
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Callable
 from collections.abc import Mapping
 from collections.abc import Sequence
+from typing import Any
 from typing import Protocol
 from typing import cast
 from urllib.parse import urljoin
@@ -69,15 +73,15 @@ class RequestSession(Protocol):
     """Minimal HTTP session protocol used by [`Client`][maicoin.v3.Client].
 
     Anything with a `request(method, url, **kwargs) -> Response` shape works,
-    so you can swap in `httpx.Client`, a mocked session for tests, or a custom
-    transport.
+    so you can swap in `httpx.AsyncClient`, a mocked session for tests, or a custom
+    async transport.
     """
 
-    def request(self, method: str, url: str, **kwargs: object) -> Response: ...
+    async def request(self, method: str, url: str, **kwargs: object) -> Response: ...
 
 
 class Client:
-    """Synchronous REST v3 client for the MaiCoin MAX exchange.
+    """Async-first REST v3 client for the MaiCoin MAX exchange.
 
     Construct without credentials for public endpoints, or pass `api_key` and
     `api_secret` to call authenticated (signed) endpoints.
@@ -86,13 +90,13 @@ class Client:
         Public-only client:
 
         >>> from maicoin.v3 import Client
-        >>> client = Client()
-        >>> client.ticker("btctwd")  # doctest: +SKIP
+        >>> async with Client() as client:  # doctest: +SKIP
+        ...     await client.ticker("btctwd")
 
         Authenticated client:
 
-        >>> client = Client(api_key="...", api_secret="...")  # doctest: +SKIP
-        >>> client.accounts()  # doctest: +SKIP
+        >>> async with Client(api_key="...", api_secret="...") as client:  # doctest: +SKIP
+        ...     await client.accounts()
     """
 
     def __init__(
@@ -113,7 +117,7 @@ class Client:
             base_url: API base URL. Override for staging or test environments.
             timeout: Per-request timeout in seconds.
             session: Custom HTTP session implementing [`RequestSession`][maicoin.v3.client.RequestSession].
-                Defaults to a fresh `httpx.Client`.
+                Defaults to a fresh `httpx.AsyncClient`.
             nonce_factory: Callable returning a strictly increasing integer
                 nonce in milliseconds. Override in tests.
         """
@@ -121,10 +125,239 @@ class Client:
         self.api_secret = api_secret
         self.base_url = base_url
         self.timeout = timeout
-        self.session: RequestSession = cast("RequestSession", httpx.Client()) if session is None else session
+        self.session: RequestSession = cast("RequestSession", httpx.AsyncClient()) if session is None else session
         self.nonce_factory = nonce_factory
 
-    def request(
+    async def __aenter__(self) -> Client:
+        return self
+
+    async def __aexit__(self, exc_type: object, exc: object, traceback: object) -> None:
+        await self.aclose()
+
+    async def aclose(self) -> None:
+        """Close the underlying async HTTP session when it supports closing."""
+        aclose = getattr(self.session, "aclose", None)
+        if aclose is not None:
+            await aclose()
+
+    def _run_sync(self, method_name: str, *args: Any, **kwargs: Any) -> Any:
+        """Run one async REST method for synchronous scripts."""
+        method = getattr(self, method_name)
+        return asyncio.run(method(*args, **kwargs))
+
+    def request_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("request", *args, **kwargs)
+
+    def markets_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("markets", *args, **kwargs)
+
+    def currencies_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("currencies", *args, **kwargs)
+
+    def timestamp_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("timestamp", *args, **kwargs)
+
+    def kline_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("kline", *args, **kwargs)
+
+    def depth_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("depth", *args, **kwargs)
+
+    def trades_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("trades", *args, **kwargs)
+
+    def tickers_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("tickers", *args, **kwargs)
+
+    def ticker_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("ticker", *args, **kwargs)
+
+    def info_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("info", *args, **kwargs)
+
+    def accounts_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("accounts", *args, **kwargs)
+
+    def wallet_trades_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("wallet_trades", *args, **kwargs)
+
+    def open_orders_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("open_orders", *args, **kwargs)
+
+    def closed_orders_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("closed_orders", *args, **kwargs)
+
+    def order_history_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("order_history", *args, **kwargs)
+
+    def order_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("order", *args, **kwargs)
+
+    def create_order_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("create_order", *args, **kwargs)
+
+    def cancel_order_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("cancel_order", *args, **kwargs)
+
+    def cancel_orders_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("cancel_orders", *args, **kwargs)
+
+    def order_trades_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("order_trades", *args, **kwargs)
+
+    def withdrawal_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("withdrawal", *args, **kwargs)
+
+    def create_withdrawal_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("create_withdrawal", *args, **kwargs)
+
+    def create_twd_withdrawal_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("create_twd_withdrawal", *args, **kwargs)
+
+    def withdrawals_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("withdrawals", *args, **kwargs)
+
+    def withdraw_addresses_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("withdraw_addresses", *args, **kwargs)
+
+    def deposit_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("deposit", *args, **kwargs)
+
+    def deposits_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("deposits", *args, **kwargs)
+
+    def deposit_address_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("deposit_address", *args, **kwargs)
+
+    def internal_transfers_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("internal_transfers", *args, **kwargs)
+
+    def rewards_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("rewards", *args, **kwargs)
+
+    def fund_transaction_deposits_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("fund_transaction_deposits", *args, **kwargs)
+
+    def fund_transaction_deposit_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("fund_transaction_deposit", *args, **kwargs)
+
+    def fund_transaction_withdrawals_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("fund_transaction_withdrawals", *args, **kwargs)
+
+    def fund_transaction_withdrawal_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("fund_transaction_withdrawal", *args, **kwargs)
+
+    def fund_transaction_transfers_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("fund_transaction_transfers", *args, **kwargs)
+
+    def fund_transaction_transfer_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("fund_transaction_transfer", *args, **kwargs)
+
+    def create_convert_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("create_convert", *args, **kwargs)
+
+    def convert_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("convert", *args, **kwargs)
+
+    def converts_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("converts", *args, **kwargs)
+
+    def m_wallet_index_prices_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("m_wallet_index_prices", *args, **kwargs)
+
+    def m_wallet_historical_index_prices_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("m_wallet_historical_index_prices", *args, **kwargs)
+
+    def m_wallet_limits_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("m_wallet_limits", *args, **kwargs)
+
+    def m_wallet_interest_rates_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("m_wallet_interest_rates", *args, **kwargs)
+
+    def create_m_wallet_loan_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("create_m_wallet_loan", *args, **kwargs)
+
+    def m_wallet_loans_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("m_wallet_loans", *args, **kwargs)
+
+    def create_m_wallet_transfer_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("create_m_wallet_transfer", *args, **kwargs)
+
+    def m_wallet_transfers_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("m_wallet_transfers", *args, **kwargs)
+
+    def create_m_wallet_repayment_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("create_m_wallet_repayment", *args, **kwargs)
+
+    def m_wallet_repayments_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("m_wallet_repayments", *args, **kwargs)
+
+    def m_wallet_liquidations_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("m_wallet_liquidations", *args, **kwargs)
+
+    def m_wallet_liquidation_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("m_wallet_liquidation", *args, **kwargs)
+
+    def m_wallet_interests_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("m_wallet_interests", *args, **kwargs)
+
+    def m_wallet_ad_ratio_sync(self, *args: Any, **kwargs: Any) -> Any:
+        """Synchronous convenience wrapper."""
+        return self._run_sync("m_wallet_ad_ratio", *args, **kwargs)
+
+    async def request(
         self,
         method: str,
         path: str,
@@ -184,7 +417,7 @@ class Client:
         else:
             kwargs["json"] = request_params
 
-        response = self.session.request(normalized_method, url, **kwargs)
+        response = await self.session.request(normalized_method, url, **kwargs)
         raise_for_response_status(response)
         if not response.content:
             return None
@@ -193,22 +426,22 @@ class Client:
         raise_for_api_error(payload)
         return payload
 
-    def markets(self) -> list[Market]:
+    async def markets(self) -> list[Market]:
         """List all available markets (`GET /api/v3/markets`)."""
-        payload = self.request("GET", "/api/v3/markets")
+        payload = await self.request("GET", "/api/v3/markets")
         return [Market.model_validate(item) for item in cast("list[object]", payload)]
 
-    def currencies(self) -> list[Currency]:
+    async def currencies(self) -> list[Currency]:
         """List all supported currencies, including network info (`GET /api/v3/currencies`)."""
-        payload = self.request("GET", "/api/v3/currencies")
+        payload = await self.request("GET", "/api/v3/currencies")
         return [Currency.model_validate(item) for item in cast("list[object]", payload)]
 
-    def timestamp(self) -> Timestamp:
+    async def timestamp(self) -> Timestamp:
         """Return the server-side timestamp (`GET /api/v3/timestamp`)."""
-        payload = self.request("GET", "/api/v3/timestamp")
+        payload = await self.request("GET", "/api/v3/timestamp")
         return Timestamp.model_validate(payload)
 
-    def kline(
+    async def kline(
         self,
         market: str,
         *,
@@ -224,7 +457,7 @@ class Client:
             period: Candle period in minutes (1, 5, 15, 30, 60, 120, 240, 360, 720, 1440, 4320, 10080).
             timestamp: Earliest UNIX timestamp (seconds) to include.
         """
-        payload = self.request(
+        payload = await self.request(
             "GET",
             "/api/v3/k",
             params=_compact({"market": market, "limit": limit, "period": period, "timestamp": timestamp}),
@@ -241,7 +474,7 @@ class Client:
             for row in cast("list[Sequence[object]]", payload)
         ]
 
-    def depth(self, market: str, *, limit: int | None = None, sort_by_price: bool | None = None) -> Depth:
+    async def depth(self, market: str, *, limit: int | None = None, sort_by_price: bool | None = None) -> Depth:
         """Fetch the order book depth for `market` (`GET /api/v3/depth`).
 
         Args:
@@ -249,45 +482,45 @@ class Client:
             limit: Maximum number of price levels per side.
             sort_by_price: If `True`, sort each side by price.
         """
-        payload = self.request(
+        payload = await self.request(
             "GET",
             "/api/v3/depth",
             params=_compact({"market": market, "limit": limit, "sort_by_price": sort_by_price}),
         )
         return Depth.model_validate(payload)
 
-    def trades(self, market: str, *, timestamp: int | None = None, limit: int | None = None) -> list[PublicTrade]:
+    async def trades(self, market: str, *, timestamp: int | None = None, limit: int | None = None) -> list[PublicTrade]:
         """Fetch recent public trades for `market` (`GET /api/v3/trades`)."""
-        payload = self.request(
+        payload = await self.request(
             "GET",
             "/api/v3/trades",
             params=_compact({"market": market, "timestamp": timestamp, "limit": limit}),
         )
         return [PublicTrade.model_validate(item) for item in cast("list[object]", payload)]
 
-    def tickers(self, markets: Sequence[str]) -> list[Ticker]:
+    async def tickers(self, markets: Sequence[str]) -> list[Ticker]:
         """Fetch tickers for several markets in one request (`GET /api/v3/tickers`)."""
-        payload = self.request("GET", "/api/v3/tickers", params={"markets[]": list(markets)})
+        payload = await self.request("GET", "/api/v3/tickers", params={"markets[]": list(markets)})
         return [Ticker.model_validate(item) for item in cast("list[object]", payload)]
 
-    def ticker(self, market: str) -> Ticker:
+    async def ticker(self, market: str) -> Ticker:
         """Fetch the ticker for a single market (`GET /api/v3/ticker`)."""
-        payload = self.request("GET", "/api/v3/ticker", params={"market": market})
+        payload = await self.request("GET", "/api/v3/ticker", params={"market": market})
         return Ticker.model_validate(payload)
 
-    def info(self) -> UserInfo:
+    async def info(self) -> UserInfo:
         """Return the authenticated user profile and VIP info (`GET /api/v3/info`)."""
-        payload = self.request("GET", "/api/v3/info", auth=True)
+        payload = await self.request("GET", "/api/v3/info", auth=True)
         return UserInfo.model_validate(payload)
 
-    def accounts(self, *, wallet_type: str = "spot", currency: str | None = None) -> list[Account]:
+    async def accounts(self, *, wallet_type: str = "spot", currency: str | None = None) -> list[Account]:
         """List wallet account balances.
 
         Args:
             wallet_type: `"spot"` or `"m"` (M-Wallet).
             currency: Optional filter, e.g. `"twd"`.
         """
-        payload = self.request(
+        payload = await self.request(
             "GET",
             f"/api/v3/wallet/{wallet_type}/accounts",
             params=_compact({"currency": currency}),
@@ -295,7 +528,7 @@ class Client:
         )
         return [Account.model_validate(item) for item in cast("list[object]", payload)]
 
-    def wallet_trades(
+    async def wallet_trades(
         self,
         *,
         wallet_type: str = "spot",
@@ -306,7 +539,7 @@ class Client:
         limit: int | None = None,
     ) -> list[PrivateTrade]:
         """List the authenticated user's trades for a wallet."""
-        payload = self.request(
+        payload = await self.request(
             "GET",
             f"/api/v3/wallet/{wallet_type}/trades",
             params=_compact(
@@ -316,7 +549,7 @@ class Client:
         )
         return [PrivateTrade.model_validate(item) for item in cast("list[object]", payload)]
 
-    def open_orders(
+    async def open_orders(
         self,
         *,
         wallet_type: str = "spot",
@@ -326,7 +559,7 @@ class Client:
         limit: int | None = None,
     ) -> list[Order]:
         """List the user's open orders."""
-        payload = self.request(
+        payload = await self.request(
             "GET",
             f"/api/v3/wallet/{wallet_type}/orders/open",
             params=_compact({"market": market, "timestamp": timestamp, "order_by": order_by, "limit": limit}),
@@ -334,7 +567,7 @@ class Client:
         )
         return [Order.model_validate(item) for item in cast("list[object]", payload)]
 
-    def closed_orders(
+    async def closed_orders(
         self,
         *,
         wallet_type: str = "spot",
@@ -344,7 +577,7 @@ class Client:
         limit: int | None = None,
     ) -> list[Order]:
         """List the user's closed (filled or cancelled) orders."""
-        payload = self.request(
+        payload = await self.request(
             "GET",
             f"/api/v3/wallet/{wallet_type}/orders/closed",
             params=_compact({"market": market, "timestamp": timestamp, "order_by": order_by, "limit": limit}),
@@ -352,7 +585,7 @@ class Client:
         )
         return [Order.model_validate(item) for item in cast("list[object]", payload)]
 
-    def order_history(
+    async def order_history(
         self,
         market: str,
         *,
@@ -364,7 +597,7 @@ class Client:
 
         Use `from_id` to seek past the last id you saw.
         """
-        payload = self.request(
+        payload = await self.request(
             "GET",
             f"/api/v3/wallet/{wallet_type}/orders/history",
             params=_compact({"market": market, "from_id": from_id, "limit": limit}),
@@ -372,9 +605,9 @@ class Client:
         )
         return [Order.model_validate(item) for item in cast("list[object]", payload)]
 
-    def order(self, *, order_id: int | None = None, client_oid: str | None = None) -> Order:
+    async def order(self, *, order_id: int | None = None, client_oid: str | None = None) -> Order:
         """Fetch a single order by `order_id` or `client_oid`."""
-        payload = self.request(
+        payload = await self.request(
             "GET",
             "/api/v3/order",
             params=_compact({"id": order_id, "client_oid": client_oid}),
@@ -382,7 +615,7 @@ class Client:
         )
         return Order.model_validate(payload)
 
-    def create_order(
+    async def create_order(
         self,
         market: str,
         side: OrderSide | str,
@@ -412,7 +645,7 @@ class Client:
             ord_type: One of [`OrderType`][maicoin.v3.OrderType] (e.g. `"limit"`, `"market"`, `"stop_limit"`).
             group_id: Group id for OCO/grouped cancellation.
         """
-        payload = self.request(
+        payload = await self.request(
             "POST",
             f"/api/v3/wallet/{wallet_type}/order",
             params=_compact(
@@ -431,9 +664,9 @@ class Client:
         )
         return Order.model_validate(payload)
 
-    def cancel_order(self, *, order_id: int | None = None, client_oid: str | None = None) -> Order:
+    async def cancel_order(self, *, order_id: int | None = None, client_oid: str | None = None) -> Order:
         """Cancel an order by `order_id` or `client_oid`."""
-        payload = self.request(
+        payload = await self.request(
             "DELETE",
             "/api/v3/order",
             params=_compact({"id": order_id, "client_oid": client_oid}),
@@ -441,7 +674,7 @@ class Client:
         )
         return Order.model_validate(payload)
 
-    def cancel_orders(
+    async def cancel_orders(
         self,
         *,
         wallet_type: str = "spot",
@@ -450,7 +683,7 @@ class Client:
         group_id: int | None = None,
     ) -> list[Order]:
         """Bulk-cancel orders. Filters compose: omit them all to cancel everything in the wallet."""
-        payload = self.request(
+        payload = await self.request(
             "DELETE",
             f"/api/v3/wallet/{wallet_type}/orders",
             params=_compact({"market": market, "side": side, "group_id": group_id}),
@@ -458,9 +691,9 @@ class Client:
         )
         return [Order.model_validate(item) for item in cast("list[object]", payload)]
 
-    def order_trades(self, *, order_id: int | None = None, client_oid: str | None = None) -> list[PrivateTrade]:
+    async def order_trades(self, *, order_id: int | None = None, client_oid: str | None = None) -> list[PrivateTrade]:
         """List the executed trades for one order."""
-        payload = self.request(
+        payload = await self.request(
             "GET",
             "/api/v3/order/trades",
             params=_compact({"order_id": order_id, "client_oid": client_oid}),
@@ -468,18 +701,18 @@ class Client:
         )
         return [PrivateTrade.model_validate(item) for item in cast("list[object]", payload)]
 
-    def withdrawal(self, uuid: str) -> Withdrawal:
+    async def withdrawal(self, uuid: str) -> Withdrawal:
         """Look up a withdrawal by its `uuid`."""
-        payload = self.request("GET", "/api/v3/withdrawal", params={"uuid": uuid}, auth=True)
+        payload = await self.request("GET", "/api/v3/withdrawal", params={"uuid": uuid}, auth=True)
         return Withdrawal.model_validate(payload)
 
-    def create_withdrawal(self, *, withdraw_address_uuid: str, amount: str) -> Withdrawal:
+    async def create_withdrawal(self, *, withdraw_address_uuid: str, amount: str) -> Withdrawal:
         """Submit a crypto withdrawal to a pre-approved address.
 
         !!! warning
             State-changing. The address must already be whitelisted on MAX.
         """
-        payload = self.request(
+        payload = await self.request(
             "POST",
             "/api/v3/withdrawal",
             params={"withdraw_address_uuid": withdraw_address_uuid, "amount": amount},
@@ -487,16 +720,16 @@ class Client:
         )
         return Withdrawal.model_validate(payload)
 
-    def create_twd_withdrawal(self, amount: str) -> Withdrawal:
+    async def create_twd_withdrawal(self, amount: str) -> Withdrawal:
         """Submit a TWD bank withdrawal.
 
         !!! warning
             State-changing. The default bank account on file is debited.
         """
-        payload = self.request("POST", "/api/v3/withdrawal/twd", params={"amount": amount}, auth=True)
+        payload = await self.request("POST", "/api/v3/withdrawal/twd", params={"amount": amount}, auth=True)
         return Withdrawal.model_validate(payload)
 
-    def withdrawals(
+    async def withdrawals(
         self,
         *,
         currency: str | None = None,
@@ -506,7 +739,7 @@ class Client:
         limit: int | None = None,
     ) -> list[Withdrawal]:
         """List withdrawal history."""
-        payload = self.request(
+        payload = await self.request(
             "GET",
             "/api/v3/withdrawals",
             params=_compact(
@@ -516,7 +749,7 @@ class Client:
         )
         return [Withdrawal.model_validate(item) for item in cast("list[object]", payload)]
 
-    def withdraw_addresses(
+    async def withdraw_addresses(
         self,
         currency: str,
         *,
@@ -524,7 +757,7 @@ class Client:
         offset: int | None = None,
     ) -> list[WithdrawAddress]:
         """List the user's whitelisted withdrawal addresses for `currency`."""
-        payload = self.request(
+        payload = await self.request(
             "GET",
             "/api/v3/withdraw_addresses",
             params=_compact({"currency": currency, "limit": limit, "offset": offset}),
@@ -532,12 +765,12 @@ class Client:
         )
         return [WithdrawAddress.model_validate(item) for item in cast("list[object]", payload)]
 
-    def deposit(self, *, txid: str | None = None, uuid: str | None = None) -> Deposit:
+    async def deposit(self, *, txid: str | None = None, uuid: str | None = None) -> Deposit:
         """Look up a deposit by `txid` or `uuid`."""
-        payload = self.request("GET", "/api/v3/deposit", params=_compact({"txid": txid, "uuid": uuid}), auth=True)
+        payload = await self.request("GET", "/api/v3/deposit", params=_compact({"txid": txid, "uuid": uuid}), auth=True)
         return Deposit.model_validate(payload)
 
-    def deposits(
+    async def deposits(
         self,
         *,
         currency: str | None = None,
@@ -546,7 +779,7 @@ class Client:
         limit: int | None = None,
     ) -> list[Deposit]:
         """List deposit history."""
-        payload = self.request(
+        payload = await self.request(
             "GET",
             "/api/v3/deposits",
             params=_compact({"currency": currency, "timestamp": timestamp, "order": order, "limit": limit}),
@@ -554,9 +787,9 @@ class Client:
         )
         return [Deposit.model_validate(item) for item in cast("list[object]", payload)]
 
-    def deposit_address(self, currency_version: str) -> DepositAddress:
+    async def deposit_address(self, currency_version: str) -> DepositAddress:
         """Get the deposit address for a specific currency/network version."""
-        payload = self.request(
+        payload = await self.request(
             "GET",
             "/api/v3/deposit_address",
             params={"currency_version": currency_version},
@@ -564,7 +797,7 @@ class Client:
         )
         return DepositAddress.model_validate(payload)
 
-    def internal_transfers(
+    async def internal_transfers(
         self,
         side: str,
         *,
@@ -578,7 +811,7 @@ class Client:
         Args:
             side: `"in"` or `"out"`.
         """
-        payload = self.request(
+        payload = await self.request(
             "GET",
             "/api/v3/internal_transfers",
             params=_compact(
@@ -588,7 +821,7 @@ class Client:
         )
         return [InternalTransfer.model_validate(item) for item in cast("list[object]", payload)]
 
-    def rewards(
+    async def rewards(
         self,
         *,
         reward_type: str | None = None,
@@ -598,7 +831,7 @@ class Client:
         limit: int | None = None,
     ) -> list[Reward]:
         """List reward history (referrals, mining, staking, etc.)."""
-        payload = self.request(
+        payload = await self.request(
             "GET",
             "/api/v3/rewards",
             params=_compact(
@@ -614,11 +847,11 @@ class Client:
         )
         return [Reward.model_validate(item) for item in cast("list[object]", payload)]
 
-    def fund_transaction_deposits(
+    async def fund_transaction_deposits(
         self, *, timestamp: int | None = None, order: str | None = None, limit: int | None = None
     ) -> list[FundTransactionDeposit]:
         """List fund-transaction deposits (off-exchange settlement)."""
-        payload = self.request(
+        payload = await self.request(
             "GET",
             "/api/v3/fund_transactions/deposits",
             params=_compact({"timestamp": timestamp, "order": order, "limit": limit}),
@@ -626,16 +859,16 @@ class Client:
         )
         return [FundTransactionDeposit.model_validate(item) for item in cast("list[object]", payload)]
 
-    def fund_transaction_deposit(self, sn: str) -> FundTransactionDeposit:
+    async def fund_transaction_deposit(self, sn: str) -> FundTransactionDeposit:
         """Look up a fund-transaction deposit by `sn`."""
-        payload = self.request("GET", "/api/v3/fund_transactions/deposit", params={"sn": sn}, auth=True)
+        payload = await self.request("GET", "/api/v3/fund_transactions/deposit", params={"sn": sn}, auth=True)
         return FundTransactionDeposit.model_validate(payload)
 
-    def fund_transaction_withdrawals(
+    async def fund_transaction_withdrawals(
         self, *, timestamp: int | None = None, order: str | None = None, limit: int | None = None
     ) -> list[FundTransactionWithdrawal]:
         """List fund-transaction withdrawals."""
-        payload = self.request(
+        payload = await self.request(
             "GET",
             "/api/v3/fund_transactions/withdrawals",
             params=_compact({"timestamp": timestamp, "order": order, "limit": limit}),
@@ -643,16 +876,16 @@ class Client:
         )
         return [FundTransactionWithdrawal.model_validate(item) for item in cast("list[object]", payload)]
 
-    def fund_transaction_withdrawal(self, sn: str) -> FundTransactionWithdrawal:
+    async def fund_transaction_withdrawal(self, sn: str) -> FundTransactionWithdrawal:
         """Look up a fund-transaction withdrawal by `sn`."""
-        payload = self.request("GET", "/api/v3/fund_transactions/withdrawal", params={"sn": sn}, auth=True)
+        payload = await self.request("GET", "/api/v3/fund_transactions/withdrawal", params={"sn": sn}, auth=True)
         return FundTransactionWithdrawal.model_validate(payload)
 
-    def fund_transaction_transfers(
+    async def fund_transaction_transfers(
         self, *, timestamp: int | None = None, order: str | None = None, limit: int | None = None
     ) -> list[FundTransactionTransfer]:
         """List fund-transaction transfers."""
-        payload = self.request(
+        payload = await self.request(
             "GET",
             "/api/v3/fund_transactions/transfers",
             params=_compact({"timestamp": timestamp, "order": order, "limit": limit}),
@@ -660,12 +893,12 @@ class Client:
         )
         return [FundTransactionTransfer.model_validate(item) for item in cast("list[object]", payload)]
 
-    def fund_transaction_transfer(self, sn: str) -> FundTransactionTransfer:
+    async def fund_transaction_transfer(self, sn: str) -> FundTransactionTransfer:
         """Look up a fund-transaction transfer by `sn`."""
-        payload = self.request("GET", "/api/v3/fund_transactions/transfer", params={"sn": sn}, auth=True)
+        payload = await self.request("GET", "/api/v3/fund_transactions/transfer", params={"sn": sn}, auth=True)
         return FundTransactionTransfer.model_validate(payload)
 
-    def create_convert(
+    async def create_convert(
         self,
         *,
         from_currency: str,
@@ -677,7 +910,7 @@ class Client:
 
         Specify exactly one of `from_amount` or `to_amount`.
         """
-        payload = self.request(
+        payload = await self.request(
             "POST",
             "/api/v3/convert",
             params=_compact(
@@ -692,16 +925,16 @@ class Client:
         )
         return ConvertOrder.model_validate(payload)
 
-    def convert(self, sn: str) -> ConvertOrder:
+    async def convert(self, sn: str) -> ConvertOrder:
         """Look up a convert order by `sn`."""
-        payload = self.request("GET", "/api/v3/convert", params={"sn": sn}, auth=True)
+        payload = await self.request("GET", "/api/v3/convert", params={"sn": sn}, auth=True)
         return ConvertOrder.model_validate(payload)
 
-    def converts(
+    async def converts(
         self, *, timestamp: int | None = None, order: str | None = None, limit: int | None = None
     ) -> list[ConvertOrder]:
         """List convert order history."""
-        payload = self.request(
+        payload = await self.request(
             "GET",
             "/api/v3/converts",
             params=_compact({"timestamp": timestamp, "order": order, "limit": limit}),
@@ -709,12 +942,12 @@ class Client:
         )
         return [ConvertOrder.model_validate(item) for item in cast("list[object]", payload)]
 
-    def m_wallet_index_prices(self) -> dict[str, str]:
+    async def m_wallet_index_prices(self) -> dict[str, str]:
         """Return current M-Wallet index prices keyed by market id."""
-        payload = self.request("GET", "/api/v3/wallet/m/index_prices")
+        payload = await self.request("GET", "/api/v3/wallet/m/index_prices")
         return cast("dict[str, str]", payload)
 
-    def m_wallet_historical_index_prices(
+    async def m_wallet_historical_index_prices(
         self,
         market: str,
         *,
@@ -728,32 +961,32 @@ class Client:
             start_time: Inclusive start (UNIX milliseconds).
             end_time: Inclusive end (UNIX milliseconds).
         """
-        payload = self.request(
+        payload = await self.request(
             "GET",
             "/api/v3/wallet/m/historical_index_prices",
             params={"market": market, "start_time": start_time, "end_time": end_time},
         )
         return [HistoricalIndexPrice.model_validate(item) for item in cast("list[object]", payload)]
 
-    def m_wallet_limits(self) -> dict[str, str]:
+    async def m_wallet_limits(self) -> dict[str, str]:
         """Return per-currency M-Wallet borrow limits."""
-        payload = self.request("GET", "/api/v3/wallet/m/limits")
+        payload = await self.request("GET", "/api/v3/wallet/m/limits")
         return cast("dict[str, str]", payload)
 
-    def m_wallet_interest_rates(self) -> dict[str, InterestRate]:
+    async def m_wallet_interest_rates(self) -> dict[str, InterestRate]:
         """Return current M-Wallet interest rates per currency."""
-        payload = self.request("GET", "/api/v3/wallet/m/interest_rates")
+        payload = await self.request("GET", "/api/v3/wallet/m/interest_rates")
         return {
             currency: InterestRate.model_validate(rate) for currency, rate in cast("dict[str, object]", payload).items()
         }
 
-    def create_m_wallet_loan(self, *, currency: str, amount: str) -> MWalletLoan:
+    async def create_m_wallet_loan(self, *, currency: str, amount: str) -> MWalletLoan:
         """Borrow `amount` of `currency` into the M-Wallet.
 
         !!! warning
             State-changing — accrues interest until repaid.
         """
-        payload = self.request(
+        payload = await self.request(
             "POST",
             "/api/v3/wallet/m/loan",
             params={"currency": currency, "amount": amount},
@@ -761,7 +994,7 @@ class Client:
         )
         return MWalletLoan.model_validate(payload)
 
-    def m_wallet_loans(
+    async def m_wallet_loans(
         self,
         currency: str,
         *,
@@ -770,7 +1003,7 @@ class Client:
         limit: int | None = None,
     ) -> list[MWalletLoan]:
         """List M-Wallet loans for `currency`."""
-        payload = self.request(
+        payload = await self.request(
             "GET",
             "/api/v3/wallet/m/loans",
             params=_compact({"currency": currency, "timestamp": timestamp, "order": order, "limit": limit}),
@@ -778,7 +1011,7 @@ class Client:
         )
         return [MWalletLoan.model_validate(item) for item in cast("list[object]", payload)]
 
-    def create_m_wallet_transfer(self, *, currency: str, amount: str, side: str) -> MWalletTransfer:
+    async def create_m_wallet_transfer(self, *, currency: str, amount: str, side: str) -> MWalletTransfer:
         """Transfer between spot and M-Wallet.
 
         Args:
@@ -786,7 +1019,7 @@ class Client:
             amount: Decimal amount as a string.
             side: `"in"` (spot → M-Wallet) or `"out"` (M-Wallet → spot).
         """
-        payload = self.request(
+        payload = await self.request(
             "POST",
             "/api/v3/wallet/m/transfer",
             params={"currency": currency, "amount": amount, "side": side},
@@ -794,7 +1027,7 @@ class Client:
         )
         return MWalletTransfer.model_validate(payload)
 
-    def m_wallet_transfers(
+    async def m_wallet_transfers(
         self,
         *,
         currency: str,
@@ -804,7 +1037,7 @@ class Client:
         limit: int | None = None,
     ) -> list[MWalletTransfer]:
         """List M-Wallet transfer history."""
-        payload = self.request(
+        payload = await self.request(
             "GET",
             "/api/v3/wallet/m/transfers",
             params=_compact(
@@ -814,13 +1047,13 @@ class Client:
         )
         return [MWalletTransfer.model_validate(item) for item in cast("list[object]", payload)]
 
-    def create_m_wallet_repayment(self, *, currency: str, amount: str) -> MWalletRepayment:
+    async def create_m_wallet_repayment(self, *, currency: str, amount: str) -> MWalletRepayment:
         """Repay an M-Wallet loan.
 
         !!! warning
             State-changing.
         """
-        payload = self.request(
+        payload = await self.request(
             "POST",
             "/api/v3/wallet/m/repayment",
             params={"currency": currency, "amount": amount},
@@ -828,7 +1061,7 @@ class Client:
         )
         return MWalletRepayment.model_validate(payload)
 
-    def m_wallet_repayments(
+    async def m_wallet_repayments(
         self,
         currency: str,
         *,
@@ -837,7 +1070,7 @@ class Client:
         limit: int | None = None,
     ) -> list[MWalletRepayment]:
         """List M-Wallet repayment history for `currency`."""
-        payload = self.request(
+        payload = await self.request(
             "GET",
             "/api/v3/wallet/m/repayments",
             params=_compact({"currency": currency, "timestamp": timestamp, "order": order, "limit": limit}),
@@ -845,11 +1078,11 @@ class Client:
         )
         return [MWalletRepayment.model_validate(item) for item in cast("list[object]", payload)]
 
-    def m_wallet_liquidations(
+    async def m_wallet_liquidations(
         self, *, timestamp: int | None = None, order: str | None = None, limit: int | None = None
     ) -> list[MWalletLiquidation]:
         """List M-Wallet liquidation events."""
-        payload = self.request(
+        payload = await self.request(
             "GET",
             "/api/v3/wallet/m/liquidations",
             params=_compact({"timestamp": timestamp, "order": order, "limit": limit}),
@@ -857,12 +1090,12 @@ class Client:
         )
         return [MWalletLiquidation.model_validate(item) for item in cast("list[object]", payload)]
 
-    def m_wallet_liquidation(self, sn: str) -> MWalletLiquidationDetail:
+    async def m_wallet_liquidation(self, sn: str) -> MWalletLiquidationDetail:
         """Look up a single M-Wallet liquidation, including order/repayment details."""
-        payload = self.request("GET", "/api/v3/wallet/m/liquidation", params={"sn": sn}, auth=True)
+        payload = await self.request("GET", "/api/v3/wallet/m/liquidation", params={"sn": sn}, auth=True)
         return MWalletLiquidationDetail.model_validate(payload)
 
-    def m_wallet_interests(
+    async def m_wallet_interests(
         self,
         *,
         currency: str | None = None,
@@ -871,7 +1104,7 @@ class Client:
         limit: int | None = None,
     ) -> list[MWalletInterest]:
         """List M-Wallet interest accruals."""
-        payload = self.request(
+        payload = await self.request(
             "GET",
             "/api/v3/wallet/m/interests",
             params=_compact({"currency": currency, "timestamp": timestamp, "order": order, "limit": limit}),
@@ -879,7 +1112,7 @@ class Client:
         )
         return [MWalletInterest.model_validate(item) for item in cast("list[object]", payload)]
 
-    def m_wallet_ad_ratio(self) -> MWalletADRatio:
+    async def m_wallet_ad_ratio(self) -> MWalletADRatio:
         """Return the M-Wallet account debt ratio (asset-to-debt and margin level)."""
-        payload = self.request("GET", "/api/v3/wallet/m/ad_ratio", auth=True)
+        payload = await self.request("GET", "/api/v3/wallet/m/ad_ratio", auth=True)
         return MWalletADRatio.model_validate(payload)

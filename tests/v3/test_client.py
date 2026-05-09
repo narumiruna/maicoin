@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Mapping
 from typing import cast
 
@@ -25,10 +26,14 @@ class FakeSession:
     def __init__(self, response: FakeResponse) -> None:
         self.response = response
         self.calls: list[dict[str, object]] = []
+        self.closed = False
 
-    def request(self, method: str, url: str, **kwargs: object) -> FakeResponse:
+    async def request(self, method: str, url: str, **kwargs: object) -> FakeResponse:
         self.calls.append({"method": method, "url": url, "kwargs": kwargs})
         return self.response
+
+    async def aclose(self) -> None:
+        self.closed = True
 
 
 def last_kwargs(session: FakeSession) -> Mapping[str, object]:
@@ -39,7 +44,7 @@ def test_get_request_sends_params_as_query_params() -> None:
     session = FakeSession(FakeResponse([{"id": "btctwd"}]))
     client = Client(base_url="https://example.test", session=session)
 
-    assert client.request("GET", "/api/v3/markets", params={"foo": "bar"}) == [{"id": "btctwd"}]
+    assert asyncio.run(client.request("GET", "/api/v3/markets", params={"foo": "bar"})) == [{"id": "btctwd"}]
 
     assert session.calls[-1]["method"] == "GET"
     assert session.calls[-1]["url"] == "https://example.test/api/v3/markets"
@@ -51,7 +56,7 @@ def test_post_request_sends_params_as_json_body() -> None:
     session = FakeSession(FakeResponse({"id": 1}))
     client = Client(base_url="https://example.test", session=session)
 
-    assert client.request("POST", "api/v3/order", params={"market": "btctwd"}) == {"id": 1}
+    assert asyncio.run(client.request("POST", "api/v3/order", params={"market": "btctwd"})) == {"id": 1}
 
     assert session.calls[-1]["method"] == "POST"
     assert session.calls[-1]["url"] == "https://example.test/api/v3/order"
@@ -63,7 +68,7 @@ def test_delete_request_sends_params_as_json_body() -> None:
     session = FakeSession(FakeResponse({"ok": True}))
     client = Client(base_url="https://example.test", session=session)
 
-    assert client.request("DELETE", "/api/v3/order", params={"id": 1}) == {"ok": True}
+    assert asyncio.run(client.request("DELETE", "/api/v3/order", params={"id": 1})) == {"ok": True}
 
     assert session.calls[-1]["method"] == "DELETE"
     assert last_kwargs(session)["json"] == {"id": 1}
@@ -80,7 +85,7 @@ def test_authenticated_request_adds_max_headers() -> None:
         nonce_factory=lambda: 123456,
     )
 
-    client.request("GET", "/api/v3/wallet/spot/accounts", params={"currency": "btc"}, auth=True)
+    asyncio.run(client.request("GET", "/api/v3/wallet/spot/accounts", params={"currency": "btc"}, auth=True))
 
     headers = cast("Mapping[str, str]", last_kwargs(session)["headers"])
     assert headers["X-MAX-ACCESSKEY"] == "key"
@@ -99,18 +104,36 @@ def test_http_error_response_raises() -> None:
     )
 
     with pytest.raises(MaxHTTPError, match="invalid nonce"):
-        client.request("GET", "/api/v3/wallet/spot/accounts")
+        asyncio.run(client.request("GET", "/api/v3/wallet/spot/accounts"))
 
 
 def test_api_error_payload_raises() -> None:
     client = Client(base_url="https://example.test", session=FakeSession(FakeResponse({"error": "bad request"})))
 
     with pytest.raises(MaxAPIError, match="bad request"):
-        client.request("GET", "/api/v3/ticker")
+        asyncio.run(client.request("GET", "/api/v3/ticker"))
 
 
 def test_authenticated_request_requires_credentials() -> None:
     client = Client(base_url="https://example.test", session=FakeSession(FakeResponse({})))
 
     with pytest.raises(ValueError, match="api_key and api_secret"):
-        client.request("GET", "/api/v3/wallet/spot/accounts", auth=True)
+        asyncio.run(client.request("GET", "/api/v3/wallet/spot/accounts", auth=True))
+
+
+def test_request_sync_wrapper_runs_async_request() -> None:
+    session = FakeSession(FakeResponse({"ok": True}))
+    client = Client(base_url="https://example.test", session=session)
+
+    assert client.request_sync("GET", "/api/v3/ping") == {"ok": True}
+    assert session.calls[-1]["url"] == "https://example.test/api/v3/ping"
+
+
+def test_async_context_manager_closes_session() -> None:
+    async def run() -> FakeSession:
+        session = FakeSession(FakeResponse({}))
+        async with Client(session=session):
+            assert not session.closed
+        return session
+
+    assert asyncio.run(run()).closed
