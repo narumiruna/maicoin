@@ -1,74 +1,23 @@
 from __future__ import annotations
 
-import base64
-import json
-from collections.abc import Mapping
-from typing import cast
-
 import pytest
 
 from maicoin.v3 import Account
-from maicoin.v3 import Client
 from maicoin.v3 import Order
 from maicoin.v3 import OrderSide
 from maicoin.v3 import OrderState
 from maicoin.v3 import OrderType
 from maicoin.v3 import PrivateTrade
 from maicoin.v3 import UserInfo
+from tests.v3.helpers import FakeSession
+from tests.v3.helpers import PagedFakeSession
+from tests.v3.helpers import authenticated_client
+from tests.v3.helpers import call_kwargs
+from tests.v3.helpers import last_json
+from tests.v3.helpers import last_kwargs
+from tests.v3.helpers import last_payload
 
 pytestmark = pytest.mark.anyio
-
-
-class FakeResponse:
-    def __init__(self, payload: object) -> None:
-        self.payload = payload
-        self.status_code = 200
-        self.content = b"{}"
-        self.text = str(payload)
-
-    def json(self) -> object:
-        return self.payload
-
-
-class FakeSession:
-    def __init__(self, payload: object) -> None:
-        self.response = FakeResponse(payload)
-        self.calls: list[dict[str, object]] = []
-
-    async def request(self, method: str, url: str, **kwargs: object) -> FakeResponse:
-        self.calls.append({"method": method, "url": url, "kwargs": kwargs})
-        return self.response
-
-
-class PagedFakeSession:
-    def __init__(self, pages: list[object]) -> None:
-        self.pages = pages
-        self.calls: list[dict[str, object]] = []
-
-    async def request(self, method: str, url: str, **kwargs: object) -> FakeResponse:
-        self.calls.append({"method": method, "url": url, "kwargs": kwargs})
-        page = self.pages[len(self.calls) - 1]
-        return FakeResponse(page)
-
-
-def last_kwargs(session: FakeSession | PagedFakeSession) -> Mapping[str, object]:
-    return cast("Mapping[str, object]", session.calls[-1]["kwargs"])
-
-
-def last_payload(session: FakeSession) -> Mapping[str, object]:
-    headers = cast("Mapping[str, str]", last_kwargs(session)["headers"])
-    payload = base64.b64decode(headers["X-MAX-PAYLOAD"]).decode()
-    return cast("Mapping[str, object]", json.loads(payload))
-
-
-def authenticated_client(session: FakeSession | PagedFakeSession) -> Client:
-    return Client(
-        api_key="key",
-        api_secret="secret",
-        base_url="https://example.test",
-        session=session,
-        nonce_factory=lambda: 123456,
-    )
 
 
 def order_payload(**overrides: object) -> dict[str, object]:
@@ -204,14 +153,14 @@ async def test_iter_wallet_trades_advances_from_id_and_stops_at_max_items() -> N
     trades = [trade async for trade in client.iter_wallet_trades(market="ethtwd", from_id=0, page_limit=2, max_items=3)]
 
     assert [trade.id for trade in trades] == [1, 2, 3]
-    assert cast("Mapping[str, object]", session.calls[0]["kwargs"])["params"] == {
+    assert call_kwargs(session, 0)["params"] == {
         "nonce": 123456,
         "market": "ethtwd",
         "from_id": 0,
         "order": "asc",
         "limit": 2,
     }
-    assert cast("Mapping[str, object]", session.calls[1]["kwargs"])["params"] == {
+    assert call_kwargs(session, 1)["params"] == {
         "nonce": 123456,
         "market": "ethtwd",
         "from_id": 2,
@@ -232,13 +181,13 @@ async def test_iter_order_history_advances_from_id_until_short_page() -> None:
     orders = [order async for order in client.iter_order_history("ethtwd", from_id=0, page_limit=2)]
 
     assert [order.id for order in orders] == [1, 2, 3]
-    assert cast("Mapping[str, object]", session.calls[0]["kwargs"])["params"] == {
+    assert call_kwargs(session, 0)["params"] == {
         "nonce": 123456,
         "market": "ethtwd",
         "from_id": 0,
         "limit": 2,
     }
-    assert cast("Mapping[str, object]", session.calls[1]["kwargs"])["params"] == {
+    assert call_kwargs(session, 1)["params"] == {
         "nonce": 123456,
         "market": "ethtwd",
         "from_id": 2,
@@ -310,7 +259,7 @@ async def test_create_and_cancel_order_send_authenticated_json_body() -> None:
     assert created.id == 87
     assert create_session.calls[-1]["method"] == "POST"
     assert create_session.calls[-1]["url"] == "https://example.test/api/v3/wallet/spot/order"
-    assert last_kwargs(create_session)["json"] == {
+    assert last_json(create_session) == {
         "nonce": 123456,
         "market": "ethtwd",
         "side": "buy",
@@ -326,10 +275,10 @@ async def test_create_and_cancel_order_send_authenticated_json_body() -> None:
     assert cancelled_order.state == "cancel"
     assert cancel_session.calls[-1]["method"] == "DELETE"
     assert cancel_session.calls[-1]["url"] == "https://example.test/api/v3/order"
-    assert last_kwargs(cancel_session)["json"] == {"nonce": 123456, "id": 87}
+    assert last_json(cancel_session) == {"nonce": 123456, "id": 87}
 
     cancel_all_session = FakeSession([order_payload(state="cancel")])
     cancelled = await authenticated_client(cancel_all_session).cancel_orders(market="ethtwd", side="buy")
     assert cancelled[0].state == "cancel"
     assert cancel_all_session.calls[-1]["url"] == "https://example.test/api/v3/wallet/spot/orders"
-    assert last_kwargs(cancel_all_session)["json"] == {"nonce": 123456, "market": "ethtwd", "side": "buy"}
+    assert last_json(cancel_all_session) == {"nonce": 123456, "market": "ethtwd", "side": "buy"}

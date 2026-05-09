@@ -1,44 +1,17 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import cast
-
 import pytest
 
-from maicoin.v3 import Client
 from maicoin.v3 import Depth
 from maicoin.v3 import InterestRate
 from maicoin.v3 import KLine
 from maicoin.v3 import Market
 from maicoin.v3 import Ticker
+from tests.v3.helpers import FakeSession
+from tests.v3.helpers import last_params
+from tests.v3.helpers import public_client
 
 pytestmark = pytest.mark.anyio
-
-
-class FakeResponse:
-    def __init__(self, payload: object) -> None:
-        self.payload = payload
-        self.status_code = 200
-        self.content = b"{}"
-        self.text = str(payload)
-
-    def json(self) -> object:
-        return self.payload
-
-
-class FakeSession:
-    def __init__(self, payload: object) -> None:
-        self.response = FakeResponse(payload)
-        self.calls: list[dict[str, object]] = []
-
-    async def request(self, method: str, url: str, **kwargs: object) -> FakeResponse:
-        self.calls.append({"method": method, "url": url, "kwargs": kwargs})
-        return self.response
-
-
-def last_params(session: FakeSession) -> Mapping[str, object]:
-    kwargs = cast("Mapping[str, object]", session.calls[-1]["kwargs"])
-    return cast("Mapping[str, object]", kwargs["params"])
 
 
 async def test_markets_returns_market_models() -> None:
@@ -57,7 +30,7 @@ async def test_markets_returns_market_models() -> None:
             }
         ]
     )
-    client = Client(base_url="https://example.test", session=session)
+    client = public_client(session)
 
     markets = await client.markets()
 
@@ -107,7 +80,7 @@ async def test_currencies_returns_currency_models() -> None:
             }
         ]
     )
-    client = Client(base_url="https://example.test", session=session)
+    client = public_client(session)
 
     currencies = await client.currencies()
 
@@ -117,14 +90,14 @@ async def test_currencies_returns_currency_models() -> None:
 
 
 async def test_timestamp_returns_timestamp_model() -> None:
-    client = Client(base_url="https://example.test", session=FakeSession({"timestamp": 1678766175}))
+    client = public_client(FakeSession({"timestamp": 1678766175}))
 
     assert (await client.timestamp()).timestamp == 1678766175
 
 
 async def test_kline_constructs_params_and_parses_rows() -> None:
     session = FakeSession([[1678766100, "1", "2", "0.5", "1.5", "42"]])
-    client = Client(base_url="https://example.test", session=session)
+    client = public_client(session)
 
     klines = await client.kline("btctwd", limit=1, period=5, timestamp=1678766100)
 
@@ -142,7 +115,7 @@ async def test_depth_constructs_params_and_parses_depth() -> None:
             "bids": [["2520028.3", "0.11903796"]],
         }
     )
-    client = Client(base_url="https://example.test", session=session)
+    client = public_client(session)
 
     depth = await client.depth("btctwd", limit=1, sort_by_price=True)
 
@@ -170,7 +143,7 @@ async def test_trades_constructs_params_and_parses_trades() -> None:
             }
         ]
     )
-    client = Client(base_url="https://example.test", session=session)
+    client = public_client(session)
 
     trades = await client.trades("ethtwd", timestamp=1521726960357, limit=1)
 
@@ -196,7 +169,7 @@ async def test_tickers_uses_bracket_array_param_and_parses_tickers() -> None:
         "vol_in_quote": "2005000.0",
     }
     session = FakeSession([ticker_payload])
-    client = Client(base_url="https://example.test", session=session)
+    client = public_client(session)
 
     tickers = await client.tickers(["btctwd", "ethusdt"])
 
@@ -222,7 +195,7 @@ async def test_ticker_constructs_params_and_parses_ticker() -> None:
             "vol_in_quote": "2005000.0",
         }
     )
-    client = Client(base_url="https://example.test", session=session)
+    client = public_client(session)
 
     ticker = await client.ticker("btctwd")
 
@@ -231,20 +204,20 @@ async def test_ticker_constructs_params_and_parses_ticker() -> None:
 
 
 async def test_m_wallet_public_methods_parse_payloads() -> None:
-    assert await Client(session=FakeSession({"btcusdt": "79848.60666667"})).m_wallet_index_prices() == {
+    assert await public_client(FakeSession({"btcusdt": "79848.60666667"})).m_wallet_index_prices() == {
         "btcusdt": "79848.60666667"
     }
-    assert await Client(session=FakeSession({"btc": "10.67520286"})).m_wallet_limits() == {"btc": "10.67520286"}
+    assert await public_client(FakeSession({"btc": "10.67520286"})).m_wallet_limits() == {"btc": "10.67520286"}
 
-    rates = await Client(
-        session=FakeSession({"btc": {"hourly_interest_rate": "0.00000126", "next_hourly_interest_rate": "0.00000126"}})
+    rates = await public_client(
+        FakeSession({"btc": {"hourly_interest_rate": "0.00000126", "next_hourly_interest_rate": "0.00000126"}})
     ).m_wallet_interest_rates()
     assert rates == {"btc": InterestRate(hourly_interest_rate="0.00000126", next_hourly_interest_rate="0.00000126")}
 
 
 async def test_m_wallet_historical_index_prices_constructs_params_and_parses_prices() -> None:
     session = FakeSession([{"timestamp": "1644572610000", "price": "43497.56666666"}])
-    client = Client(base_url="https://example.test", session=session)
+    client = public_client(session)
 
     prices = await client.m_wallet_historical_index_prices("btcusdt", start_time=1644572610000, end_time=1644572670000)
 
