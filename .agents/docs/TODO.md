@@ -18,12 +18,6 @@ Plan: [`plans/client-resilience-and-ergonomics-plan.md`](plans/client-resilience
 - [ ] Add async pagination helpers / async iterators for historical and list endpoints, for example `async for order in client.iter_order_history(...)`.
 - [ ] Expand async lifecycle docs and examples, including `async with Client()`, `await client.aclose()`, `_sync` limitations in existing event loops, and a FastAPI dependency example.
 
-## Dataclass Low-Level Models
-
-Plan: [`plans/dataclass-low-level-models-plan.md`](plans/dataclass-low-level-models-plan.md)
-
-- [ ] Re-evaluate a dataclass data layer with benchmarks before implementation while keeping Pydantic as the high-level validated API.
-
 ## Completed Milestones
 
 - REST v3 foundation, public endpoints, private order/trade/account endpoints, wallet funds, convert, and M-Wallet private endpoints.
