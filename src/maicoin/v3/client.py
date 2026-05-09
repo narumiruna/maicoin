@@ -171,217 +171,368 @@ class Client:
 
         return asyncio.run(runner())
 
-    def request_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def request_sync(
+        self, method: str, path: str, params: Mapping[str, object] | None = None, *, auth: bool = False
+    ) -> object:
         """Synchronous convenience wrapper."""
-        return self._run_sync("request", *args, **kwargs)
+        return self._run_sync("request", method, path, params, auth=auth)
 
-    def markets_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def markets_sync(self) -> list[Market]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("markets", *args, **kwargs)
+        return self._run_sync("markets")
 
-    def currencies_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def currencies_sync(self) -> list[Currency]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("currencies", *args, **kwargs)
+        return self._run_sync("currencies")
 
-    def timestamp_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def timestamp_sync(self) -> Timestamp:
         """Synchronous convenience wrapper."""
-        return self._run_sync("timestamp", *args, **kwargs)
+        return self._run_sync("timestamp")
 
-    def kline_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def kline_sync(self, market: str, *, limit: int = 30, period: int = 1, timestamp: int | None = None) -> list[KLine]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("kline", *args, **kwargs)
+        return self._run_sync("kline", market, limit=limit, period=period, timestamp=timestamp)
 
-    def depth_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def depth_sync(self, market: str, *, limit: int | None = None, sort_by_price: bool | None = None) -> Depth:
         """Synchronous convenience wrapper."""
-        return self._run_sync("depth", *args, **kwargs)
+        return self._run_sync("depth", market, limit=limit, sort_by_price=sort_by_price)
 
-    def trades_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def trades_sync(self, market: str, *, timestamp: int | None = None, limit: int | None = None) -> list[PublicTrade]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("trades", *args, **kwargs)
+        return self._run_sync("trades", market, timestamp=timestamp, limit=limit)
 
-    def tickers_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def tickers_sync(self, markets: Sequence[str]) -> list[Ticker]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("tickers", *args, **kwargs)
+        return self._run_sync("tickers", markets)
 
-    def ticker_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def ticker_sync(self, market: str) -> Ticker:
         """Synchronous convenience wrapper."""
-        return self._run_sync("ticker", *args, **kwargs)
+        return self._run_sync("ticker", market)
 
-    def info_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def info_sync(self) -> UserInfo:
         """Synchronous convenience wrapper."""
-        return self._run_sync("info", *args, **kwargs)
+        return self._run_sync("info")
 
-    def accounts_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def accounts_sync(self, *, wallet_type: str = "spot", currency: str | None = None) -> list[Account]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("accounts", *args, **kwargs)
+        return self._run_sync("accounts", wallet_type=wallet_type, currency=currency)
 
-    def wallet_trades_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def wallet_trades_sync(
+        self,
+        *,
+        wallet_type: str = "spot",
+        market: str | None = None,
+        timestamp: int | None = None,
+        from_id: int | None = None,
+        order: str | None = None,
+        limit: int | None = None,
+    ) -> list[PrivateTrade]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("wallet_trades", *args, **kwargs)
+        return self._run_sync(
+            "wallet_trades",
+            wallet_type=wallet_type,
+            market=market,
+            timestamp=timestamp,
+            from_id=from_id,
+            order=order,
+            limit=limit,
+        )
 
-    def open_orders_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def open_orders_sync(
+        self,
+        *,
+        wallet_type: str = "spot",
+        market: str | None = None,
+        timestamp: int | None = None,
+        order_by: str | None = None,
+        limit: int | None = None,
+    ) -> list[Order]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("open_orders", *args, **kwargs)
+        return self._run_sync(
+            "open_orders", wallet_type=wallet_type, market=market, timestamp=timestamp, order_by=order_by, limit=limit
+        )
 
-    def closed_orders_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def closed_orders_sync(
+        self,
+        *,
+        wallet_type: str = "spot",
+        market: str | None = None,
+        timestamp: int | None = None,
+        order_by: str | None = None,
+        limit: int | None = None,
+    ) -> list[Order]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("closed_orders", *args, **kwargs)
+        return self._run_sync(
+            "closed_orders", wallet_type=wallet_type, market=market, timestamp=timestamp, order_by=order_by, limit=limit
+        )
 
-    def order_history_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def order_history_sync(
+        self, market: str, *, wallet_type: str = "spot", from_id: int | None = None, limit: int | None = None
+    ) -> list[Order]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("order_history", *args, **kwargs)
+        return self._run_sync("order_history", market, wallet_type=wallet_type, from_id=from_id, limit=limit)
 
-    def order_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def order_sync(self, *, order_id: int | None = None, client_oid: str | None = None) -> Order:
         """Synchronous convenience wrapper."""
-        return self._run_sync("order", *args, **kwargs)
+        return self._run_sync("order", order_id=order_id, client_oid=client_oid)
 
-    def create_order_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def create_order_sync(
+        self,
+        market: str,
+        side: OrderSide | str,
+        volume: str,
+        *,
+        wallet_type: str = "spot",
+        price: str | None = None,
+        client_oid: str | None = None,
+        stop_price: str | None = None,
+        ord_type: OrderType | str | None = None,
+        group_id: int | None = None,
+    ) -> Order:
         """Synchronous convenience wrapper."""
-        return self._run_sync("create_order", *args, **kwargs)
+        return self._run_sync(
+            "create_order",
+            market,
+            side,
+            volume,
+            wallet_type=wallet_type,
+            price=price,
+            client_oid=client_oid,
+            stop_price=stop_price,
+            ord_type=ord_type,
+            group_id=group_id,
+        )
 
-    def cancel_order_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def cancel_order_sync(self, *, order_id: int | None = None, client_oid: str | None = None) -> Order:
         """Synchronous convenience wrapper."""
-        return self._run_sync("cancel_order", *args, **kwargs)
+        return self._run_sync("cancel_order", order_id=order_id, client_oid=client_oid)
 
-    def cancel_orders_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def cancel_orders_sync(
+        self,
+        *,
+        wallet_type: str = "spot",
+        market: str | None = None,
+        side: OrderSide | str | None = None,
+        group_id: int | None = None,
+    ) -> list[Order]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("cancel_orders", *args, **kwargs)
+        return self._run_sync("cancel_orders", wallet_type=wallet_type, market=market, side=side, group_id=group_id)
 
-    def order_trades_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def order_trades_sync(self, *, order_id: int | None = None, client_oid: str | None = None) -> list[PrivateTrade]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("order_trades", *args, **kwargs)
+        return self._run_sync("order_trades", order_id=order_id, client_oid=client_oid)
 
-    def withdrawal_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def withdrawal_sync(self, uuid: str) -> Withdrawal:
         """Synchronous convenience wrapper."""
-        return self._run_sync("withdrawal", *args, **kwargs)
+        return self._run_sync("withdrawal", uuid)
 
-    def create_withdrawal_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def create_withdrawal_sync(self, *, withdraw_address_uuid: str, amount: str) -> Withdrawal:
         """Synchronous convenience wrapper."""
-        return self._run_sync("create_withdrawal", *args, **kwargs)
+        return self._run_sync("create_withdrawal", withdraw_address_uuid=withdraw_address_uuid, amount=amount)
 
-    def create_twd_withdrawal_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def create_twd_withdrawal_sync(self, amount: str) -> Withdrawal:
         """Synchronous convenience wrapper."""
-        return self._run_sync("create_twd_withdrawal", *args, **kwargs)
+        return self._run_sync("create_twd_withdrawal", amount)
 
-    def withdrawals_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def withdrawals_sync(
+        self,
+        *,
+        currency: str | None = None,
+        state: str | None = None,
+        timestamp: int | None = None,
+        order: str | None = None,
+        limit: int | None = None,
+    ) -> list[Withdrawal]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("withdrawals", *args, **kwargs)
+        return self._run_sync(
+            "withdrawals", currency=currency, state=state, timestamp=timestamp, order=order, limit=limit
+        )
 
-    def withdraw_addresses_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def withdraw_addresses_sync(
+        self, currency: str, *, limit: int | None = None, offset: int | None = None
+    ) -> list[WithdrawAddress]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("withdraw_addresses", *args, **kwargs)
+        return self._run_sync("withdraw_addresses", currency, limit=limit, offset=offset)
 
-    def deposit_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def deposit_sync(self, *, txid: str | None = None, uuid: str | None = None) -> Deposit:
         """Synchronous convenience wrapper."""
-        return self._run_sync("deposit", *args, **kwargs)
+        return self._run_sync("deposit", txid=txid, uuid=uuid)
 
-    def deposits_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def deposits_sync(
+        self,
+        *,
+        currency: str | None = None,
+        timestamp: int | None = None,
+        order: str | None = None,
+        limit: int | None = None,
+    ) -> list[Deposit]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("deposits", *args, **kwargs)
+        return self._run_sync("deposits", currency=currency, timestamp=timestamp, order=order, limit=limit)
 
-    def deposit_address_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def deposit_address_sync(self, currency_version: str) -> DepositAddress:
         """Synchronous convenience wrapper."""
-        return self._run_sync("deposit_address", *args, **kwargs)
+        return self._run_sync("deposit_address", currency_version)
 
-    def internal_transfers_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def internal_transfers_sync(
+        self,
+        side: str,
+        *,
+        currency: str | None = None,
+        timestamp: int | None = None,
+        order: str | None = None,
+        limit: int | None = None,
+    ) -> list[InternalTransfer]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("internal_transfers", *args, **kwargs)
+        return self._run_sync(
+            "internal_transfers", side, currency=currency, timestamp=timestamp, order=order, limit=limit
+        )
 
-    def rewards_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def rewards_sync(
+        self,
+        *,
+        reward_type: str | None = None,
+        currency: str | None = None,
+        timestamp: int | None = None,
+        order: str | None = None,
+        limit: int | None = None,
+    ) -> list[Reward]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("rewards", *args, **kwargs)
+        return self._run_sync(
+            "rewards", reward_type=reward_type, currency=currency, timestamp=timestamp, order=order, limit=limit
+        )
 
-    def fund_transaction_deposits_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def fund_transaction_deposits_sync(
+        self, *, timestamp: int | None = None, order: str | None = None, limit: int | None = None
+    ) -> list[FundTransactionDeposit]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("fund_transaction_deposits", *args, **kwargs)
+        return self._run_sync("fund_transaction_deposits", timestamp=timestamp, order=order, limit=limit)
 
-    def fund_transaction_deposit_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def fund_transaction_deposit_sync(self, sn: str) -> FundTransactionDeposit:
         """Synchronous convenience wrapper."""
-        return self._run_sync("fund_transaction_deposit", *args, **kwargs)
+        return self._run_sync("fund_transaction_deposit", sn)
 
-    def fund_transaction_withdrawals_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def fund_transaction_withdrawals_sync(
+        self, *, timestamp: int | None = None, order: str | None = None, limit: int | None = None
+    ) -> list[FundTransactionWithdrawal]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("fund_transaction_withdrawals", *args, **kwargs)
+        return self._run_sync("fund_transaction_withdrawals", timestamp=timestamp, order=order, limit=limit)
 
-    def fund_transaction_withdrawal_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def fund_transaction_withdrawal_sync(self, sn: str) -> FundTransactionWithdrawal:
         """Synchronous convenience wrapper."""
-        return self._run_sync("fund_transaction_withdrawal", *args, **kwargs)
+        return self._run_sync("fund_transaction_withdrawal", sn)
 
-    def fund_transaction_transfers_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def fund_transaction_transfers_sync(
+        self, *, timestamp: int | None = None, order: str | None = None, limit: int | None = None
+    ) -> list[FundTransactionTransfer]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("fund_transaction_transfers", *args, **kwargs)
+        return self._run_sync("fund_transaction_transfers", timestamp=timestamp, order=order, limit=limit)
 
-    def fund_transaction_transfer_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def fund_transaction_transfer_sync(self, sn: str) -> FundTransactionTransfer:
         """Synchronous convenience wrapper."""
-        return self._run_sync("fund_transaction_transfer", *args, **kwargs)
+        return self._run_sync("fund_transaction_transfer", sn)
 
-    def create_convert_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def create_convert_sync(
+        self, *, from_currency: str, to_currency: str, from_amount: str | None = None, to_amount: str | None = None
+    ) -> ConvertOrder:
         """Synchronous convenience wrapper."""
-        return self._run_sync("create_convert", *args, **kwargs)
+        return self._run_sync(
+            "create_convert",
+            from_currency=from_currency,
+            to_currency=to_currency,
+            from_amount=from_amount,
+            to_amount=to_amount,
+        )
 
-    def convert_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def convert_sync(self, sn: str) -> ConvertOrder:
         """Synchronous convenience wrapper."""
-        return self._run_sync("convert", *args, **kwargs)
+        return self._run_sync("convert", sn)
 
-    def converts_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def converts_sync(
+        self, *, timestamp: int | None = None, order: str | None = None, limit: int | None = None
+    ) -> list[ConvertOrder]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("converts", *args, **kwargs)
+        return self._run_sync("converts", timestamp=timestamp, order=order, limit=limit)
 
-    def m_wallet_index_prices_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def m_wallet_index_prices_sync(self) -> dict[str, str]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("m_wallet_index_prices", *args, **kwargs)
+        return self._run_sync("m_wallet_index_prices")
 
-    def m_wallet_historical_index_prices_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def m_wallet_historical_index_prices_sync(
+        self, market: str, *, start_time: int, end_time: int
+    ) -> list[HistoricalIndexPrice]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("m_wallet_historical_index_prices", *args, **kwargs)
+        return self._run_sync("m_wallet_historical_index_prices", market, start_time=start_time, end_time=end_time)
 
-    def m_wallet_limits_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def m_wallet_limits_sync(self) -> dict[str, str]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("m_wallet_limits", *args, **kwargs)
+        return self._run_sync("m_wallet_limits")
 
-    def m_wallet_interest_rates_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def m_wallet_interest_rates_sync(self) -> dict[str, InterestRate]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("m_wallet_interest_rates", *args, **kwargs)
+        return self._run_sync("m_wallet_interest_rates")
 
-    def create_m_wallet_loan_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def create_m_wallet_loan_sync(self, *, currency: str, amount: str) -> MWalletLoan:
         """Synchronous convenience wrapper."""
-        return self._run_sync("create_m_wallet_loan", *args, **kwargs)
+        return self._run_sync("create_m_wallet_loan", currency=currency, amount=amount)
 
-    def m_wallet_loans_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def m_wallet_loans_sync(
+        self, currency: str, *, timestamp: int | None = None, order: str | None = None, limit: int | None = None
+    ) -> list[MWalletLoan]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("m_wallet_loans", *args, **kwargs)
+        return self._run_sync("m_wallet_loans", currency, timestamp=timestamp, order=order, limit=limit)
 
-    def create_m_wallet_transfer_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def create_m_wallet_transfer_sync(self, *, currency: str, amount: str, side: str) -> MWalletTransfer:
         """Synchronous convenience wrapper."""
-        return self._run_sync("create_m_wallet_transfer", *args, **kwargs)
+        return self._run_sync("create_m_wallet_transfer", currency=currency, amount=amount, side=side)
 
-    def m_wallet_transfers_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def m_wallet_transfers_sync(
+        self,
+        *,
+        currency: str,
+        side: str,
+        timestamp: int | None = None,
+        order: str | None = None,
+        limit: int | None = None,
+    ) -> list[MWalletTransfer]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("m_wallet_transfers", *args, **kwargs)
+        return self._run_sync(
+            "m_wallet_transfers", currency=currency, side=side, timestamp=timestamp, order=order, limit=limit
+        )
 
-    def create_m_wallet_repayment_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def create_m_wallet_repayment_sync(self, *, currency: str, amount: str) -> MWalletRepayment:
         """Synchronous convenience wrapper."""
-        return self._run_sync("create_m_wallet_repayment", *args, **kwargs)
+        return self._run_sync("create_m_wallet_repayment", currency=currency, amount=amount)
 
-    def m_wallet_repayments_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def m_wallet_repayments_sync(
+        self, currency: str, *, timestamp: int | None = None, order: str | None = None, limit: int | None = None
+    ) -> list[MWalletRepayment]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("m_wallet_repayments", *args, **kwargs)
+        return self._run_sync("m_wallet_repayments", currency, timestamp=timestamp, order=order, limit=limit)
 
-    def m_wallet_liquidations_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def m_wallet_liquidations_sync(
+        self, *, timestamp: int | None = None, order: str | None = None, limit: int | None = None
+    ) -> list[MWalletLiquidation]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("m_wallet_liquidations", *args, **kwargs)
+        return self._run_sync("m_wallet_liquidations", timestamp=timestamp, order=order, limit=limit)
 
-    def m_wallet_liquidation_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def m_wallet_liquidation_sync(self, sn: str) -> MWalletLiquidationDetail:
         """Synchronous convenience wrapper."""
-        return self._run_sync("m_wallet_liquidation", *args, **kwargs)
+        return self._run_sync("m_wallet_liquidation", sn)
 
-    def m_wallet_interests_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def m_wallet_interests_sync(
+        self,
+        *,
+        currency: str | None = None,
+        timestamp: int | None = None,
+        order: str | None = None,
+        limit: int | None = None,
+    ) -> list[MWalletInterest]:
         """Synchronous convenience wrapper."""
-        return self._run_sync("m_wallet_interests", *args, **kwargs)
+        return self._run_sync("m_wallet_interests", currency=currency, timestamp=timestamp, order=order, limit=limit)
 
-    def m_wallet_ad_ratio_sync(self, *args: Any, **kwargs: Any) -> Any:
+    def m_wallet_ad_ratio_sync(self) -> MWalletADRatio:
         """Synchronous convenience wrapper."""
-        return self._run_sync("m_wallet_ad_ratio", *args, **kwargs)
+        return self._run_sync("m_wallet_ad_ratio")
 
     async def request(
         self,
