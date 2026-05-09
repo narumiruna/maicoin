@@ -10,12 +10,12 @@ from maicoin.v3._endpoints.base import EndpointExecutor
 from maicoin.v3._endpoints.base import EndpointSpec
 from maicoin.v3._endpoints.base import RestRequester
 from maicoin.v3._endpoints.base import iter_id_paginated
-from maicoin.v3.models import Account
-from maicoin.v3.models import Order
-from maicoin.v3.models import OrderSide
-from maicoin.v3.models import OrderType
-from maicoin.v3.models import PrivateTrade
-from maicoin.v3.models import UserInfo
+from maicoin.v3.models.orders import Account
+from maicoin.v3.models.orders import Order
+from maicoin.v3.models.orders import OrderSide
+from maicoin.v3.models.orders import OrderType
+from maicoin.v3.models.orders import PrivateTrade
+from maicoin.v3.models.orders import UserInfo
 
 INFO = EndpointSpec("GET", "/api/v3/info", auth=True)
 ACCOUNTS = EndpointSpec("GET", "/api/v3/wallet/{wallet_type}/accounts", auth=True)
