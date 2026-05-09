@@ -62,6 +62,14 @@ async def handler(client: Client) -> dict[str, str]:
     return {"last": ticker.last}
 ```
 
+Use async iterators for cursor-paginated history endpoints:
+
+```python
+async with Client(api_key=..., api_secret=...) as client:
+    async for order in client.iter_order_history("btctwd", page_limit=100):
+        print(order.id, order.state)
+```
+
 > [!WARNING]
 > ⚠️ Private methods can place orders, transfer funds, take loans, and trigger withdrawals. Double-check arguments before calling state-changing methods against a live account.
 
