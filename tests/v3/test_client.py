@@ -9,6 +9,9 @@ from maicoin.v3.client import Client
 from maicoin.v3.client import RetryPolicy
 from maicoin.v3.errors import MaxAPIError
 from maicoin.v3.errors import MaxHTTPError
+from maicoin.v3.models import InterestRate
+from maicoin.v3.models import Market
+from maicoin.v3.models import Timestamp
 
 pytestmark = pytest.mark.anyio
 
@@ -124,6 +127,41 @@ async def test_authenticated_request_requires_credentials() -> None:
 
     with pytest.raises(ValueError, match="api_key and api_secret"):
         await client.request("GET", "/api/v3/wallet/spot/accounts", auth=True)
+
+
+async def test_request_model_helpers_preserve_request_conventions_and_parse_payloads() -> None:
+    market_payload = {
+        "id": "btctwd",
+        "status": "enabled",
+        "base_unit": "btc",
+        "base_unit_precision": 8,
+        "min_base_amount": 0.0001,
+        "quote_unit": "twd",
+        "quote_unit_precision": 2,
+        "min_quote_amount": 100.0,
+        "m_wallet_supported": True,
+    }
+    session = FakeSession(
+        [
+            FakeResponse({"timestamp": 1678766175}),
+            FakeResponse([market_payload]),
+            FakeResponse({"btc": {"hourly_interest_rate": "0.0003", "next_hourly_interest_rate": "0.0004"}}),
+        ]
+    )
+    client = Client(base_url="https://example.test", session=session)
+
+    timestamp = await client._request_model(Timestamp, "GET", "/api/v3/timestamp")
+    markets = await client._request_model_list(Market, "GET", "/api/v3/markets")
+    rates = await client._request_model_mapping(InterestRate, "GET", "/api/v3/wallet/m/interest_rates")
+
+    assert timestamp.timestamp == 1678766175
+    assert markets == [Market.model_validate(market_payload)]
+    assert rates["btc"].hourly_interest_rate == "0.0003"
+    assert [call["url"] for call in session.calls] == [
+        "https://example.test/api/v3/timestamp",
+        "https://example.test/api/v3/markets",
+        "https://example.test/api/v3/wallet/m/interest_rates",
+    ]
 
 
 async def test_get_request_retries_retry_after_rate_limit(monkeypatch: pytest.MonkeyPatch) -> None:
