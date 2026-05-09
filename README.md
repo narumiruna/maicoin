@@ -34,6 +34,34 @@ async with Client(api_key=..., api_secret=...) as client:  # private endpoints (
     raw = await client.request("GET", "/api/v3/...", auth=True)  # raw escape hatch
 ```
 
+`Client` owns an underlying `httpx.AsyncClient` by default. Prefer `async with Client(...)` so the HTTP session is closed automatically, or call `await client.aclose()` when managing the lifecycle manually.
+
+For small synchronous scripts, use the explicit `_sync` wrappers:
+
+```python
+from maicoin.v3 import Client
+
+ticker = Client().ticker_sync("btctwd")
+```
+
+Do not call `_sync` wrappers from code that already runs inside an event loop, such as FastAPI handlers, Jupyter notebooks, or async trading bots. Await the async methods there instead:
+
+```python
+from collections.abc import AsyncIterator
+
+from maicoin.v3 import Client
+
+
+async def max_client() -> AsyncIterator[Client]:
+    async with Client(api_key="...", api_secret="...") as client:
+        yield client
+
+
+async def handler(client: Client) -> dict[str, str]:
+    ticker = await client.ticker("btctwd")
+    return {"last": ticker.last}
+```
+
 > [!WARNING]
 > ⚠️ Private methods can place orders, transfer funds, take loans, and trigger withdrawals. Double-check arguments before calling state-changing methods against a live account.
 

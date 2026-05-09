@@ -130,6 +130,13 @@ def test_request_sync_wrapper_runs_async_request() -> None:
     assert session.calls[-1]["url"] == "https://example.test/api/v3/ping"
 
 
+async def test_sync_wrappers_raise_inside_running_event_loop() -> None:
+    client = Client(session=FakeSession(FakeResponse({"timestamp": 1678766175})))
+
+    with pytest.raises(RuntimeError, match="cannot run inside an active event loop"):
+        client.timestamp_sync()
+
+
 def test_default_sync_wrappers_use_fresh_sessions(monkeypatch: pytest.MonkeyPatch) -> None:
     sessions: list[FakeSession] = []
 
