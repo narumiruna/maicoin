@@ -5,6 +5,7 @@ WebSocket stream client and channel models for MAX.
 ## Stream
 
 ::: maicoin.ws.Stream
+::: maicoin.ws.ReconnectPolicy
 
 ## Subscriptions and requests
 
