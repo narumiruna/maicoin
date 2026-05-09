@@ -9,79 +9,43 @@ transient disconnect.
 from __future__ import annotations
 
 import asyncio
-import inspect
 import os
-import random
-from collections.abc import Awaitable
-from collections.abc import Callable
-from dataclasses import dataclass
-from typing import Literal
-from typing import Protocol
 from typing import cast
 
 import websockets
 
+from maicoin.ws._stream.dispatch import ResponseDispatcher
+from maicoin.ws._stream.lifecycle import call_lifecycle
+from maicoin.ws._stream.reconnect import ReconnectLoop
+from maicoin.ws._stream.reconnect import ReconnectPolicy
+from maicoin.ws._stream.reconnect import should_reconnect
+from maicoin.ws._stream.session import ConnectedSession
+from maicoin.ws._stream.types import ConnectFactory
+from maicoin.ws._stream.types import DispatchMode
+from maicoin.ws._stream.types import Handler
+from maicoin.ws._stream.types import HandlerErrorCallback
+from maicoin.ws._stream.types import LifecycleCallback
+from maicoin.ws._stream.types import WebSocketConnection
+from maicoin.ws._stream.types import WebSocketContext
 from maicoin.ws.request import Request
 from maicoin.ws.response import Response
 from maicoin.ws.subscription import Subscription
 
+__all__ = [
+    "MAX_WS_URI",
+    "ConnectFactory",
+    "DispatchMode",
+    "Handler",
+    "HandlerErrorCallback",
+    "LifecycleCallback",
+    "ReconnectPolicy",
+    "Stream",
+    "WebSocketConnection",
+    "WebSocketContext",
+]
+
 MAX_WS_URI = os.getenv("MAX_WS_URI", "wss://max-stream.maicoin.com/ws")
 """WebSocket endpoint. Override with the `MAX_WS_URI` env var (e.g. for staging)."""
-
-DispatchMode = Literal["inline", "task", "queue"]
-"""Response dispatch strategy used by [`Stream`][maicoin.ws.Stream]."""
-
-Handler = Callable[[Response], object | Awaitable[object]]
-LifecycleCallback = Callable[[Exception | None], object | Awaitable[object]]
-HandlerErrorCallback = Callable[[Exception, Response], object | Awaitable[object]]
-
-
-class WebSocketConnection(Protocol):
-    """Minimal async websocket connection protocol used by [`Stream`][maicoin.ws.Stream]."""
-
-    async def send(self, message: str) -> None: ...
-
-    async def recv(self) -> str | bytes: ...
-
-    async def close(self) -> None: ...
-
-
-class WebSocketContext(Protocol):
-    """Async context manager returned by websocket connect factories."""
-
-    async def __aenter__(self) -> WebSocketConnection: ...
-
-    async def __aexit__(self, exc_type: object, exc: object, traceback: object) -> None: ...
-
-
-ConnectFactory = Callable[..., WebSocketContext]
-
-
-@dataclass(frozen=True)
-class ReconnectPolicy:
-    """Reconnect/backoff configuration for [`Stream`][maicoin.ws.Stream].
-
-    Args:
-        enabled: Whether to reconnect after non-cancellation disconnects.
-        max_retries: Maximum reconnect attempts after the initial connection.
-            `None` retries forever.
-        base_delay: Initial backoff delay in seconds.
-        max_delay: Maximum backoff delay in seconds.
-        jitter: Random delay added to each backoff, in seconds.
-    """
-
-    enabled: bool = True
-    max_retries: int | None = None
-    base_delay: float = 1.0
-    max_delay: float = 30.0
-    jitter: float = 1.0
-
-    def delay(self, retry_number: int) -> float:
-        """Return the reconnect delay for a 1-based retry number."""
-        backoff = min(self.max_delay, self.base_delay * 2 ** max(0, retry_number - 1))
-        if self.jitter <= 0:
-            return backoff
-        return backoff + random.uniform(0, self.jitter)
 
 
 class Stream:
@@ -144,10 +108,6 @@ class Stream:
             **connect_options: Extra options forwarded to `websockets.connect`,
                 such as `ping_interval`, `ping_timeout`, `close_timeout`, and `max_queue`.
         """
-        if dispatch not in {"inline", "task", "queue"}:
-            msg = "dispatch must be 'inline', 'task', or 'queue'"
-            raise ValueError(msg)
-
         self.requests = []
         self.handlers = []
         self.uri = uri
@@ -161,7 +121,13 @@ class Stream:
         self.on_reconnecting = on_reconnecting
         self.on_permanent_failure = on_permanent_failure
         self.on_handler_error = on_handler_error
-        self._handler_tasks: set[asyncio.Task[object]] = set()
+        self._dispatcher = ResponseDispatcher(
+            dispatch=dispatch,
+            handlers=self.handlers,
+            response_queue=self.response_queue,
+            on_handler_error=on_handler_error,
+        )
+        self._handler_tasks = self._dispatcher._handler_tasks
 
         self.auth(api_key, api_secret)
 
@@ -241,32 +207,26 @@ class Stream:
 
     async def arun(self) -> None:
         """Async entry point: connect, replay queued requests, and dispatch responses forever."""
-        retry_count = 0
-        while True:
-            try:
-                async with self.connect_factory(self.uri, **self.connect_options) as ws:
-                    retry_count = 0
-                    for req in self.requests:
-                        await ws.send(req.message())
-                    await self._call_lifecycle(self.on_connected, None)
-
-                    while True:
-                        data = await ws.recv()
-                        resp = Response.model_validate_json(data)
-                        await self._dispatch(resp)
-            except asyncio.CancelledError:
-                await self._cancel_handler_tasks()
-                raise
-            except Exception as exc:
-                await self._call_lifecycle(self.on_disconnected, exc)
-                retry_count += 1
-                if not self._should_reconnect(retry_count):
-                    await self._call_lifecycle(self.on_permanent_failure, exc)
-                    raise
-                await self._call_lifecycle(self.on_reconnecting, exc)
-                delay = self.reconnect_policy.delay(retry_count)
-                if delay > 0:
-                    await asyncio.sleep(delay)
+        session = ConnectedSession(
+            requests=self.requests,
+            dispatcher=self._dispatcher,
+            on_connected=self.on_connected,
+        )
+        loop = ReconnectLoop(
+            uri=self.uri,
+            connect_factory=self.connect_factory,
+            connect_options=self.connect_options,
+            reconnect_policy=self.reconnect_policy,
+            run_connected=session.run,
+            on_disconnected=self.on_disconnected,
+            on_reconnecting=self.on_reconnecting,
+            on_permanent_failure=self.on_permanent_failure,
+        )
+        try:
+            await loop.run()
+        except asyncio.CancelledError:
+            await self._cancel_handler_tasks()
+            raise
 
     def add_handler(self, handler: Handler) -> None:
         """Register a callback invoked with each [`Response`][maicoin.ws.Response].
@@ -279,48 +239,16 @@ class Stream:
         self.handlers.append(handler)
 
     def _should_reconnect(self, retry_count: int) -> bool:
-        policy = self.reconnect_policy
-        if not policy.enabled:
-            return False
-        return policy.max_retries is None or retry_count <= policy.max_retries
+        return should_reconnect(self.reconnect_policy, retry_count)
 
     async def _dispatch(self, resp: Response) -> None:
-        if self.dispatch == "queue":
-            await self.response_queue.put(resp)
-            return
-
-        for handler in self.handlers:
-            if self.dispatch == "task":
-                task = asyncio.create_task(self._call_handler(handler, resp))
-                self._handler_tasks.add(task)
-                task.add_done_callback(self._handler_tasks.discard)
-            else:
-                await self._call_handler(handler, resp)
+        await self._dispatcher.dispatch_response(resp)
 
     async def _call_handler(self, handler: Handler, resp: Response) -> None:
-        try:
-            result = handler(resp)
-            if inspect.isawaitable(result):
-                await result
-        except Exception as exc:
-            if self.on_handler_error is None:
-                if self.dispatch == "inline":
-                    raise
-                return
-            result = self.on_handler_error(exc, resp)
-            if inspect.isawaitable(result):
-                await result
+        await self._dispatcher.call_handler(handler, resp)
 
     async def _call_lifecycle(self, callback: LifecycleCallback | None, exc: Exception | None) -> None:
-        if callback is None:
-            return
-        result = callback(exc)
-        if inspect.isawaitable(result):
-            await result
+        await call_lifecycle(callback, exc)
 
     async def _cancel_handler_tasks(self) -> None:
-        for task in self._handler_tasks:
-            task.cancel()
-        if self._handler_tasks:
-            await asyncio.gather(*self._handler_tasks, return_exceptions=True)
-        self._handler_tasks.clear()
+        await self._dispatcher.cancel_handler_tasks()
