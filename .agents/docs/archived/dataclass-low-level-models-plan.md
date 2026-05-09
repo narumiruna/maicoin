@@ -1,3 +1,23 @@
+# Archived: Dataclass Low-Level Models Plan
+
+**Status:** Rejected after benchmarking. Do not re-open without new evidence.
+
+This plan proposed introducing a fast `@dataclass`-based low-level layer
+alongside the existing Pydantic models. The experiment was implemented and
+benchmarked, and the result was that `@dataclass(slots=True, frozen=True)`
+parsing and instantiation was **slower than `pydantic.BaseModel`** for the
+REST v3 and WebSocket payload shapes used by this package. The change was
+reverted to keep Pydantic as the only model layer.
+
+Relevant commits:
+
+- `0e3cb72 refactor(ws): use dataclasses for response payloads` — the experiment.
+- `f4b9548 Revert "refactor: use dataclasses"` — the rollback after benchmarking.
+
+The original plan body is preserved below as historical context only.
+
+---
+
 # Low-Level Dataclass Models Plan
 
 ## Goal
