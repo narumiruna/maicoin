@@ -5,6 +5,8 @@ from typing import cast
 
 import pytest
 
+from maicoin.v3._endpoints.base import EndpointExecutor
+from maicoin.v3._endpoints.base import EndpointSpec
 from maicoin.v3.client import Client
 from maicoin.v3.client import RetryPolicy
 from maicoin.v3.errors import MaxAPIError
@@ -129,7 +131,7 @@ async def test_authenticated_request_requires_credentials() -> None:
         await client.request("GET", "/api/v3/wallet/spot/accounts", auth=True)
 
 
-async def test_request_model_helpers_preserve_request_conventions_and_parse_payloads() -> None:
+async def test_endpoint_executor_preserves_request_conventions_and_parse_payloads() -> None:
     market_payload = {
         "id": "btctwd",
         "status": "enabled",
@@ -148,11 +150,22 @@ async def test_request_model_helpers_preserve_request_conventions_and_parse_payl
             FakeResponse({"btc": {"hourly_interest_rate": "0.0003", "next_hourly_interest_rate": "0.0004"}}),
         ]
     )
-    client = Client(base_url="https://example.test", session=session)
+    client = Client(
+        api_key="key",
+        api_secret="secret",
+        base_url="https://example.test",
+        session=session,
+        nonce_factory=lambda: 123456,
+    )
+    endpoint = EndpointExecutor(client)
 
-    timestamp = await client._request_model(Timestamp, "GET", "/api/v3/timestamp")
-    markets = await client._request_model_list(Market, "GET", "/api/v3/markets")
-    rates = await client._request_model_mapping(InterestRate, "GET", "/api/v3/wallet/m/interest_rates")
+    timestamp = await endpoint.model(EndpointSpec("GET", "/api/v3/timestamp"), Timestamp)
+    markets = await endpoint.model_list(EndpointSpec("GET", "/api/v3/markets"), Market)
+    rates = await endpoint.model_mapping(
+        EndpointSpec("GET", "/api/v3/wallet/m/interest_rates", auth=True),
+        InterestRate,
+        {"currency": None},
+    )
 
     assert timestamp.timestamp == 1678766175
     assert markets == [Market.model_validate(market_payload)]
@@ -162,6 +175,7 @@ async def test_request_model_helpers_preserve_request_conventions_and_parse_payl
         "https://example.test/api/v3/markets",
         "https://example.test/api/v3/wallet/m/interest_rates",
     ]
+    assert cast("dict[str, object]", session.calls[-1]["kwargs"])["params"] == {"nonce": 123456}
 
 
 async def test_get_request_retries_retry_after_rate_limit(monkeypatch: pytest.MonkeyPatch) -> None:
