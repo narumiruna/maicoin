@@ -31,7 +31,7 @@ class FakeSession:
         self.response = FakeResponse(payload)
         self.calls: list[dict[str, object]] = []
 
-    def request(self, method: str, url: str, **kwargs: object) -> FakeResponse:
+    async def request(self, method: str, url: str, **kwargs: object) -> FakeResponse:
         self.calls.append({"method": method, "url": url, "kwargs": kwargs})
         return self.response
 
@@ -134,7 +134,7 @@ def liquidation_detail_payload() -> dict[str, object]:
 
 def test_create_m_wallet_loan_and_history_construct_authenticated_requests() -> None:
     create_session = FakeSession(loan_payload())
-    loan = authenticated_client(create_session).create_m_wallet_loan(currency="eth", amount="0.019")
+    loan = authenticated_client(create_session).create_m_wallet_loan_sync(currency="eth", amount="0.019")
 
     assert loan == MWalletLoan.model_validate(loan_payload())
     assert create_session.calls[-1]["method"] == "POST"
@@ -143,7 +143,9 @@ def test_create_m_wallet_loan_and_history_construct_authenticated_requests() -> 
     assert last_payload(create_session)["path"] == "/api/v3/wallet/m/loan"
 
     list_session = FakeSession([loan_payload()])
-    loans = authenticated_client(list_session).m_wallet_loans("eth", timestamp=1521726960357, order="desc", limit=1)
+    loans = authenticated_client(list_session).m_wallet_loans_sync(
+        "eth", timestamp=1521726960357, order="desc", limit=1
+    )
     assert loans == [MWalletLoan.model_validate(loan_payload())]
     assert list_session.calls[-1]["url"] == "https://example.test/api/v3/wallet/m/loans"
     assert last_kwargs(list_session)["params"] == {
@@ -157,7 +159,9 @@ def test_create_m_wallet_loan_and_history_construct_authenticated_requests() -> 
 
 def test_m_wallet_transfer_create_and_history_construct_requests() -> None:
     create_session = FakeSession(transfer_payload())
-    transfer = authenticated_client(create_session).create_m_wallet_transfer(currency="eth", amount="0.019", side="in")
+    transfer = authenticated_client(create_session).create_m_wallet_transfer_sync(
+        currency="eth", amount="0.019", side="in"
+    )
 
     assert transfer == MWalletTransfer.model_validate(transfer_payload())
     assert create_session.calls[-1]["method"] == "POST"
@@ -165,7 +169,7 @@ def test_m_wallet_transfer_create_and_history_construct_requests() -> None:
     assert last_kwargs(create_session)["json"] == {"nonce": 123456, "currency": "eth", "amount": "0.019", "side": "in"}
 
     list_session = FakeSession([transfer_payload()])
-    transfers = authenticated_client(list_session).m_wallet_transfers(currency="eth", side="in", limit=1)
+    transfers = authenticated_client(list_session).m_wallet_transfers_sync(currency="eth", side="in", limit=1)
     assert transfers == [MWalletTransfer.model_validate(transfer_payload())]
     assert list_session.calls[-1]["url"] == "https://example.test/api/v3/wallet/m/transfers"
     assert last_kwargs(list_session)["params"] == {"nonce": 123456, "currency": "eth", "side": "in", "limit": 1}
@@ -173,7 +177,7 @@ def test_m_wallet_transfer_create_and_history_construct_requests() -> None:
 
 def test_m_wallet_repayment_create_and_history_construct_requests() -> None:
     create_session = FakeSession(repayment_payload())
-    repayment = authenticated_client(create_session).create_m_wallet_repayment(currency="eth", amount="0.15")
+    repayment = authenticated_client(create_session).create_m_wallet_repayment_sync(currency="eth", amount="0.15")
 
     assert repayment == MWalletRepayment.model_validate(repayment_payload())
     assert create_session.calls[-1]["method"] == "POST"
@@ -181,7 +185,7 @@ def test_m_wallet_repayment_create_and_history_construct_requests() -> None:
     assert last_kwargs(create_session)["json"] == {"nonce": 123456, "currency": "eth", "amount": "0.15"}
 
     list_session = FakeSession([repayment_payload()])
-    repayments = authenticated_client(list_session).m_wallet_repayments("eth", order="asc", limit=1)
+    repayments = authenticated_client(list_session).m_wallet_repayments_sync("eth", order="asc", limit=1)
     assert repayments == [MWalletRepayment.model_validate(repayment_payload())]
     assert list_session.calls[-1]["url"] == "https://example.test/api/v3/wallet/m/repayments"
     assert last_kwargs(list_session)["params"] == {"nonce": 123456, "currency": "eth", "order": "asc", "limit": 1}
@@ -189,14 +193,14 @@ def test_m_wallet_repayment_create_and_history_construct_requests() -> None:
 
 def test_m_wallet_liquidations_and_detail_parse_nested_payloads() -> None:
     list_session = FakeSession([liquidation_payload()])
-    liquidations = authenticated_client(list_session).m_wallet_liquidations(limit=1)
+    liquidations = authenticated_client(list_session).m_wallet_liquidations_sync(limit=1)
 
     assert liquidations == [MWalletLiquidation.model_validate(liquidation_payload())]
     assert list_session.calls[-1]["url"] == "https://example.test/api/v3/wallet/m/liquidations"
     assert last_kwargs(list_session)["params"] == {"nonce": 123456, "limit": 1}
 
     detail_session = FakeSession(liquidation_detail_payload())
-    detail = authenticated_client(detail_session).m_wallet_liquidation("210407080800050666")
+    detail = authenticated_client(detail_session).m_wallet_liquidation_sync("210407080800050666")
     assert detail == MWalletLiquidationDetail.model_validate(liquidation_detail_payload())
     assert detail.repayments[0].principal == "0.1"
     assert detail.liquidations[0].repayment.interest == "0.05"
@@ -213,7 +217,7 @@ def test_m_wallet_interests_and_ad_ratio_construct_authenticated_requests() -> N
         "created_at": 1521726960123,
     }
     interests_session = FakeSession([interest_payload])
-    interests = authenticated_client(interests_session).m_wallet_interests(currency="eth", limit=1)
+    interests = authenticated_client(interests_session).m_wallet_interests_sync(currency="eth", limit=1)
 
     assert interests == [MWalletInterest.model_validate(interest_payload)]
     assert interests_session.calls[-1]["url"] == "https://example.test/api/v3/wallet/m/interests"
@@ -221,7 +225,7 @@ def test_m_wallet_interests_and_ad_ratio_construct_authenticated_requests() -> N
 
     ad_ratio_payload = {"ad_ratio": "1.21", "asset_in_usdt": "2639.98128484", "debt_in_usdt": "2165.54482641"}
     ad_ratio_session = FakeSession(ad_ratio_payload)
-    ad_ratio = authenticated_client(ad_ratio_session).m_wallet_ad_ratio()
+    ad_ratio = authenticated_client(ad_ratio_session).m_wallet_ad_ratio_sync()
     assert ad_ratio == MWalletADRatio.model_validate(ad_ratio_payload)
     assert ad_ratio_session.calls[-1]["url"] == "https://example.test/api/v3/wallet/m/ad_ratio"
     assert last_payload(ad_ratio_session) == {"nonce": 123456, "path": "/api/v3/wallet/m/ad_ratio"}

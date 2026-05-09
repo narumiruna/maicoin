@@ -7,9 +7,21 @@
 ```python
 from maicoin.v3 import Client
 
-public = Client()
-private = Client(api_key="...", api_secret="...")
+async with Client() as public:
+    ticker = await public.ticker("btctwd")
+
+async with Client(api_key="...", api_secret="...") as private:
+    accounts = await private.accounts()
 ```
+
+For small synchronous scripts, every typed method also has an explicit `_sync` convenience wrapper:
+
+```python
+client = Client()
+ticker = client.ticker_sync("btctwd")
+```
+
+`_sync` wrappers use `asyncio.run()`, so code already running in an event loop should call the async methods directly.
 
 You can override the base URL, timeout, or HTTP session if needed:
 
@@ -22,31 +34,31 @@ client = Client(
     api_secret="...",
     base_url="https://max-api.maicoin.com",
     timeout=10,
-    session=httpx.Client(),
+    session=httpx.AsyncClient(),
 )
 ```
 
 ## Public endpoints
 
 ```python
-client.timestamp()
-client.markets()
-client.currencies()
-client.ticker("btctwd")
-client.tickers(["btctwd", "ethtwd"])
-client.depth("btctwd", limit=5)
-client.trades("btctwd", limit=10)
-client.kline("btctwd", period=1, limit=5)
+await client.timestamp()
+await client.markets()
+await client.currencies()
+await client.ticker("btctwd")
+await client.tickers(["btctwd", "ethtwd"])
+await client.depth("btctwd", limit=5)
+await client.trades("btctwd", limit=10)
+await client.kline("btctwd", period=1, limit=5)
 ```
 
 ## Private endpoints
 
 ```python
-client.info()
-client.accounts()
-client.open_orders(market="btctwd", limit=10)
-client.closed_orders(market="btctwd", limit=10)
-client.wallet_trades(limit=10)
+await client.info()
+await client.accounts()
+await client.open_orders(market="btctwd", limit=10)
+await client.closed_orders(market="btctwd", limit=10)
+await client.wallet_trades(limit=10)
 ```
 
 !!! warning "⚠️ Private methods can move money"
@@ -57,7 +69,7 @@ client.wallet_trades(limit=10)
 When you need an endpoint that the typed wrapper doesn't cover, call [`Client.request`][maicoin.v3.Client.request] directly:
 
 ```python
-client.request("GET", "/api/v3/some/endpoint", auth=True, params={"market": "btctwd"})
+await client.request("GET", "/api/v3/some/endpoint", auth=True, params={"market": "btctwd"})
 ```
 
 The raw method returns the parsed JSON payload and applies the same auth/error handling as the typed wrappers.

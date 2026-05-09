@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from typing import Any
 from typing import cast
 
 from maicoin.v3 import Client
@@ -27,7 +28,7 @@ class FakeSession:
         self.response = FakeResponse(payload)
         self.calls: list[dict[str, object]] = []
 
-    def request(self, method: str, url: str, **kwargs: object) -> FakeResponse:
+    async def request(self, method: str, url: str, **kwargs: object) -> FakeResponse:
         self.calls.append({"method": method, "url": url, "kwargs": kwargs})
         return self.response
 
@@ -55,7 +56,7 @@ def test_markets_returns_market_models() -> None:
     )
     client = Client(base_url="https://example.test", session=session)
 
-    markets = client.markets()
+    markets = cast(Any, client.markets_sync)()
 
     assert markets == [
         Market(
@@ -105,7 +106,7 @@ def test_currencies_returns_currency_models() -> None:
     )
     client = Client(base_url="https://example.test", session=session)
 
-    currencies = client.currencies()
+    currencies = cast(Any, client.currencies_sync)()
 
     assert currencies[0].currency == "usdt"
     assert currencies[0].networks[0].id == "trc20usdt"
@@ -115,14 +116,14 @@ def test_currencies_returns_currency_models() -> None:
 def test_timestamp_returns_timestamp_model() -> None:
     client = Client(base_url="https://example.test", session=FakeSession({"timestamp": 1678766175}))
 
-    assert client.timestamp().timestamp == 1678766175
+    assert cast(Any, client.timestamp_sync)().timestamp == 1678766175
 
 
 def test_kline_constructs_params_and_parses_rows() -> None:
     session = FakeSession([[1678766100, "1", "2", "0.5", "1.5", "42"]])
     client = Client(base_url="https://example.test", session=session)
 
-    klines = client.kline("btctwd", limit=1, period=5, timestamp=1678766100)
+    klines = cast(Any, client.kline_sync)("btctwd", limit=1, period=5, timestamp=1678766100)
 
     assert klines == [KLine(timestamp=1678766100, open="1", high="2", low="0.5", close="1.5", volume="42")]
     assert last_params(session) == {"market": "btctwd", "limit": 1, "period": 5, "timestamp": 1678766100}
@@ -140,7 +141,7 @@ def test_depth_constructs_params_and_parses_depth() -> None:
     )
     client = Client(base_url="https://example.test", session=session)
 
-    depth = client.depth("btctwd", limit=1, sort_by_price=True)
+    depth = cast(Any, client.depth_sync)("btctwd", limit=1, sort_by_price=True)
 
     assert depth == Depth(
         timestamp=1778249163,
@@ -168,7 +169,7 @@ def test_trades_constructs_params_and_parses_trades() -> None:
     )
     client = Client(base_url="https://example.test", session=session)
 
-    trades = client.trades("ethtwd", timestamp=1521726960357, limit=1)
+    trades = cast(Any, client.trades_sync)("ethtwd", timestamp=1521726960357, limit=1)
 
     assert trades[0].id == 68444
     assert trades[0].side == "bid"
@@ -194,7 +195,7 @@ def test_tickers_uses_bracket_array_param_and_parses_tickers() -> None:
     session = FakeSession([ticker_payload])
     client = Client(base_url="https://example.test", session=session)
 
-    tickers = client.tickers(["btctwd", "ethusdt"])
+    tickers = cast(Any, client.tickers_sync)(["btctwd", "ethusdt"])
 
     assert tickers == [Ticker.model_validate(ticker_payload)]
     assert last_params(session) == {"markets[]": ["btctwd", "ethusdt"]}
@@ -220,21 +221,28 @@ def test_ticker_constructs_params_and_parses_ticker() -> None:
     )
     client = Client(base_url="https://example.test", session=session)
 
-    ticker = client.ticker("btctwd")
+    ticker = cast(Any, client.ticker_sync)("btctwd")
 
     assert ticker.market == "btctwd"
     assert last_params(session) == {"market": "btctwd"}
 
 
 def test_m_wallet_public_methods_parse_payloads() -> None:
-    assert Client(session=FakeSession({"btcusdt": "79848.60666667"})).m_wallet_index_prices() == {
+    assert cast(Any, Client(session=FakeSession({"btcusdt": "79848.60666667"})).m_wallet_index_prices_sync)() == {
         "btcusdt": "79848.60666667"
     }
-    assert Client(session=FakeSession({"btc": "10.67520286"})).m_wallet_limits() == {"btc": "10.67520286"}
+    assert cast(Any, Client(session=FakeSession({"btc": "10.67520286"})).m_wallet_limits_sync)() == {
+        "btc": "10.67520286"
+    }
 
-    rates = Client(
-        session=FakeSession({"btc": {"hourly_interest_rate": "0.00000126", "next_hourly_interest_rate": "0.00000126"}})
-    ).m_wallet_interest_rates()
+    rates = cast(
+        Any,
+        Client(
+            session=FakeSession(
+                {"btc": {"hourly_interest_rate": "0.00000126", "next_hourly_interest_rate": "0.00000126"}}
+            )
+        ).m_wallet_interest_rates_sync,
+    )()
     assert rates == {"btc": InterestRate(hourly_interest_rate="0.00000126", next_hourly_interest_rate="0.00000126")}
 
 
@@ -242,7 +250,9 @@ def test_m_wallet_historical_index_prices_constructs_params_and_parses_prices() 
     session = FakeSession([{"timestamp": "1644572610000", "price": "43497.56666666"}])
     client = Client(base_url="https://example.test", session=session)
 
-    prices = client.m_wallet_historical_index_prices("btcusdt", start_time=1644572610000, end_time=1644572670000)
+    prices = cast(Any, client.m_wallet_historical_index_prices_sync)(
+        "btcusdt", start_time=1644572610000, end_time=1644572670000
+    )
 
     assert prices[0].timestamp == "1644572610000"
     assert prices[0].price == "43497.56666666"

@@ -26,12 +26,12 @@ MAX_API_SECRET=your_secret
 ```python
 from maicoin.v3 import Client
 
-client = Client()                  # public endpoints
-client = Client(api_key=..., api_secret=...)  # private endpoints (signed)
+async with Client() as client:  # public endpoints
+    ticker = await client.ticker("btctwd")
 
-client.ticker("btctwd")
-client.accounts()
-client.request("GET", "/api/v3/...", auth=True)  # raw escape hatch
+async with Client(api_key=..., api_secret=...) as client:  # private endpoints (signed)
+    accounts = await client.accounts()
+    raw = await client.request("GET", "/api/v3/...", auth=True)  # raw escape hatch
 ```
 
 > [!WARNING]

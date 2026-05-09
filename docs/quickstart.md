@@ -5,21 +5,20 @@
 ```python
 from maicoin.v3 import Client
 
-client = Client()                                  # public-only
-client = Client(api_key=..., api_secret=...)       # private (signed)
-
-client.ticker("btctwd")
-client.markets()
-client.depth("btctwd", limit=5)
-client.kline("btctwd", period=1, limit=5)
+async with Client() as client:  # public-only
+    await client.ticker("btctwd")
+    await client.markets()
+    await client.depth("btctwd", limit=5)
+    await client.kline("btctwd", period=1, limit=5)
 ```
 
 For private calls:
 
 ```python
-client.info()
-client.accounts()
-client.open_orders(market="btctwd")
+async with Client(api_key=..., api_secret=...) as client:
+    await client.info()
+    await client.accounts()
+    await client.open_orders(market="btctwd")
 ```
 
 ## WebSocket

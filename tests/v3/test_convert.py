@@ -25,7 +25,7 @@ class FakeSession:
         self.response = FakeResponse(payload)
         self.calls: list[dict[str, object]] = []
 
-    def request(self, method: str, url: str, **kwargs: object) -> FakeResponse:
+    async def request(self, method: str, url: str, **kwargs: object) -> FakeResponse:
         self.calls.append({"method": method, "url": url, "kwargs": kwargs})
         return self.response
 
@@ -68,7 +68,7 @@ def convert_payload(**overrides: object) -> dict[str, object]:
 
 def test_create_convert_constructs_authenticated_post_and_parses_payload() -> None:
     session = FakeSession(convert_payload())
-    convert = authenticated_client(session).create_convert(
+    convert = authenticated_client(session).create_convert_sync(
         from_currency="btc",
         to_currency="usdt",
         from_amount="0.01",
@@ -88,7 +88,7 @@ def test_create_convert_constructs_authenticated_post_and_parses_payload() -> No
 
 def test_convert_detail_constructs_authenticated_get_and_parses_payload() -> None:
     session = FakeSession(convert_payload())
-    convert = authenticated_client(session).convert("6322d9bd-736b-4f19-b862-829e75cae1ce")
+    convert = authenticated_client(session).convert_sync("6322d9bd-736b-4f19-b862-829e75cae1ce")
 
     assert convert.sn == "6322d9bd-736b-4f19-b862-829e75cae1ce"
     assert session.calls[-1]["method"] == "GET"
@@ -98,7 +98,7 @@ def test_convert_detail_constructs_authenticated_get_and_parses_payload() -> Non
 
 def test_converts_constructs_authenticated_get_and_parses_list() -> None:
     session = FakeSession([convert_payload()])
-    converts = authenticated_client(session).converts(timestamp=1704937708, order="desc", limit=1)
+    converts = authenticated_client(session).converts_sync(timestamp=1704937708, order="desc", limit=1)
 
     assert converts == [ConvertOrder.model_validate(convert_payload())]
     assert session.calls[-1]["method"] == "GET"

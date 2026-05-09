@@ -31,7 +31,7 @@ class FakeSession:
         self.response = FakeResponse(payload)
         self.calls: list[dict[str, object]] = []
 
-    def request(self, method: str, url: str, **kwargs: object) -> FakeResponse:
+    async def request(self, method: str, url: str, **kwargs: object) -> FakeResponse:
         self.calls.append({"method": method, "url": url, "kwargs": kwargs})
         return self.response
 
@@ -95,7 +95,7 @@ def test_info_constructs_authenticated_request_and_parses_user_info() -> None:
         "next_vip_level": None,
     }
     session = FakeSession(payload)
-    info = authenticated_client(session).info()
+    info = authenticated_client(session).info_sync()
 
     assert info == UserInfo.model_validate(payload)
     assert session.calls[-1]["method"] == "GET"
@@ -107,7 +107,7 @@ def test_accounts_constructs_authenticated_request_and_parses_accounts() -> None
     session = FakeSession([{"currency": "twd", "balance": "100000.0", "locked": "5566.0", "staked": None}])
     client = authenticated_client(session)
 
-    accounts = client.accounts(currency="twd")
+    accounts = client.accounts_sync(currency="twd")
 
     assert accounts == [Account(currency="twd", balance="100000.0", locked="5566.0", staked=None)]
     assert session.calls[-1]["method"] == "GET"
@@ -124,16 +124,16 @@ def test_open_closed_and_history_orders_parse_order_models() -> None:
     expected_order = Order.model_validate(order_payload())
 
     open_session = FakeSession([order_payload()])
-    assert authenticated_client(open_session).open_orders(market="ethtwd", limit=1) == [expected_order]
+    assert authenticated_client(open_session).open_orders_sync(market="ethtwd", limit=1) == [expected_order]
     assert open_session.calls[-1]["url"] == "https://example.test/api/v3/wallet/spot/orders/open"
     assert last_kwargs(open_session)["params"] == {"nonce": 123456, "market": "ethtwd", "limit": 1}
 
     closed_session = FakeSession([order_payload(state="done")])
-    assert authenticated_client(closed_session).closed_orders(wallet_type="m")[0].state == "done"
+    assert authenticated_client(closed_session).closed_orders_sync(wallet_type="m")[0].state == "done"
     assert closed_session.calls[-1]["url"] == "https://example.test/api/v3/wallet/m/orders/closed"
 
     history_session = FakeSession([order_payload()])
-    history = authenticated_client(history_session).order_history("ethtwd", from_id=10, limit=50)
+    history = authenticated_client(history_session).order_history_sync("ethtwd", from_id=10, limit=50)
     assert history == [expected_order]
     assert last_kwargs(history_session)["params"] == {"nonce": 123456, "market": "ethtwd", "from_id": 10, "limit": 50}
 
@@ -156,7 +156,7 @@ def test_wallet_trades_constructs_authenticated_request_and_parses_private_trade
         "created_at": 1521726960357,
     }
     session = FakeSession([trade_payload])
-    trades = authenticated_client(session).wallet_trades(market="ethtwd", from_id=68444, order="asc", limit=1)
+    trades = authenticated_client(session).wallet_trades_sync(market="ethtwd", from_id=68444, order="asc", limit=1)
 
     assert trades == [PrivateTrade.model_validate(trade_payload)]
     assert session.calls[-1]["url"] == "https://example.test/api/v3/wallet/spot/trades"
@@ -172,7 +172,7 @@ def test_wallet_trades_constructs_authenticated_request_and_parses_private_trade
 
 def test_order_lookup_and_order_trades_construct_requests() -> None:
     order_session = FakeSession(order_payload())
-    order = authenticated_client(order_session).order(order_id=87)
+    order = authenticated_client(order_session).order_sync(order_id=87)
 
     assert order.id == 87
     assert order.side is OrderSide.BUY
@@ -198,7 +198,7 @@ def test_order_lookup_and_order_trades_construct_requests() -> None:
         "created_at": 1521726960357,
     }
     trade_session = FakeSession([trade_payload])
-    trades = authenticated_client(trade_session).order_trades(client_oid="client-1")
+    trades = authenticated_client(trade_session).order_trades_sync(client_oid="client-1")
 
     assert trades == [PrivateTrade.model_validate(trade_payload)]
     assert trade_session.calls[-1]["url"] == "https://example.test/api/v3/order/trades"
@@ -207,7 +207,7 @@ def test_order_lookup_and_order_trades_construct_requests() -> None:
 
 def test_create_and_cancel_order_send_authenticated_json_body() -> None:
     create_session = FakeSession(order_payload())
-    created = authenticated_client(create_session).create_order(
+    created = authenticated_client(create_session).create_order_sync(
         "ethtwd",
         OrderSide.BUY,
         "0.2658",
@@ -231,13 +231,13 @@ def test_create_and_cancel_order_send_authenticated_json_body() -> None:
     assert last_payload(create_session)["path"] == "/api/v3/wallet/spot/order"
 
     cancel_session = FakeSession(order_payload(state="cancel"))
-    assert authenticated_client(cancel_session).cancel_order(order_id=87).state == "cancel"
+    assert authenticated_client(cancel_session).cancel_order_sync(order_id=87).state == "cancel"
     assert cancel_session.calls[-1]["method"] == "DELETE"
     assert cancel_session.calls[-1]["url"] == "https://example.test/api/v3/order"
     assert last_kwargs(cancel_session)["json"] == {"nonce": 123456, "id": 87}
 
     cancel_all_session = FakeSession([order_payload(state="cancel")])
-    cancelled = authenticated_client(cancel_all_session).cancel_orders(market="ethtwd", side="buy")
+    cancelled = authenticated_client(cancel_all_session).cancel_orders_sync(market="ethtwd", side="buy")
     assert cancelled[0].state == "cancel"
     assert cancel_all_session.calls[-1]["url"] == "https://example.test/api/v3/wallet/spot/orders"
     assert last_kwargs(cancel_all_session)["json"] == {"nonce": 123456, "market": "ethtwd", "side": "buy"}

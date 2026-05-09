@@ -20,8 +20,8 @@ pip install maicoin
 ```python
 from maicoin.v3 import Client
 
-client = Client()
-print(client.ticker("btctwd"))
+async with Client() as client:
+    print(await client.ticker("btctwd"))
 ```
 
 ```python

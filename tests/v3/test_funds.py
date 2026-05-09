@@ -33,7 +33,7 @@ class FakeSession:
         self.response = FakeResponse(payload)
         self.calls: list[dict[str, object]] = []
 
-    def request(self, method: str, url: str, **kwargs: object) -> FakeResponse:
+    async def request(self, method: str, url: str, **kwargs: object) -> FakeResponse:
         self.calls.append({"method": method, "url": url, "kwargs": kwargs})
         return self.response
 
@@ -147,14 +147,14 @@ def fund_transfer_payload(**overrides: object) -> dict[str, object]:
 
 def test_withdrawal_methods_construct_authenticated_requests_and_parse_payloads() -> None:
     detail_session = FakeSession(withdrawal_payload())
-    withdrawal = authenticated_client(detail_session).withdrawal("18022603540001")
+    withdrawal = authenticated_client(detail_session).withdrawal_sync("18022603540001")
 
     assert withdrawal == Withdrawal.model_validate(withdrawal_payload())
     assert detail_session.calls[-1]["url"] == "https://example.test/api/v3/withdrawal"
     assert last_kwargs(detail_session)["params"] == {"nonce": 123456, "uuid": "18022603540001"}
 
     create_session = FakeSession(withdrawal_payload())
-    authenticated_client(create_session).create_withdrawal(withdraw_address_uuid="addr-1", amount="0.019")
+    authenticated_client(create_session).create_withdrawal_sync(withdraw_address_uuid="addr-1", amount="0.019")
     assert create_session.calls[-1]["method"] == "POST"
     assert last_kwargs(create_session)["json"] == {
         "nonce": 123456,
@@ -164,14 +164,14 @@ def test_withdrawal_methods_construct_authenticated_requests_and_parse_payloads(
     assert last_payload(create_session)["path"] == "/api/v3/withdrawal"
 
     twd_session = FakeSession(withdrawal_payload(currency="twd", network_protocol=None, amount="100"))
-    authenticated_client(twd_session).create_twd_withdrawal("100")
+    authenticated_client(twd_session).create_twd_withdrawal_sync("100")
     assert twd_session.calls[-1]["url"] == "https://example.test/api/v3/withdrawal/twd"
     assert last_kwargs(twd_session)["json"] == {"nonce": 123456, "amount": "100"}
 
 
 def test_withdrawals_and_withdraw_addresses_parse_lists() -> None:
     withdrawals_session = FakeSession([withdrawal_payload()])
-    withdrawals = authenticated_client(withdrawals_session).withdrawals(currency="usdt", state="done", limit=1)
+    withdrawals = authenticated_client(withdrawals_session).withdrawals_sync(currency="usdt", state="done", limit=1)
 
     assert withdrawals == [Withdrawal.model_validate(withdrawal_payload())]
     assert withdrawals_session.calls[-1]["url"] == "https://example.test/api/v3/withdrawals"
@@ -194,7 +194,7 @@ def test_withdrawals_and_withdraw_addresses_parse_lists() -> None:
         "network_congested": False,
     }
     address_session = FakeSession([address_payload])
-    addresses = authenticated_client(address_session).withdraw_addresses("usdt", limit=10, offset=20)
+    addresses = authenticated_client(address_session).withdraw_addresses_sync("usdt", limit=10, offset=20)
 
     assert addresses == [WithdrawAddress.model_validate(address_payload)]
     assert address_session.calls[-1]["url"] == "https://example.test/api/v3/withdraw_addresses"
@@ -203,14 +203,14 @@ def test_withdrawals_and_withdraw_addresses_parse_lists() -> None:
 
 def test_deposit_methods_construct_authenticated_requests_and_parse_payloads() -> None:
     detail_session = FakeSession(deposit_payload())
-    deposit = authenticated_client(detail_session).deposit(uuid="18022603540001")
+    deposit = authenticated_client(detail_session).deposit_sync(uuid="18022603540001")
 
     assert deposit == Deposit.model_validate(deposit_payload())
     assert detail_session.calls[-1]["url"] == "https://example.test/api/v3/deposit"
     assert last_kwargs(detail_session)["params"] == {"nonce": 123456, "uuid": "18022603540001"}
 
     deposits_session = FakeSession([deposit_payload()])
-    deposits = authenticated_client(deposits_session).deposits(currency="usdt", order="asc", limit=1)
+    deposits = authenticated_client(deposits_session).deposits_sync(currency="usdt", order="asc", limit=1)
     assert deposits == [Deposit.model_validate(deposit_payload())]
     assert last_kwargs(deposits_session)["params"] == {"nonce": 123456, "currency": "usdt", "order": "asc", "limit": 1}
 
@@ -221,7 +221,7 @@ def test_deposit_methods_construct_authenticated_requests_and_parse_payloads() -
         "address": "TU91BoeyrqW9MKaiRPDiE6z7UecK2n2Hze",
     }
     address_session = FakeSession(address_payload)
-    address = authenticated_client(address_session).deposit_address("trc20usdt")
+    address = authenticated_client(address_session).deposit_address_sync("trc20usdt")
     assert address == DepositAddress.model_validate(address_payload)
     assert address_session.calls[-1]["url"] == "https://example.test/api/v3/deposit_address"
     assert last_kwargs(address_session)["params"] == {"nonce": 123456, "currency_version": "trc20usdt"}
@@ -238,7 +238,7 @@ def test_internal_transfers_and_rewards_construct_requests_and_parse_payloads() 
         "state": "done",
     }
     transfer_session = FakeSession([transfer_payload])
-    transfers = authenticated_client(transfer_session).internal_transfers("in", currency="eth", limit=1)
+    transfers = authenticated_client(transfer_session).internal_transfers_sync("in", currency="eth", limit=1)
 
     assert transfers == [InternalTransfer.model_validate(transfer_payload)]
     assert transfers[0].from_ == "pr***@***.com"
@@ -253,7 +253,7 @@ def test_internal_transfers_and_rewards_construct_requests_and_parse_payloads() 
         "note": "2018-11-13 Holding Reward",
     }
     reward_session = FakeSession([reward_payload])
-    rewards = authenticated_client(reward_session).rewards(reward_type="airdrop_reward", limit=1)
+    rewards = authenticated_client(reward_session).rewards_sync(reward_type="airdrop_reward", limit=1)
 
     assert rewards == [Reward.model_validate(reward_payload)]
     assert reward_session.calls[-1]["url"] == "https://example.test/api/v3/rewards"
@@ -262,7 +262,7 @@ def test_internal_transfers_and_rewards_construct_requests_and_parse_payloads() 
 
 def test_fund_transaction_deposit_methods_parse_list_and_detail() -> None:
     list_session = FakeSession([fund_deposit_payload()])
-    deposits = authenticated_client(list_session).fund_transaction_deposits(
+    deposits = authenticated_client(list_session).fund_transaction_deposits_sync(
         timestamp=1521726960123, order="desc", limit=1
     )
 
@@ -277,28 +277,29 @@ def test_fund_transaction_deposit_methods_parse_list_and_detail() -> None:
     }
 
     detail_session = FakeSession(fund_deposit_payload())
-    assert authenticated_client(detail_session).fund_transaction_deposit("18022603540001").sn == "18022603540001"
+    assert authenticated_client(detail_session).fund_transaction_deposit_sync("18022603540001").sn == "18022603540001"
     assert detail_session.calls[-1]["url"] == "https://example.test/api/v3/fund_transactions/deposit"
     assert last_kwargs(detail_session)["params"] == {"nonce": 123456, "sn": "18022603540001"}
 
 
 def test_fund_transaction_withdrawal_methods_parse_list_and_detail() -> None:
     list_session = FakeSession([fund_withdrawal_payload()])
-    withdrawals = authenticated_client(list_session).fund_transaction_withdrawals(limit=1)
+    withdrawals = authenticated_client(list_session).fund_transaction_withdrawals_sync(limit=1)
 
     assert withdrawals == [FundTransactionWithdrawal.model_validate(fund_withdrawal_payload())]
     assert list_session.calls[-1]["url"] == "https://example.test/api/v3/fund_transactions/withdrawals"
     assert last_kwargs(list_session)["params"] == {"nonce": 123456, "limit": 1}
 
     detail_session = FakeSession(fund_withdrawal_payload())
-    assert authenticated_client(detail_session).fund_transaction_withdrawal("18022603540001").sn == "18022603540001"
+    withdrawal = authenticated_client(detail_session).fund_transaction_withdrawal_sync("18022603540001")
+    assert withdrawal.sn == "18022603540001"
     assert detail_session.calls[-1]["url"] == "https://example.test/api/v3/fund_transactions/withdrawal"
     assert last_kwargs(detail_session)["params"] == {"nonce": 123456, "sn": "18022603540001"}
 
 
 def test_fund_transaction_transfer_methods_parse_list_and_detail() -> None:
     list_session = FakeSession([fund_transfer_payload()])
-    transfers = authenticated_client(list_session).fund_transaction_transfers(limit=1)
+    transfers = authenticated_client(list_session).fund_transaction_transfers_sync(limit=1)
 
     assert transfers == [FundTransactionTransfer.model_validate(fund_transfer_payload())]
     assert transfers[0].from_.wallet_type == "spot"
@@ -306,6 +307,6 @@ def test_fund_transaction_transfer_methods_parse_list_and_detail() -> None:
     assert last_kwargs(list_session)["params"] == {"nonce": 123456, "limit": 1}
 
     detail_session = FakeSession(fund_transfer_payload())
-    assert authenticated_client(detail_session).fund_transaction_transfer("18022603540001").sn == "18022603540001"
+    assert authenticated_client(detail_session).fund_transaction_transfer_sync("18022603540001").sn == "18022603540001"
     assert detail_session.calls[-1]["url"] == "https://example.test/api/v3/fund_transactions/transfer"
     assert last_kwargs(detail_session)["params"] == {"nonce": 123456, "sn": "18022603540001"}
