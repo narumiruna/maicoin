@@ -130,6 +130,24 @@ def test_request_sync_wrapper_runs_async_request() -> None:
     assert session.calls[-1]["url"] == "https://example.test/api/v3/ping"
 
 
+def test_default_sync_wrappers_use_fresh_sessions(monkeypatch: pytest.MonkeyPatch) -> None:
+    sessions: list[FakeSession] = []
+
+    def session_factory() -> FakeSession:
+        session = FakeSession(FakeResponse({"timestamp": 1678766175}))
+        sessions.append(session)
+        return session
+
+    monkeypatch.setattr("maicoin.v3.client.httpx.AsyncClient", session_factory)
+    client = Client(base_url="https://example.test")
+
+    assert client.timestamp_sync().timestamp == 1678766175
+    assert client.timestamp_sync().timestamp == 1678766175
+
+    assert len(sessions) == 2
+    assert all(session.closed for session in sessions)
+
+
 async def test_async_context_manager_closes_session() -> None:
     session = FakeSession(FakeResponse({}))
 
