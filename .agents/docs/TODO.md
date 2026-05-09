@@ -2,13 +2,22 @@
 
 ## Live Integration Tests
 
-Plan archived: [`docs/archived/live-integration-tests-plan.md`](archived/live-integration-tests-plan.md). Read-only public and private live tests are implemented; destructive live tests remain intentionally out of scope until a separate design pass.
+Plan archived: [`archived/live-integration-tests-plan.md`](archived/live-integration-tests-plan.md). Read-only public and private live tests are implemented; destructive live tests remain intentionally out of scope until a separate design pass.
+
+## Client Resilience and Ergonomics
+
+Plan: [`plans/client-resilience-and-ergonomics-plan.md`](plans/client-resilience-and-ergonomics-plan.md)
+
+- [ ] Add WebSocket reconnect, heartbeat configuration, graceful cancellation, and non-blocking handler dispatch.
+- [ ] Add conservative REST retry/rate-limit support.
+- [ ] Add pagination helpers for historical/list endpoints.
+- [ ] Add an async REST client.
 
 ## Dataclass Low-Level Models
 
-Plan: [`docs/dataclass-low-level-models-plan.md`](dataclass-low-level-models-plan.md)
+Plan: [`plans/dataclass-low-level-models-plan.md`](plans/dataclass-low-level-models-plan.md)
 
-- [ ] Add a fast dataclass data layer while keeping Pydantic as the high-level validated API.
+- [ ] Re-evaluate a dataclass data layer with benchmarks before implementation while keeping Pydantic as the high-level validated API.
 
 ## Completed Milestones
 
@@ -21,4 +30,4 @@ Plan: [`docs/dataclass-low-level-models-plan.md`](dataclass-low-level-models-pla
 
 - `just` passed after Phase 7 WebSocket cleanup.
 - Tests currently use mocked sessions/payloads and do not depend on real MAX API credentials.
-- Live integration tests are planned but not yet implemented.
+- Read-only live integration tests are implemented; destructive live tests are still intentionally gated for a future design.
