@@ -158,6 +158,17 @@ class Client:
 
     def _run_sync(self, method_name: str, *args: Any, **kwargs: Any) -> Any:
         """Run one async REST method for synchronous scripts."""
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            pass
+        else:
+            msg = (
+                "Synchronous Client.*_sync wrappers cannot run inside an active event loop; "
+                "await the async method instead."
+            )
+            raise RuntimeError(msg)
+
         method = getattr(self, method_name)
         if not self._owns_session:
             return asyncio.run(method(*args, **kwargs))
