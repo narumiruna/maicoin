@@ -23,20 +23,23 @@ ticker = client.ticker_sync("btctwd")
 
 `_sync` wrappers use `asyncio.run()`, so code already running in an event loop should call the async methods directly.
 
-You can override the base URL, timeout, or HTTP session if needed:
+You can override the base URL, timeout, retry policy, or HTTP session if needed:
 
 ```python
 import httpx
-from maicoin.v3 import Client
+from maicoin.v3 import Client, RetryPolicy
 
 client = Client(
     api_key="...",
     api_secret="...",
     base_url="https://max-api.maicoin.com",
     timeout=10,
+    retry_policy=RetryPolicy(total_attempts=3),
     session=httpx.AsyncClient(),
 )
 ```
+
+Retries are conservative by default: only idempotent methods (`GET`, `HEAD`, `OPTIONS`) retry transient `429`, `502`, `503`, and `504` responses or network/timeout failures. `Retry-After` is respected when present. State-changing methods such as order placement and withdrawals are not retried unless you explicitly opt in with `RetryPolicy(retry_non_idempotent=True)`.
 
 ## Public endpoints
 

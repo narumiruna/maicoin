@@ -42,7 +42,7 @@ Or pass them explicitly:
 stream = Stream(api_key="...", api_secret="...")
 ```
 
-## Handlers
+## Handlers and dispatch modes
 
 Handlers receive a fully validated [`Response`][maicoin.ws.Response]. You can attach as many handlers as you like:
 
@@ -53,6 +53,36 @@ def on_response(response):
 
 stream.add_handler(on_response)
 ```
+
+`Stream` supports three dispatch modes:
+
+- `inline` (default): call/await handlers before reading the next message. This preserves strict ordering.
+- `task`: schedule each handler with `asyncio.create_task()`. This keeps slow async handlers from blocking the receive loop, but ordering is not guaranteed.
+- `queue`: put responses into `stream.response_queue` for consumer-managed processing; registered handlers are ignored.
+
+```python
+stream = Stream(dispatch="task", on_handler_error=lambda exc, response: print(exc))
+
+queue_stream = Stream(dispatch="queue")
+# elsewhere: response = await queue_stream.response_queue.get()
+```
+
+## Reconnects and heartbeat options
+
+By default, `Stream` reconnects after transient disconnects and replays queued auth/subscription requests. Configure backoff with [`ReconnectPolicy`][maicoin.ws.ReconnectPolicy], or disable reconnects with `reconnect=False`:
+
+```python
+from maicoin.ws import ReconnectPolicy
+
+stream = Stream(
+    reconnect_policy=ReconnectPolicy(max_retries=10, base_delay=1, max_delay=30),
+    ping_interval=20,
+    ping_timeout=20,
+    close_timeout=5,
+)
+```
+
+Extra keyword arguments are forwarded to `websockets.connect`, including heartbeat and queue options such as `ping_interval`, `ping_timeout`, `close_timeout`, and `max_queue`.
 
 ## Async usage
 

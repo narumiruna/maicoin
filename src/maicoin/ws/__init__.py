@@ -14,6 +14,7 @@ from maicoin.ws.request import Request
 from maicoin.ws.response import Event
 from maicoin.ws.response import Response
 from maicoin.ws.side import Side
+from maicoin.ws.stream import ReconnectPolicy
 from maicoin.ws.stream import Stream
 from maicoin.ws.subscription import Subscription
 from maicoin.ws.ticker import Ticker
@@ -33,6 +34,7 @@ __all__ = [
     "OrderState",
     "OrderType",
     "PoolQuota",
+    "ReconnectPolicy",
     "Request",
     "Response",
     "Side",
