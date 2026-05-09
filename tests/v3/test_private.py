@@ -40,7 +40,18 @@ class FakeSession:
         return self.response
 
 
-def last_kwargs(session: FakeSession) -> Mapping[str, object]:
+class PagedFakeSession:
+    def __init__(self, pages: list[object]) -> None:
+        self.pages = pages
+        self.calls: list[dict[str, object]] = []
+
+    async def request(self, method: str, url: str, **kwargs: object) -> FakeResponse:
+        self.calls.append({"method": method, "url": url, "kwargs": kwargs})
+        page = self.pages[len(self.calls) - 1]
+        return FakeResponse(page)
+
+
+def last_kwargs(session: FakeSession | PagedFakeSession) -> Mapping[str, object]:
     return cast("Mapping[str, object]", session.calls[-1]["kwargs"])
 
 
@@ -50,7 +61,7 @@ def last_payload(session: FakeSession) -> Mapping[str, object]:
     return cast("Mapping[str, object]", json.loads(payload))
 
 
-def authenticated_client(session: FakeSession) -> Client:
+def authenticated_client(session: FakeSession | PagedFakeSession) -> Client:
     return Client(
         api_key="key",
         api_secret="secret",
@@ -79,6 +90,27 @@ def order_payload(**overrides: object) -> dict[str, object]:
         "trades_count": 0,
         "created_at": 1521726960123,
         "updated_at": 1521726960123,
+    }
+    payload.update(overrides)
+    return payload
+
+
+def trade_payload(**overrides: object) -> dict[str, object]:
+    payload: dict[str, object] = {
+        "id": 68444,
+        "order_id": 87,
+        "wallet_type": "spot",
+        "price": "21499.0",
+        "volume": "0.2658",
+        "funds": "5714.4",
+        "market": "ethtwd",
+        "market_name": "ETH/TWD",
+        "side": "bid",
+        "fee": "0.00001",
+        "fee_currency": "usdt",
+        "fee_discounted": False,
+        "liquidity": "taker",
+        "created_at": 1521726960357,
     }
     payload.update(overrides)
     return payload
@@ -144,26 +176,11 @@ async def test_open_closed_and_history_orders_parse_order_models() -> None:
 
 
 async def test_wallet_trades_constructs_authenticated_request_and_parses_private_trades() -> None:
-    trade_payload = {
-        "id": 68444,
-        "order_id": 87,
-        "wallet_type": "spot",
-        "price": "21499.0",
-        "volume": "0.2658",
-        "funds": "5714.4",
-        "market": "ethtwd",
-        "market_name": "ETH/TWD",
-        "side": "bid",
-        "fee": "0.00001",
-        "fee_currency": "usdt",
-        "fee_discounted": False,
-        "liquidity": "taker",
-        "created_at": 1521726960357,
-    }
-    session = FakeSession([trade_payload])
+    payload = trade_payload()
+    session = FakeSession([payload])
     trades = await authenticated_client(session).wallet_trades(market="ethtwd", from_id=68444, order="asc", limit=1)
 
-    assert trades == [PrivateTrade.model_validate(trade_payload)]
+    assert trades == [PrivateTrade.model_validate(payload)]
     assert session.calls[-1]["url"] == "https://example.test/api/v3/wallet/spot/trades"
     assert last_kwargs(session)["params"] == {
         "nonce": 123456,
@@ -173,6 +190,75 @@ async def test_wallet_trades_constructs_authenticated_request_and_parses_private
         "limit": 1,
     }
     assert last_payload(session)["path"] == "/api/v3/wallet/spot/trades"
+
+
+async def test_iter_wallet_trades_advances_from_id_and_stops_at_max_items() -> None:
+    session = PagedFakeSession(
+        [
+            [trade_payload(id=1), trade_payload(id=2)],
+            [trade_payload(id=2), trade_payload(id=3)],
+        ]
+    )
+    client = authenticated_client(session)
+
+    trades = [trade async for trade in client.iter_wallet_trades(market="ethtwd", from_id=0, page_limit=2, max_items=3)]
+
+    assert [trade.id for trade in trades] == [1, 2, 3]
+    assert cast("Mapping[str, object]", session.calls[0]["kwargs"])["params"] == {
+        "nonce": 123456,
+        "market": "ethtwd",
+        "from_id": 0,
+        "order": "asc",
+        "limit": 2,
+    }
+    assert cast("Mapping[str, object]", session.calls[1]["kwargs"])["params"] == {
+        "nonce": 123456,
+        "market": "ethtwd",
+        "from_id": 2,
+        "order": "asc",
+        "limit": 2,
+    }
+
+
+async def test_iter_order_history_advances_from_id_until_short_page() -> None:
+    session = PagedFakeSession(
+        [
+            [order_payload(id=1), order_payload(id=2)],
+            [order_payload(id=3)],
+        ]
+    )
+    client = authenticated_client(session)
+
+    orders = [order async for order in client.iter_order_history("ethtwd", from_id=0, page_limit=2)]
+
+    assert [order.id for order in orders] == [1, 2, 3]
+    assert cast("Mapping[str, object]", session.calls[0]["kwargs"])["params"] == {
+        "nonce": 123456,
+        "market": "ethtwd",
+        "from_id": 0,
+        "limit": 2,
+    }
+    assert cast("Mapping[str, object]", session.calls[1]["kwargs"])["params"] == {
+        "nonce": 123456,
+        "market": "ethtwd",
+        "from_id": 2,
+        "limit": 2,
+    }
+
+
+async def test_iter_order_history_respects_max_pages() -> None:
+    session = PagedFakeSession(
+        [
+            [order_payload(id=1), order_payload(id=2)],
+            [order_payload(id=3), order_payload(id=4)],
+        ]
+    )
+    client = authenticated_client(session)
+
+    orders = [order async for order in client.iter_order_history("ethtwd", page_limit=2, max_pages=1)]
+
+    assert [order.id for order in orders] == [1, 2]
+    assert len(session.calls) == 1
 
 
 async def test_order_lookup_and_order_trades_construct_requests() -> None:

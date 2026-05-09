@@ -10,6 +10,8 @@ credentials. Every other method is authenticated and requires `api_key` /
 from __future__ import annotations
 
 import asyncio
+from collections.abc import AsyncIterator
+from collections.abc import Awaitable
 from collections.abc import Callable
 from collections.abc import Mapping
 from collections.abc import Sequence
@@ -67,6 +69,51 @@ DEFAULT_TIMEOUT = 10
 
 def _compact(params: Mapping[str, object | None]) -> dict[str, object]:
     return {key: value for key, value in params.items() if value is not None}
+
+
+async def _iter_id_paginated[PageItemT](  # noqa: C901
+    fetch_page: Callable[[int | None, int], Awaitable[Sequence[PageItemT]]],
+    item_id: Callable[[PageItemT], int],
+    *,
+    from_id: int | None,
+    page_limit: int,
+    max_items: int | None,
+    max_pages: int | None,
+) -> AsyncIterator[PageItemT]:
+    if page_limit <= 0:
+        msg = "page_limit must be greater than 0"
+        raise ValueError(msg)
+    if max_items == 0 or max_pages == 0:
+        return
+
+    cursor = from_id
+    yielded = 0
+    seen_ids: set[int] = set()
+    page_count = max_pages if max_pages is not None else 2**63
+
+    for page_number in range(page_count):
+        page = await fetch_page(cursor, page_limit)
+        if not page:
+            return
+
+        next_cursor = cursor
+        for item in page:
+            current_id = item_id(item)
+            if current_id in seen_ids:
+                continue
+            seen_ids.add(current_id)
+            yield item
+            yielded += 1
+            if max_items is not None and yielded >= max_items:
+                return
+            if next_cursor is None or current_id > next_cursor:
+                next_cursor = current_id
+
+        if len(page) < page_limit or page_number + 1 >= page_count:
+            return
+        if next_cursor == cursor:
+            return
+        cursor = next_cursor
 
 
 class RequestSession(Protocol):
@@ -792,6 +839,77 @@ class Client:
             auth=True,
         )
         return [Order.model_validate(item) for item in cast("list[object]", payload)]
+
+    async def iter_wallet_trades(
+        self,
+        *,
+        wallet_type: str = "spot",
+        market: str | None = None,
+        timestamp: int | None = None,
+        from_id: int | None = None,
+        order: str = "asc",
+        page_limit: int = 100,
+        max_items: int | None = None,
+        max_pages: int | None = None,
+    ) -> AsyncIterator[PrivateTrade]:
+        """Iterate wallet trades using the `from_id` cursor.
+
+        The iterator stops when the API returns an empty page, a page smaller
+        than `page_limit`, `max_pages` is reached, or `max_items` have been
+        yielded. Duplicate ids are skipped to protect callers from cursor
+        boundary overlap.
+        """
+
+        async def fetch_page(cursor: int | None, limit: int) -> Sequence[PrivateTrade]:
+            return await self.wallet_trades(
+                wallet_type=wallet_type,
+                market=market,
+                timestamp=timestamp,
+                from_id=cursor,
+                order=order,
+                limit=limit,
+            )
+
+        async for trade in _iter_id_paginated(
+            fetch_page,
+            lambda trade: trade.id,
+            from_id=from_id,
+            page_limit=page_limit,
+            max_items=max_items,
+            max_pages=max_pages,
+        ):
+            yield trade
+
+    async def iter_order_history(
+        self,
+        market: str,
+        *,
+        wallet_type: str = "spot",
+        from_id: int | None = None,
+        page_limit: int = 100,
+        max_items: int | None = None,
+        max_pages: int | None = None,
+    ) -> AsyncIterator[Order]:
+        """Iterate order history using the `from_id` cursor.
+
+        The iterator stops when the API returns an empty page, a page smaller
+        than `page_limit`, `max_pages` is reached, or `max_items` have been
+        yielded. Duplicate ids are skipped to protect callers from cursor
+        boundary overlap.
+        """
+
+        async def fetch_page(cursor: int | None, limit: int) -> Sequence[Order]:
+            return await self.order_history(market, wallet_type=wallet_type, from_id=cursor, limit=limit)
+
+        async for order_item in _iter_id_paginated(
+            fetch_page,
+            lambda order_item: order_item.id,
+            from_id=from_id,
+            page_limit=page_limit,
+            max_items=max_items,
+            max_pages=max_pages,
+        ):
+            yield order_item
 
     async def order(self, *, order_id: int | None = None, client_oid: str | None = None) -> Order:
         """Fetch a single order by `order_id` or `client_oid`."""
