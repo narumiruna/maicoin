@@ -22,6 +22,14 @@ from maicoin.ws.trade import Trade
 
 
 class Event(StrEnum):
+    """Event names sent in the `e` field of every MAX WebSocket response.
+
+    Snapshot events deliver the full current state on (re)subscribe; update
+    events deliver incremental changes after that. Lifecycle events
+    (`error`, `subscribed`, `unsubscribed`, `authenticated`) confirm
+    request handling.
+    """
+
     ERROR = "error"
     SUBSCRIBED = "subscribed"
     UNSUBSCRIBED = "unsubscribed"
@@ -48,30 +56,63 @@ class Event(StrEnum):
     BORROWING_UPDATE = "borrowing_update"
 
 
-# https://maicoin.github.io/max-websocket-docs/#/?id=response-key-alias
 class Response(BaseModel):
+    """A single message decoded from the MAX WebSocket connection.
+
+    The MAX wire format uses one-letter aliases (`e`, `T`, `M`, …) to keep
+    payloads small. This model exposes readable Python field names while
+    preserving the wire aliases via `validation_alias` so it parses raw MAX
+    JSON directly.
+
+    See the [MAX response key alias reference](https://maicoin.github.io/max-websocket-docs/#/?id=response-key-alias).
+    Inspect `event` to dispatch on message type, and read whichever payload
+    field matches that event (`ticker`, `trades`, `orders`, …).
+    """
+
     event: Event = Field(validation_alias="e")
+    """Event type. Drives which payload fields are populated."""
     created_at: datetime = Field(validation_alias="T")
+    """Server timestamp, converted from millisecond UNIX time."""
     id: str | None = Field(default=None, validation_alias="i")
+    """Echoed request id for `subscribed` / `unsubscribed` / `authenticated` events."""
     errors: list[str] | None = Field(default=None, validation_alias="E")
+    """Error messages for `error` events."""
     subscriptions: list[Subscription] | None = Field(default=None, validation_alias="s")
+    """Subscription list confirmed by `subscribed` / `unsubscribed`."""
     channel: Channel | None = Field(default=None, validation_alias="c")
+    """Source channel for events that carry market data."""
     balances: list[Balance] | None = Field(default=None, validation_alias="B")
+    """Balances payload for `account_*` events."""
     market: str | None = Field(default=None, validation_alias="M")
+    """Market id for market-scoped events."""
     asks: list[list[str]] | None = Field(default=None, validation_alias="a")
+    """Order-book ask levels, each `[price, volume]` (string)."""
     bids: list[list[str]] | None = Field(default=None, validation_alias="b")
+    """Order-book bid levels, each `[price, volume]` (string)."""
     first_update_id: int | None = Field(default=None, validation_alias="fi")
+    """First update id covered by an order-book diff."""
     last_update_id: int | None = Field(default=None, validation_alias="li")
+    """Last update id covered by an order-book diff."""
     version: int | None = Field(default=None, validation_alias="v")
+    """Snapshot version counter for the book."""
     orders: list[Order] | None = Field(default=None, validation_alias="o")
+    """Orders payload for `order_*` / `mwallet_order_*` events."""
     ticker: Ticker | None = Field(default=None, validation_alias="tk")
+    """Ticker payload for `ticker` events."""
     trades: list[Trade] | None = Field(default=None, validation_alias="t")
+    """Trade payload for `trade_*` events."""
     currency: str | None = Field(default=None, validation_alias="cu")
+    """Currency code for currency-scoped events."""
     kline: KLine | None = Field(default=None, validation_alias="k")
+    """Kline payload for `kline` events."""
     market_status: list[MarketStatus] | None = Field(default=None, validation_alias="ms")
+    """Market status payload for `market_status` events."""
     pool_quota: PoolQuota | None = Field(default=None, validation_alias="qta")
+    """Pool quota payload for `pool_quota` events."""
     m_wallet_ad_ratio: MWalletADRatio | None = Field(default=None, validation_alias="ad")
+    """M-Wallet account-debt ratio payload."""
     m_wallet_borrowings: list[MWalletBorrowing] | None = Field(default=None, validation_alias="db")
+    """M-Wallet borrowing payload for `borrowing_*` events."""
 
     @field_validator("created_at", mode="before")
     @classmethod

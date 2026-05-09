@@ -1,3 +1,10 @@
+"""REST v3 client for the [MaiCoin MAX](https://max-api.maicoin.com/doc/v3.html) API.
+
+Public endpoints (markets, tickers, depth, trades, kline, timestamp) need no
+credentials. Every other method is authenticated and requires `api_key` /
+`api_secret` to sign the request.
+"""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -48,7 +55,10 @@ from maicoin.v3.models import WithdrawAddress
 from maicoin.v3.models import Withdrawal
 
 BASE_URL = "https://max-api.maicoin.com"
+"""Default MAX REST v3 base URL."""
+
 DEFAULT_TIMEOUT = 10
+"""Default per-request timeout in seconds."""
 
 
 def _compact(params: Mapping[str, object | None]) -> dict[str, object]:
@@ -56,10 +66,35 @@ def _compact(params: Mapping[str, object | None]) -> dict[str, object]:
 
 
 class RequestSession(Protocol):
+    """Minimal HTTP session protocol used by [`Client`][maicoin.v3.Client].
+
+    Anything with a `request(method, url, **kwargs) -> Response` shape works,
+    so you can swap in `httpx.Client`, a mocked session for tests, or a custom
+    transport.
+    """
+
     def request(self, method: str, url: str, **kwargs: object) -> Response: ...
 
 
 class Client:
+    """Synchronous REST v3 client for the MaiCoin MAX exchange.
+
+    Construct without credentials for public endpoints, or pass `api_key` and
+    `api_secret` to call authenticated (signed) endpoints.
+
+    Examples:
+        Public-only client:
+
+        >>> from maicoin.v3 import Client
+        >>> client = Client()
+        >>> client.ticker("btctwd")  # doctest: +SKIP
+
+        Authenticated client:
+
+        >>> client = Client(api_key="...", api_secret="...")  # doctest: +SKIP
+        >>> client.accounts()  # doctest: +SKIP
+    """
+
     def __init__(
         self,
         api_key: str | None = None,
@@ -70,6 +105,18 @@ class Client:
         session: RequestSession | None = None,
         nonce_factory: Callable[[], int] = generate_nonce,
     ) -> None:
+        """Build a REST v3 client.
+
+        Args:
+            api_key: MAX API access key. Required for authenticated endpoints.
+            api_secret: MAX API secret used to sign authenticated requests.
+            base_url: API base URL. Override for staging or test environments.
+            timeout: Per-request timeout in seconds.
+            session: Custom HTTP session implementing [`RequestSession`][maicoin.v3.client.RequestSession].
+                Defaults to a fresh `httpx.Client`.
+            nonce_factory: Callable returning a strictly increasing integer
+                nonce in milliseconds. Override in tests.
+        """
         self.api_key = api_key
         self.api_secret = api_secret
         self.base_url = base_url
@@ -85,6 +132,27 @@ class Client:
         *,
         auth: bool = False,
     ) -> object:
+        """Send a raw REST v3 request and return the parsed JSON payload.
+
+        Use this escape hatch when you need an endpoint that the typed
+        wrappers below don't cover. Auth headers, nonce injection, and error
+        handling work the same way as for the typed methods.
+
+        Args:
+            method: HTTP method, case-insensitive (e.g. `"GET"`, `"POST"`).
+            path: Request path. Leading `/` is added automatically.
+            params: Query parameters (GET) or JSON body (other methods).
+                Use `None` values to omit a key — they are dropped before sending.
+            auth: When `True`, sign the request with the configured credentials.
+
+        Returns:
+            The parsed JSON response, or `None` for empty bodies.
+
+        Raises:
+            ValueError: `auth=True` but the client has no credentials.
+            MaxHTTPError: Non-2xx HTTP response.
+            MaxAPIError: MAX-shaped error payload (`{"error": {...}}`).
+        """
         normalized_method = method.upper()
         normalized_path = path if path.startswith("/") else f"/{path}"
         url = urljoin(self.base_url, normalized_path)
@@ -126,14 +194,17 @@ class Client:
         return payload
 
     def markets(self) -> list[Market]:
+        """List all available markets (`GET /api/v3/markets`)."""
         payload = self.request("GET", "/api/v3/markets")
         return [Market.model_validate(item) for item in cast("list[object]", payload)]
 
     def currencies(self) -> list[Currency]:
+        """List all supported currencies, including network info (`GET /api/v3/currencies`)."""
         payload = self.request("GET", "/api/v3/currencies")
         return [Currency.model_validate(item) for item in cast("list[object]", payload)]
 
     def timestamp(self) -> Timestamp:
+        """Return the server-side timestamp (`GET /api/v3/timestamp`)."""
         payload = self.request("GET", "/api/v3/timestamp")
         return Timestamp.model_validate(payload)
 
@@ -145,6 +216,14 @@ class Client:
         period: int = 1,
         timestamp: int | None = None,
     ) -> list[KLine]:
+        """Fetch OHLCV candles for `market` (`GET /api/v3/k`).
+
+        Args:
+            market: Market id, e.g. `"btctwd"`.
+            limit: Number of candles to return (1-10000, default 30).
+            period: Candle period in minutes (1, 5, 15, 30, 60, 120, 240, 360, 720, 1440, 4320, 10080).
+            timestamp: Earliest UNIX timestamp (seconds) to include.
+        """
         payload = self.request(
             "GET",
             "/api/v3/k",
@@ -163,6 +242,13 @@ class Client:
         ]
 
     def depth(self, market: str, *, limit: int | None = None, sort_by_price: bool | None = None) -> Depth:
+        """Fetch the order book depth for `market` (`GET /api/v3/depth`).
+
+        Args:
+            market: Market id, e.g. `"btctwd"`.
+            limit: Maximum number of price levels per side.
+            sort_by_price: If `True`, sort each side by price.
+        """
         payload = self.request(
             "GET",
             "/api/v3/depth",
@@ -171,6 +257,7 @@ class Client:
         return Depth.model_validate(payload)
 
     def trades(self, market: str, *, timestamp: int | None = None, limit: int | None = None) -> list[PublicTrade]:
+        """Fetch recent public trades for `market` (`GET /api/v3/trades`)."""
         payload = self.request(
             "GET",
             "/api/v3/trades",
@@ -179,18 +266,27 @@ class Client:
         return [PublicTrade.model_validate(item) for item in cast("list[object]", payload)]
 
     def tickers(self, markets: Sequence[str]) -> list[Ticker]:
+        """Fetch tickers for several markets in one request (`GET /api/v3/tickers`)."""
         payload = self.request("GET", "/api/v3/tickers", params={"markets[]": list(markets)})
         return [Ticker.model_validate(item) for item in cast("list[object]", payload)]
 
     def ticker(self, market: str) -> Ticker:
+        """Fetch the ticker for a single market (`GET /api/v3/ticker`)."""
         payload = self.request("GET", "/api/v3/ticker", params={"market": market})
         return Ticker.model_validate(payload)
 
     def info(self) -> UserInfo:
+        """Return the authenticated user profile and VIP info (`GET /api/v3/info`)."""
         payload = self.request("GET", "/api/v3/info", auth=True)
         return UserInfo.model_validate(payload)
 
     def accounts(self, *, wallet_type: str = "spot", currency: str | None = None) -> list[Account]:
+        """List wallet account balances.
+
+        Args:
+            wallet_type: `"spot"` or `"m"` (M-Wallet).
+            currency: Optional filter, e.g. `"twd"`.
+        """
         payload = self.request(
             "GET",
             f"/api/v3/wallet/{wallet_type}/accounts",
@@ -209,6 +305,7 @@ class Client:
         order: str | None = None,
         limit: int | None = None,
     ) -> list[PrivateTrade]:
+        """List the authenticated user's trades for a wallet."""
         payload = self.request(
             "GET",
             f"/api/v3/wallet/{wallet_type}/trades",
@@ -228,6 +325,7 @@ class Client:
         order_by: str | None = None,
         limit: int | None = None,
     ) -> list[Order]:
+        """List the user's open orders."""
         payload = self.request(
             "GET",
             f"/api/v3/wallet/{wallet_type}/orders/open",
@@ -245,6 +343,7 @@ class Client:
         order_by: str | None = None,
         limit: int | None = None,
     ) -> list[Order]:
+        """List the user's closed (filled or cancelled) orders."""
         payload = self.request(
             "GET",
             f"/api/v3/wallet/{wallet_type}/orders/closed",
@@ -261,6 +360,10 @@ class Client:
         from_id: int | None = None,
         limit: int | None = None,
     ) -> list[Order]:
+        """Page through the full order history for a market.
+
+        Use `from_id` to seek past the last id you saw.
+        """
         payload = self.request(
             "GET",
             f"/api/v3/wallet/{wallet_type}/orders/history",
@@ -270,6 +373,7 @@ class Client:
         return [Order.model_validate(item) for item in cast("list[object]", payload)]
 
     def order(self, *, order_id: int | None = None, client_oid: str | None = None) -> Order:
+        """Fetch a single order by `order_id` or `client_oid`."""
         payload = self.request(
             "GET",
             "/api/v3/order",
@@ -291,6 +395,23 @@ class Client:
         ord_type: OrderType | str | None = None,
         group_id: int | None = None,
     ) -> Order:
+        """Place a new order.
+
+        !!! warning
+            This is a state-changing endpoint. Double-check `market`, `side`,
+            `volume`, and `price` before calling against a live account.
+
+        Args:
+            market: Market id, e.g. `"btctwd"`.
+            side: `"buy"` or `"sell"` (or [`OrderSide`][maicoin.v3.OrderSide]).
+            volume: Order amount as a decimal string.
+            wallet_type: `"spot"` or `"m"`.
+            price: Limit price. Omit for market orders.
+            client_oid: Optional client-side order id for idempotency.
+            stop_price: Trigger price for stop orders.
+            ord_type: One of [`OrderType`][maicoin.v3.OrderType] (e.g. `"limit"`, `"market"`, `"stop_limit"`).
+            group_id: Group id for OCO/grouped cancellation.
+        """
         payload = self.request(
             "POST",
             f"/api/v3/wallet/{wallet_type}/order",
@@ -311,6 +432,7 @@ class Client:
         return Order.model_validate(payload)
 
     def cancel_order(self, *, order_id: int | None = None, client_oid: str | None = None) -> Order:
+        """Cancel an order by `order_id` or `client_oid`."""
         payload = self.request(
             "DELETE",
             "/api/v3/order",
@@ -327,6 +449,7 @@ class Client:
         side: OrderSide | str | None = None,
         group_id: int | None = None,
     ) -> list[Order]:
+        """Bulk-cancel orders. Filters compose: omit them all to cancel everything in the wallet."""
         payload = self.request(
             "DELETE",
             f"/api/v3/wallet/{wallet_type}/orders",
@@ -336,6 +459,7 @@ class Client:
         return [Order.model_validate(item) for item in cast("list[object]", payload)]
 
     def order_trades(self, *, order_id: int | None = None, client_oid: str | None = None) -> list[PrivateTrade]:
+        """List the executed trades for one order."""
         payload = self.request(
             "GET",
             "/api/v3/order/trades",
@@ -345,10 +469,16 @@ class Client:
         return [PrivateTrade.model_validate(item) for item in cast("list[object]", payload)]
 
     def withdrawal(self, uuid: str) -> Withdrawal:
+        """Look up a withdrawal by its `uuid`."""
         payload = self.request("GET", "/api/v3/withdrawal", params={"uuid": uuid}, auth=True)
         return Withdrawal.model_validate(payload)
 
     def create_withdrawal(self, *, withdraw_address_uuid: str, amount: str) -> Withdrawal:
+        """Submit a crypto withdrawal to a pre-approved address.
+
+        !!! warning
+            State-changing. The address must already be whitelisted on MAX.
+        """
         payload = self.request(
             "POST",
             "/api/v3/withdrawal",
@@ -358,6 +488,11 @@ class Client:
         return Withdrawal.model_validate(payload)
 
     def create_twd_withdrawal(self, amount: str) -> Withdrawal:
+        """Submit a TWD bank withdrawal.
+
+        !!! warning
+            State-changing. The default bank account on file is debited.
+        """
         payload = self.request("POST", "/api/v3/withdrawal/twd", params={"amount": amount}, auth=True)
         return Withdrawal.model_validate(payload)
 
@@ -370,6 +505,7 @@ class Client:
         order: str | None = None,
         limit: int | None = None,
     ) -> list[Withdrawal]:
+        """List withdrawal history."""
         payload = self.request(
             "GET",
             "/api/v3/withdrawals",
@@ -387,6 +523,7 @@ class Client:
         limit: int | None = None,
         offset: int | None = None,
     ) -> list[WithdrawAddress]:
+        """List the user's whitelisted withdrawal addresses for `currency`."""
         payload = self.request(
             "GET",
             "/api/v3/withdraw_addresses",
@@ -396,6 +533,7 @@ class Client:
         return [WithdrawAddress.model_validate(item) for item in cast("list[object]", payload)]
 
     def deposit(self, *, txid: str | None = None, uuid: str | None = None) -> Deposit:
+        """Look up a deposit by `txid` or `uuid`."""
         payload = self.request("GET", "/api/v3/deposit", params=_compact({"txid": txid, "uuid": uuid}), auth=True)
         return Deposit.model_validate(payload)
 
@@ -407,6 +545,7 @@ class Client:
         order: str | None = None,
         limit: int | None = None,
     ) -> list[Deposit]:
+        """List deposit history."""
         payload = self.request(
             "GET",
             "/api/v3/deposits",
@@ -416,6 +555,7 @@ class Client:
         return [Deposit.model_validate(item) for item in cast("list[object]", payload)]
 
     def deposit_address(self, currency_version: str) -> DepositAddress:
+        """Get the deposit address for a specific currency/network version."""
         payload = self.request(
             "GET",
             "/api/v3/deposit_address",
@@ -433,6 +573,11 @@ class Client:
         order: str | None = None,
         limit: int | None = None,
     ) -> list[InternalTransfer]:
+        """List internal transfers between MAX users.
+
+        Args:
+            side: `"in"` or `"out"`.
+        """
         payload = self.request(
             "GET",
             "/api/v3/internal_transfers",
@@ -452,6 +597,7 @@ class Client:
         order: str | None = None,
         limit: int | None = None,
     ) -> list[Reward]:
+        """List reward history (referrals, mining, staking, etc.)."""
         payload = self.request(
             "GET",
             "/api/v3/rewards",
@@ -471,6 +617,7 @@ class Client:
     def fund_transaction_deposits(
         self, *, timestamp: int | None = None, order: str | None = None, limit: int | None = None
     ) -> list[FundTransactionDeposit]:
+        """List fund-transaction deposits (off-exchange settlement)."""
         payload = self.request(
             "GET",
             "/api/v3/fund_transactions/deposits",
@@ -480,12 +627,14 @@ class Client:
         return [FundTransactionDeposit.model_validate(item) for item in cast("list[object]", payload)]
 
     def fund_transaction_deposit(self, sn: str) -> FundTransactionDeposit:
+        """Look up a fund-transaction deposit by `sn`."""
         payload = self.request("GET", "/api/v3/fund_transactions/deposit", params={"sn": sn}, auth=True)
         return FundTransactionDeposit.model_validate(payload)
 
     def fund_transaction_withdrawals(
         self, *, timestamp: int | None = None, order: str | None = None, limit: int | None = None
     ) -> list[FundTransactionWithdrawal]:
+        """List fund-transaction withdrawals."""
         payload = self.request(
             "GET",
             "/api/v3/fund_transactions/withdrawals",
@@ -495,12 +644,14 @@ class Client:
         return [FundTransactionWithdrawal.model_validate(item) for item in cast("list[object]", payload)]
 
     def fund_transaction_withdrawal(self, sn: str) -> FundTransactionWithdrawal:
+        """Look up a fund-transaction withdrawal by `sn`."""
         payload = self.request("GET", "/api/v3/fund_transactions/withdrawal", params={"sn": sn}, auth=True)
         return FundTransactionWithdrawal.model_validate(payload)
 
     def fund_transaction_transfers(
         self, *, timestamp: int | None = None, order: str | None = None, limit: int | None = None
     ) -> list[FundTransactionTransfer]:
+        """List fund-transaction transfers."""
         payload = self.request(
             "GET",
             "/api/v3/fund_transactions/transfers",
@@ -510,6 +661,7 @@ class Client:
         return [FundTransactionTransfer.model_validate(item) for item in cast("list[object]", payload)]
 
     def fund_transaction_transfer(self, sn: str) -> FundTransactionTransfer:
+        """Look up a fund-transaction transfer by `sn`."""
         payload = self.request("GET", "/api/v3/fund_transactions/transfer", params={"sn": sn}, auth=True)
         return FundTransactionTransfer.model_validate(payload)
 
@@ -521,6 +673,10 @@ class Client:
         from_amount: str | None = None,
         to_amount: str | None = None,
     ) -> ConvertOrder:
+        """Submit a convert order between two currencies.
+
+        Specify exactly one of `from_amount` or `to_amount`.
+        """
         payload = self.request(
             "POST",
             "/api/v3/convert",
@@ -537,12 +693,14 @@ class Client:
         return ConvertOrder.model_validate(payload)
 
     def convert(self, sn: str) -> ConvertOrder:
+        """Look up a convert order by `sn`."""
         payload = self.request("GET", "/api/v3/convert", params={"sn": sn}, auth=True)
         return ConvertOrder.model_validate(payload)
 
     def converts(
         self, *, timestamp: int | None = None, order: str | None = None, limit: int | None = None
     ) -> list[ConvertOrder]:
+        """List convert order history."""
         payload = self.request(
             "GET",
             "/api/v3/converts",
@@ -552,6 +710,7 @@ class Client:
         return [ConvertOrder.model_validate(item) for item in cast("list[object]", payload)]
 
     def m_wallet_index_prices(self) -> dict[str, str]:
+        """Return current M-Wallet index prices keyed by market id."""
         payload = self.request("GET", "/api/v3/wallet/m/index_prices")
         return cast("dict[str, str]", payload)
 
@@ -562,6 +721,13 @@ class Client:
         start_time: int,
         end_time: int,
     ) -> list[HistoricalIndexPrice]:
+        """Fetch historical M-Wallet index prices for `market`.
+
+        Args:
+            market: Market id.
+            start_time: Inclusive start (UNIX milliseconds).
+            end_time: Inclusive end (UNIX milliseconds).
+        """
         payload = self.request(
             "GET",
             "/api/v3/wallet/m/historical_index_prices",
@@ -570,16 +736,23 @@ class Client:
         return [HistoricalIndexPrice.model_validate(item) for item in cast("list[object]", payload)]
 
     def m_wallet_limits(self) -> dict[str, str]:
+        """Return per-currency M-Wallet borrow limits."""
         payload = self.request("GET", "/api/v3/wallet/m/limits")
         return cast("dict[str, str]", payload)
 
     def m_wallet_interest_rates(self) -> dict[str, InterestRate]:
+        """Return current M-Wallet interest rates per currency."""
         payload = self.request("GET", "/api/v3/wallet/m/interest_rates")
         return {
             currency: InterestRate.model_validate(rate) for currency, rate in cast("dict[str, object]", payload).items()
         }
 
     def create_m_wallet_loan(self, *, currency: str, amount: str) -> MWalletLoan:
+        """Borrow `amount` of `currency` into the M-Wallet.
+
+        !!! warning
+            State-changing — accrues interest until repaid.
+        """
         payload = self.request(
             "POST",
             "/api/v3/wallet/m/loan",
@@ -596,6 +769,7 @@ class Client:
         order: str | None = None,
         limit: int | None = None,
     ) -> list[MWalletLoan]:
+        """List M-Wallet loans for `currency`."""
         payload = self.request(
             "GET",
             "/api/v3/wallet/m/loans",
@@ -605,6 +779,13 @@ class Client:
         return [MWalletLoan.model_validate(item) for item in cast("list[object]", payload)]
 
     def create_m_wallet_transfer(self, *, currency: str, amount: str, side: str) -> MWalletTransfer:
+        """Transfer between spot and M-Wallet.
+
+        Args:
+            currency: Currency code.
+            amount: Decimal amount as a string.
+            side: `"in"` (spot → M-Wallet) or `"out"` (M-Wallet → spot).
+        """
         payload = self.request(
             "POST",
             "/api/v3/wallet/m/transfer",
@@ -622,6 +803,7 @@ class Client:
         order: str | None = None,
         limit: int | None = None,
     ) -> list[MWalletTransfer]:
+        """List M-Wallet transfer history."""
         payload = self.request(
             "GET",
             "/api/v3/wallet/m/transfers",
@@ -633,6 +815,11 @@ class Client:
         return [MWalletTransfer.model_validate(item) for item in cast("list[object]", payload)]
 
     def create_m_wallet_repayment(self, *, currency: str, amount: str) -> MWalletRepayment:
+        """Repay an M-Wallet loan.
+
+        !!! warning
+            State-changing.
+        """
         payload = self.request(
             "POST",
             "/api/v3/wallet/m/repayment",
@@ -649,6 +836,7 @@ class Client:
         order: str | None = None,
         limit: int | None = None,
     ) -> list[MWalletRepayment]:
+        """List M-Wallet repayment history for `currency`."""
         payload = self.request(
             "GET",
             "/api/v3/wallet/m/repayments",
@@ -660,6 +848,7 @@ class Client:
     def m_wallet_liquidations(
         self, *, timestamp: int | None = None, order: str | None = None, limit: int | None = None
     ) -> list[MWalletLiquidation]:
+        """List M-Wallet liquidation events."""
         payload = self.request(
             "GET",
             "/api/v3/wallet/m/liquidations",
@@ -669,6 +858,7 @@ class Client:
         return [MWalletLiquidation.model_validate(item) for item in cast("list[object]", payload)]
 
     def m_wallet_liquidation(self, sn: str) -> MWalletLiquidationDetail:
+        """Look up a single M-Wallet liquidation, including order/repayment details."""
         payload = self.request("GET", "/api/v3/wallet/m/liquidation", params={"sn": sn}, auth=True)
         return MWalletLiquidationDetail.model_validate(payload)
 
@@ -680,6 +870,7 @@ class Client:
         order: str | None = None,
         limit: int | None = None,
     ) -> list[MWalletInterest]:
+        """List M-Wallet interest accruals."""
         payload = self.request(
             "GET",
             "/api/v3/wallet/m/interests",
@@ -689,5 +880,6 @@ class Client:
         return [MWalletInterest.model_validate(item) for item in cast("list[object]", payload)]
 
     def m_wallet_ad_ratio(self) -> MWalletADRatio:
+        """Return the M-Wallet account debt ratio (asset-to-debt and margin level)."""
         payload = self.request("GET", "/api/v3/wallet/m/ad_ratio", auth=True)
         return MWalletADRatio.model_validate(payload)
