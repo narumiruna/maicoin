@@ -10,11 +10,16 @@ credentials. Every other method is authenticated and requires `api_key` /
 from __future__ import annotations
 
 import asyncio
+import email.utils
+import random
 from collections.abc import AsyncIterator
 from collections.abc import Awaitable
 from collections.abc import Callable
 from collections.abc import Mapping
 from collections.abc import Sequence
+from dataclasses import dataclass
+from datetime import UTC
+from datetime import datetime
 from typing import Any
 from typing import Protocol
 from typing import cast
@@ -65,6 +70,55 @@ BASE_URL = "https://max-api.maicoin.com"
 
 DEFAULT_TIMEOUT = 10
 """Default per-request timeout in seconds."""
+
+SAFE_RETRY_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+
+
+@dataclass(frozen=True)
+class RetryPolicy:
+    """Conservative retry/rate-limit policy for REST requests.
+
+    By default only idempotent public/read requests (`GET`, `HEAD`, `OPTIONS`)
+    are retried. Private write endpoints can opt in with
+    `retry_non_idempotent=True` when the caller has an idempotency strategy such
+    as stable client order ids.
+    """
+
+    enabled: bool = True
+    total_attempts: int = 3
+    backoff_factor: float = 0.5
+    max_delay: float = 10.0
+    jitter: float = 0.25
+    status_codes: frozenset[int] = frozenset({429, 502, 503, 504})
+    retry_timeouts: bool = True
+    retry_network_errors: bool = True
+    retry_non_idempotent: bool = False
+    respect_retry_after: bool = True
+
+    def allows_method(self, method: str) -> bool:
+        return method.upper() in SAFE_RETRY_METHODS or self.retry_non_idempotent
+
+    def delay(self, attempt_index: int) -> float:
+        delay = min(self.max_delay, self.backoff_factor * 2 ** max(0, attempt_index - 1))
+        if self.jitter <= 0:
+            return delay
+        return delay + random.uniform(0, self.jitter)
+
+
+def _retry_after_delay(value: str | None) -> float | None:
+    if not value:
+        return None
+    try:
+        return max(0.0, float(value))
+    except ValueError:
+        pass
+    try:
+        retry_at = email.utils.parsedate_to_datetime(value)
+    except (TypeError, ValueError):
+        return None
+    if retry_at.tzinfo is None:
+        retry_at = retry_at.replace(tzinfo=UTC)
+    return max(0.0, (retry_at - datetime.now(UTC)).total_seconds())
 
 
 def _compact(params: Mapping[str, object | None]) -> dict[str, object]:
@@ -155,6 +209,7 @@ class Client:
         timeout: float = DEFAULT_TIMEOUT,
         session: RequestSession | None = None,
         nonce_factory: Callable[[], int] = generate_nonce,
+        retry_policy: RetryPolicy | None = None,
     ) -> None:
         """Build a REST v3 client.
 
@@ -167,6 +222,8 @@ class Client:
                 Defaults to a fresh `httpx.AsyncClient`.
             nonce_factory: Callable returning a strictly increasing integer
                 nonce in milliseconds. Override in tests.
+            retry_policy: Retry/backoff policy for transient failures. Pass
+                `RetryPolicy(enabled=False)` to disable retries.
         """
         self.api_key = api_key
         self.api_secret = api_secret
@@ -175,6 +232,7 @@ class Client:
         self._owns_session = session is None
         self._session: RequestSession | None = session
         self.nonce_factory = nonce_factory
+        self.retry_policy = retry_policy or RetryPolicy()
 
     @property
     def session(self) -> RequestSession:
@@ -652,7 +710,7 @@ class Client:
         else:
             kwargs["json"] = request_params
 
-        response = await self.session.request(normalized_method, url, **kwargs)
+        response = await self._request_with_retries(normalized_method, url, kwargs)
         raise_for_response_status(response)
         if not response.content:
             return None
@@ -660,6 +718,46 @@ class Client:
         payload = response.json()
         raise_for_api_error(payload)
         return payload
+
+    async def _request_with_retries(self, method: str, url: str, kwargs: Mapping[str, object]) -> Response:
+        policy = self.retry_policy
+        attempts = max(1, policy.total_attempts)
+        retry_allowed = policy.enabled and policy.allows_method(method) and attempts > 1
+        last_exc: httpx.TimeoutException | httpx.TransportError | None = None
+
+        for attempt_index in range(1, attempts + 1):
+            try:
+                response = await self.session.request(method, url, **dict(kwargs))
+            except httpx.TimeoutException as exc:
+                last_exc = exc
+                if not (retry_allowed and policy.retry_timeouts and attempt_index < attempts):
+                    raise
+                await self._sleep_before_retry(policy.delay(attempt_index))
+                continue
+            except httpx.TransportError as exc:
+                last_exc = exc
+                if not (retry_allowed and policy.retry_network_errors and attempt_index < attempts):
+                    raise
+                await self._sleep_before_retry(policy.delay(attempt_index))
+                continue
+
+            if not (retry_allowed and response.status_code in policy.status_codes and attempt_index < attempts):
+                return response
+
+            retry_after = None
+            if policy.respect_retry_after:
+                headers = getattr(response, "headers", None)
+                retry_after = _retry_after_delay(headers.get("Retry-After") if headers is not None else None)
+            await self._sleep_before_retry(retry_after if retry_after is not None else policy.delay(attempt_index))
+
+        if last_exc is not None:
+            raise last_exc
+        msg = "request retry loop exhausted without a response"
+        raise RuntimeError(msg)
+
+    async def _sleep_before_retry(self, delay: float) -> None:
+        if delay > 0:
+            await asyncio.sleep(delay)
 
     async def markets(self) -> list[Market]:
         """List all available markets (`GET /api/v3/markets`)."""

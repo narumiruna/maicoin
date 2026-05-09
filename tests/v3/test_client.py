@@ -6,6 +6,7 @@ from typing import cast
 import pytest
 
 from maicoin.v3.client import Client
+from maicoin.v3.client import RetryPolicy
 from maicoin.v3.errors import MaxAPIError
 from maicoin.v3.errors import MaxHTTPError
 
@@ -13,9 +14,10 @@ pytestmark = pytest.mark.anyio
 
 
 class FakeResponse:
-    def __init__(self, payload: object, *, status_code: int = 200) -> None:
+    def __init__(self, payload: object, *, status_code: int = 200, headers: Mapping[str, str] | None = None) -> None:
         self.payload = payload
         self.status_code = status_code
+        self.headers = dict(headers or {})
         self.content = b"{}"
         self.text = str(payload)
 
@@ -24,14 +26,16 @@ class FakeResponse:
 
 
 class FakeSession:
-    def __init__(self, response: FakeResponse) -> None:
-        self.response = response
+    def __init__(self, response: FakeResponse | list[FakeResponse]) -> None:
+        self.responses = [response] if isinstance(response, FakeResponse) else response
         self.calls: list[dict[str, object]] = []
         self.closed = False
 
     async def request(self, method: str, url: str, **kwargs: object) -> FakeResponse:
         self.calls.append({"method": method, "url": url, "kwargs": kwargs})
-        return self.response
+        if len(self.responses) == 1:
+            return self.responses[0]
+        return self.responses.pop(0)
 
     async def aclose(self) -> None:
         self.closed = True
@@ -120,6 +124,63 @@ async def test_authenticated_request_requires_credentials() -> None:
 
     with pytest.raises(ValueError, match="api_key and api_secret"):
         await client.request("GET", "/api/v3/wallet/spot/accounts", auth=True)
+
+
+async def test_get_request_retries_retry_after_rate_limit(monkeypatch: pytest.MonkeyPatch) -> None:
+    sleeps: list[float] = []
+
+    async def sleep(delay: float) -> None:
+        sleeps.append(delay)
+
+    session = FakeSession(
+        [
+            FakeResponse({"error": "rate limited"}, status_code=429, headers={"Retry-After": "0"}),
+            FakeResponse({"ok": True}),
+        ]
+    )
+    client = Client(base_url="https://example.test", session=session, retry_policy=RetryPolicy(jitter=0))
+    monkeypatch.setattr(client, "_sleep_before_retry", sleep)
+
+    assert await client.request("GET", "/api/v3/ping") == {"ok": True}
+    assert len(session.calls) == 2
+    assert sleeps == [0.0]
+
+
+async def test_post_request_does_not_retry_by_default() -> None:
+    session = FakeSession(
+        [
+            FakeResponse({"error": "gateway"}, status_code=503),
+            FakeResponse({"ok": True}),
+        ]
+    )
+    client = Client(base_url="https://example.test", session=session, retry_policy=RetryPolicy(jitter=0))
+
+    with pytest.raises(MaxHTTPError, match="gateway"):
+        await client.request("POST", "/api/v3/order", params={"market": "btctwd"})
+
+    assert len(session.calls) == 1
+
+
+async def test_post_request_retries_when_non_idempotent_opted_in(monkeypatch: pytest.MonkeyPatch) -> None:
+    session = FakeSession(
+        [
+            FakeResponse({"error": "gateway"}, status_code=503),
+            FakeResponse({"ok": True}),
+        ]
+    )
+    client = Client(
+        base_url="https://example.test",
+        session=session,
+        retry_policy=RetryPolicy(retry_non_idempotent=True, backoff_factor=0, jitter=0),
+    )
+
+    async def sleep(_delay: float) -> None:
+        return None
+
+    monkeypatch.setattr(client, "_sleep_before_retry", sleep)
+
+    assert await client.request("POST", "/api/v3/order", params={"market": "btctwd"}) == {"ok": True}
+    assert len(session.calls) == 2
 
 
 def test_request_sync_wrapper_runs_async_request() -> None:

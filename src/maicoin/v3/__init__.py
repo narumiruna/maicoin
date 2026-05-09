@@ -5,6 +5,7 @@ from maicoin.v3.auth import sign_payload
 from maicoin.v3.client import BASE_URL
 from maicoin.v3.client import DEFAULT_TIMEOUT
 from maicoin.v3.client import Client
+from maicoin.v3.client import RetryPolicy
 from maicoin.v3.errors import MaxAPIError
 from maicoin.v3.errors import MaxHTTPError
 from maicoin.v3.models import Account
@@ -84,6 +85,7 @@ __all__ = [
     "OrderType",
     "PrivateTrade",
     "PublicTrade",
+    "RetryPolicy",
     "Reward",
     "Staking",
     "Ticker",

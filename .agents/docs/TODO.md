@@ -8,8 +8,8 @@ Plan archived: [`archived/live-integration-tests-plan.md`](archived/live-integra
 
 Plan: [`plans/client-resilience-and-ergonomics-plan.md`](plans/client-resilience-and-ergonomics-plan.md)
 
-- [ ] Add WebSocket reconnect, heartbeat configuration, graceful cancellation, and non-blocking handler dispatch.
-- [ ] Add conservative REST retry/rate-limit support.
+- [x] Add WebSocket reconnect, heartbeat configuration, graceful cancellation, and non-blocking handler dispatch.
+- [x] Add conservative REST retry/rate-limit support.
 - [x] Add pagination helpers for historical/list endpoints.
 - [x] Migrate REST `Client` to async-first methods with explicit `_sync` convenience wrappers.
 - [x] Harden `_sync` wrapper lifecycle after async-first migration; avoid or document cross-event-loop reuse of the underlying `httpx.AsyncClient`.
