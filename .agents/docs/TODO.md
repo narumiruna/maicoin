@@ -11,7 +11,12 @@ Plan: [`plans/client-resilience-and-ergonomics-plan.md`](plans/client-resilience
 - [ ] Add WebSocket reconnect, heartbeat configuration, graceful cancellation, and non-blocking handler dispatch.
 - [ ] Add conservative REST retry/rate-limit support.
 - [ ] Add pagination helpers for historical/list endpoints.
-- [ ] Migrate REST `Client` to async-first methods with explicit `_sync` convenience wrappers.
+- [x] Migrate REST `Client` to async-first methods with explicit `_sync` convenience wrappers.
+- [ ] Harden `_sync` wrapper lifecycle after async-first migration; avoid or document cross-event-loop reuse of the underlying `httpx.AsyncClient`.
+- [ ] Replace generic `_sync` wrapper signatures with endpoint-specific parameters and return types for better IDE/type-checker support.
+- [x] Convert REST client tests toward native async style (`pytest.mark.anyio`) instead of relying mostly on `asyncio.run()` / `_sync` wrappers.
+- [ ] Add async pagination helpers / async iterators for historical and list endpoints, for example `async for order in client.iter_order_history(...)`.
+- [ ] Expand async lifecycle docs and examples, including `async with Client()`, `await client.aclose()`, `_sync` limitations in existing event loops, and a FastAPI dependency example.
 
 ## Dataclass Low-Level Models
 

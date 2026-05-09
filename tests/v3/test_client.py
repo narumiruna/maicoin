@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 from collections.abc import Mapping
 from typing import cast
 
@@ -9,6 +8,8 @@ import pytest
 from maicoin.v3.client import Client
 from maicoin.v3.errors import MaxAPIError
 from maicoin.v3.errors import MaxHTTPError
+
+pytestmark = pytest.mark.anyio
 
 
 class FakeResponse:
@@ -40,11 +41,11 @@ def last_kwargs(session: FakeSession) -> Mapping[str, object]:
     return cast("Mapping[str, object]", session.calls[-1]["kwargs"])
 
 
-def test_get_request_sends_params_as_query_params() -> None:
+async def test_get_request_sends_params_as_query_params() -> None:
     session = FakeSession(FakeResponse([{"id": "btctwd"}]))
     client = Client(base_url="https://example.test", session=session)
 
-    assert asyncio.run(client.request("GET", "/api/v3/markets", params={"foo": "bar"})) == [{"id": "btctwd"}]
+    assert await client.request("GET", "/api/v3/markets", params={"foo": "bar"}) == [{"id": "btctwd"}]
 
     assert session.calls[-1]["method"] == "GET"
     assert session.calls[-1]["url"] == "https://example.test/api/v3/markets"
@@ -52,11 +53,11 @@ def test_get_request_sends_params_as_query_params() -> None:
     assert "json" not in last_kwargs(session)
 
 
-def test_post_request_sends_params_as_json_body() -> None:
+async def test_post_request_sends_params_as_json_body() -> None:
     session = FakeSession(FakeResponse({"id": 1}))
     client = Client(base_url="https://example.test", session=session)
 
-    assert asyncio.run(client.request("POST", "api/v3/order", params={"market": "btctwd"})) == {"id": 1}
+    assert await client.request("POST", "api/v3/order", params={"market": "btctwd"}) == {"id": 1}
 
     assert session.calls[-1]["method"] == "POST"
     assert session.calls[-1]["url"] == "https://example.test/api/v3/order"
@@ -64,18 +65,18 @@ def test_post_request_sends_params_as_json_body() -> None:
     assert "params" not in last_kwargs(session)
 
 
-def test_delete_request_sends_params_as_json_body() -> None:
+async def test_delete_request_sends_params_as_json_body() -> None:
     session = FakeSession(FakeResponse({"ok": True}))
     client = Client(base_url="https://example.test", session=session)
 
-    assert asyncio.run(client.request("DELETE", "/api/v3/order", params={"id": 1})) == {"ok": True}
+    assert await client.request("DELETE", "/api/v3/order", params={"id": 1}) == {"ok": True}
 
     assert session.calls[-1]["method"] == "DELETE"
     assert last_kwargs(session)["json"] == {"id": 1}
     assert "params" not in last_kwargs(session)
 
 
-def test_authenticated_request_adds_max_headers() -> None:
+async def test_authenticated_request_adds_max_headers() -> None:
     session = FakeSession(FakeResponse({"ok": True}))
     client = Client(
         api_key="key",
@@ -85,7 +86,7 @@ def test_authenticated_request_adds_max_headers() -> None:
         nonce_factory=lambda: 123456,
     )
 
-    asyncio.run(client.request("GET", "/api/v3/wallet/spot/accounts", params={"currency": "btc"}, auth=True))
+    await client.request("GET", "/api/v3/wallet/spot/accounts", params={"currency": "btc"}, auth=True)
 
     headers = cast("Mapping[str, str]", last_kwargs(session)["headers"])
     assert headers["X-MAX-ACCESSKEY"] == "key"
@@ -97,28 +98,28 @@ def test_authenticated_request_adds_max_headers() -> None:
     assert last_kwargs(session)["params"] == {"nonce": 123456, "currency": "btc"}
 
 
-def test_http_error_response_raises() -> None:
+async def test_http_error_response_raises() -> None:
     client = Client(
         base_url="https://example.test",
         session=FakeSession(FakeResponse({"error": "invalid nonce"}, status_code=401)),
     )
 
     with pytest.raises(MaxHTTPError, match="invalid nonce"):
-        asyncio.run(client.request("GET", "/api/v3/wallet/spot/accounts"))
+        await client.request("GET", "/api/v3/wallet/spot/accounts")
 
 
-def test_api_error_payload_raises() -> None:
+async def test_api_error_payload_raises() -> None:
     client = Client(base_url="https://example.test", session=FakeSession(FakeResponse({"error": "bad request"})))
 
     with pytest.raises(MaxAPIError, match="bad request"):
-        asyncio.run(client.request("GET", "/api/v3/ticker"))
+        await client.request("GET", "/api/v3/ticker")
 
 
-def test_authenticated_request_requires_credentials() -> None:
+async def test_authenticated_request_requires_credentials() -> None:
     client = Client(base_url="https://example.test", session=FakeSession(FakeResponse({})))
 
     with pytest.raises(ValueError, match="api_key and api_secret"):
-        asyncio.run(client.request("GET", "/api/v3/wallet/spot/accounts", auth=True))
+        await client.request("GET", "/api/v3/wallet/spot/accounts", auth=True)
 
 
 def test_request_sync_wrapper_runs_async_request() -> None:
@@ -129,11 +130,10 @@ def test_request_sync_wrapper_runs_async_request() -> None:
     assert session.calls[-1]["url"] == "https://example.test/api/v3/ping"
 
 
-def test_async_context_manager_closes_session() -> None:
-    async def run() -> FakeSession:
-        session = FakeSession(FakeResponse({}))
-        async with Client(session=session):
-            assert not session.closed
-        return session
+async def test_async_context_manager_closes_session() -> None:
+    session = FakeSession(FakeResponse({}))
 
-    assert asyncio.run(run()).closed
+    async with Client(session=session):
+        assert not session.closed
+
+    assert session.closed
