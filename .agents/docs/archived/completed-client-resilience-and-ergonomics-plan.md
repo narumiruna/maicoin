@@ -2,7 +2,7 @@
 
 Status: **implemented and archived**.
 
-This plan tracked production-readiness and ergonomics work for the REST v3 client and WebSocket stream. The client-resilience milestone is complete; remaining destructive live-test and dataclass-model ideas are tracked separately in `.agents/docs/plans/client-resilience-and-ergonomics-plan.md` and related archived plans.
+This plan tracked production-readiness and ergonomics work for the REST v3 client and WebSocket stream. The client-resilience milestone is complete; remaining destructive live-test and dataclass-model ideas are tracked separately in `.agents/docs/plans/client-resilience-and-ergonomics-follow-ups.md` and related archived plans.
 
 ## Implemented Scope
 

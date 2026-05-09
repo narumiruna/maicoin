@@ -2,7 +2,7 @@
 
 ## Active Follow-Ups
 
-Follow-up plan: [`plans/client-resilience-and-ergonomics-plan.md`](plans/client-resilience-and-ergonomics-plan.md)
+Follow-up plan: [`plans/client-resilience-and-ergonomics-follow-ups.md`](plans/client-resilience-and-ergonomics-follow-ups.md)
 
 ### Destructive Live Tests
 
@@ -20,7 +20,7 @@ Plan archived: [`archived/dataclass-low-level-models-plan.md`](archived/dataclas
 
 ### Client Resilience and Ergonomics
 
-Archived plan: [`archived/client-resilience-and-ergonomics-plan.md`](archived/client-resilience-and-ergonomics-plan.md)
+Archived plan: [`archived/completed-client-resilience-and-ergonomics-plan.md`](archived/completed-client-resilience-and-ergonomics-plan.md)
 
 - [x] Add WebSocket reconnect, heartbeat configuration, graceful cancellation, and non-blocking handler dispatch.
 - [x] Add conservative REST retry/rate-limit support.

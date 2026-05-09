@@ -2,7 +2,7 @@
 
 Status: **active follow-ups only**.
 
-The implemented client resilience and ergonomics work has been archived at [`../archived/client-resilience-and-ergonomics-plan.md`](../archived/client-resilience-and-ergonomics-plan.md).
+The implemented client resilience and ergonomics work has been archived at [`../archived/completed-client-resilience-and-ergonomics-plan.md`](../archived/completed-client-resilience-and-ergonomics-plan.md).
 
 There is no remaining core client-resilience implementation work in this plan. The only related follow-ups are intentionally deferred safety/benchmark tasks.
 
