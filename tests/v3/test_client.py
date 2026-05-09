@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import cast
-
 import pytest
 
 from maicoin.v3._endpoints.base import EndpointExecutor
@@ -14,40 +11,12 @@ from maicoin.v3.errors import MaxHTTPError
 from maicoin.v3.models import InterestRate
 from maicoin.v3.models import Market
 from maicoin.v3.models import Timestamp
+from tests.v3.helpers import FakeResponse
+from tests.v3.helpers import FakeSession
+from tests.v3.helpers import last_kwargs
+from tests.v3.helpers import request_headers
 
 pytestmark = pytest.mark.anyio
-
-
-class FakeResponse:
-    def __init__(self, payload: object, *, status_code: int = 200, headers: Mapping[str, str] | None = None) -> None:
-        self.payload = payload
-        self.status_code = status_code
-        self.headers = dict(headers or {})
-        self.content = b"{}"
-        self.text = str(payload)
-
-    def json(self) -> object:
-        return self.payload
-
-
-class FakeSession:
-    def __init__(self, response: FakeResponse | list[FakeResponse]) -> None:
-        self.responses = [response] if isinstance(response, FakeResponse) else response
-        self.calls: list[dict[str, object]] = []
-        self.closed = False
-
-    async def request(self, method: str, url: str, **kwargs: object) -> FakeResponse:
-        self.calls.append({"method": method, "url": url, "kwargs": kwargs})
-        if len(self.responses) == 1:
-            return self.responses[0]
-        return self.responses.pop(0)
-
-    async def aclose(self) -> None:
-        self.closed = True
-
-
-def last_kwargs(session: FakeSession) -> Mapping[str, object]:
-    return cast("Mapping[str, object]", session.calls[-1]["kwargs"])
 
 
 async def test_get_request_sends_params_as_query_params() -> None:
@@ -97,7 +66,7 @@ async def test_authenticated_request_adds_max_headers() -> None:
 
     await client.request("GET", "/api/v3/wallet/spot/accounts", params={"currency": "btc"}, auth=True)
 
-    headers = cast("Mapping[str, str]", last_kwargs(session)["headers"])
+    headers = request_headers(session)
     assert headers["X-MAX-ACCESSKEY"] == "key"
     assert headers["X-MAX-PAYLOAD"] == (
         "eyJub25jZSI6MTIzNDU2LCJjdXJyZW5jeSI6ImJ0YyIsInBhdGgiOiIvYXBpL3YzL3dhbGxldC9zcG90L2FjY291bnRzIn0="
@@ -175,7 +144,7 @@ async def test_endpoint_executor_preserves_request_conventions_and_parse_payload
         "https://example.test/api/v3/markets",
         "https://example.test/api/v3/wallet/m/interest_rates",
     ]
-    assert cast("dict[str, object]", session.calls[-1]["kwargs"])["params"] == {"nonce": 123456}
+    assert last_kwargs(session)["params"] == {"nonce": 123456}
 
 
 async def test_get_request_retries_retry_after_rate_limit(monkeypatch: pytest.MonkeyPatch) -> None:

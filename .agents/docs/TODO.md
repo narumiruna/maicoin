@@ -11,7 +11,7 @@ Follow-up plans:
 
 Plan: [`plans/codebase-architecture-deepening-opportunities.md`](plans/codebase-architecture-deepening-opportunities.md)
 
-- [ ] Deepen the REST v3 test harness so fake transport, authenticated clients, request inspection, and auth payload decoding live behind one test Module.
+- [x] Deepen the REST v3 test harness so fake transport, authenticated clients, request inspection, and auth payload decoding live behind one test Module.
 - [x] Split REST v3 raw models by domain family while preserving public `maicoin.v3` and `maicoin.v3.models` imports.
 - [ ] Deepen the WebSocket Stream lifecycle implementation so reconnect/session and response dispatch rules have stronger locality.
 - [ ] Add a public export / docs-reference consistency check to prevent strict MkDocs autorefs drift.

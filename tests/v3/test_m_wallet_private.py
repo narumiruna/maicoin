@@ -1,13 +1,7 @@
 from __future__ import annotations
 
-import base64
-import json
-from collections.abc import Mapping
-from typing import cast
-
 import pytest
 
-from maicoin.v3 import Client
 from maicoin.v3 import MWalletADRatio
 from maicoin.v3 import MWalletInterest
 from maicoin.v3 import MWalletLiquidation
@@ -15,49 +9,13 @@ from maicoin.v3 import MWalletLiquidationDetail
 from maicoin.v3 import MWalletLoan
 from maicoin.v3 import MWalletRepayment
 from maicoin.v3 import MWalletTransfer
+from tests.v3.helpers import FakeSession
+from tests.v3.helpers import authenticated_client
+from tests.v3.helpers import last_json
+from tests.v3.helpers import last_kwargs
+from tests.v3.helpers import last_payload
 
 pytestmark = pytest.mark.anyio
-
-
-class FakeResponse:
-    def __init__(self, payload: object) -> None:
-        self.payload = payload
-        self.status_code = 200
-        self.content = b"{}"
-        self.text = str(payload)
-
-    def json(self) -> object:
-        return self.payload
-
-
-class FakeSession:
-    def __init__(self, payload: object) -> None:
-        self.response = FakeResponse(payload)
-        self.calls: list[dict[str, object]] = []
-
-    async def request(self, method: str, url: str, **kwargs: object) -> FakeResponse:
-        self.calls.append({"method": method, "url": url, "kwargs": kwargs})
-        return self.response
-
-
-def authenticated_client(session: FakeSession) -> Client:
-    return Client(
-        api_key="key",
-        api_secret="secret",
-        base_url="https://example.test",
-        session=session,
-        nonce_factory=lambda: 123456,
-    )
-
-
-def last_kwargs(session: FakeSession) -> Mapping[str, object]:
-    return cast("Mapping[str, object]", session.calls[-1]["kwargs"])
-
-
-def last_payload(session: FakeSession) -> Mapping[str, object]:
-    headers = cast("Mapping[str, str]", last_kwargs(session)["headers"])
-    payload = base64.b64decode(headers["X-MAX-PAYLOAD"]).decode()
-    return cast("Mapping[str, object]", json.loads(payload))
 
 
 def loan_payload(**overrides: object) -> dict[str, object]:
@@ -143,7 +101,7 @@ async def test_create_m_wallet_loan_and_history_construct_authenticated_requests
     assert loan == MWalletLoan.model_validate(loan_payload())
     assert create_session.calls[-1]["method"] == "POST"
     assert create_session.calls[-1]["url"] == "https://example.test/api/v3/wallet/m/loan"
-    assert last_kwargs(create_session)["json"] == {"nonce": 123456, "currency": "eth", "amount": "0.019"}
+    assert last_json(create_session) == {"nonce": 123456, "currency": "eth", "amount": "0.019"}
     assert last_payload(create_session)["path"] == "/api/v3/wallet/m/loan"
 
     list_session = FakeSession([loan_payload()])
@@ -170,7 +128,7 @@ async def test_m_wallet_transfer_create_and_history_construct_requests() -> None
     assert transfer == MWalletTransfer.model_validate(transfer_payload())
     assert create_session.calls[-1]["method"] == "POST"
     assert create_session.calls[-1]["url"] == "https://example.test/api/v3/wallet/m/transfer"
-    assert last_kwargs(create_session)["json"] == {"nonce": 123456, "currency": "eth", "amount": "0.019", "side": "in"}
+    assert last_json(create_session) == {"nonce": 123456, "currency": "eth", "amount": "0.019", "side": "in"}
 
     list_session = FakeSession([transfer_payload()])
     transfers = await authenticated_client(list_session).m_wallet_transfers(currency="eth", side="in", limit=1)
@@ -186,7 +144,7 @@ async def test_m_wallet_repayment_create_and_history_construct_requests() -> Non
     assert repayment == MWalletRepayment.model_validate(repayment_payload())
     assert create_session.calls[-1]["method"] == "POST"
     assert create_session.calls[-1]["url"] == "https://example.test/api/v3/wallet/m/repayment"
-    assert last_kwargs(create_session)["json"] == {"nonce": 123456, "currency": "eth", "amount": "0.15"}
+    assert last_json(create_session) == {"nonce": 123456, "currency": "eth", "amount": "0.15"}
 
     list_session = FakeSession([repayment_payload()])
     repayments = await authenticated_client(list_session).m_wallet_repayments("eth", order="asc", limit=1)

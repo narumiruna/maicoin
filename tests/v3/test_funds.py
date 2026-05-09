@@ -1,13 +1,7 @@
 from __future__ import annotations
 
-import base64
-import json
-from collections.abc import Mapping
-from typing import cast
-
 import pytest
 
-from maicoin.v3 import Client
 from maicoin.v3 import Deposit
 from maicoin.v3 import DepositAddress
 from maicoin.v3 import FundTransactionDeposit
@@ -17,49 +11,13 @@ from maicoin.v3 import InternalTransfer
 from maicoin.v3 import Reward
 from maicoin.v3 import WithdrawAddress
 from maicoin.v3 import Withdrawal
+from tests.v3.helpers import FakeSession
+from tests.v3.helpers import authenticated_client
+from tests.v3.helpers import last_json
+from tests.v3.helpers import last_kwargs
+from tests.v3.helpers import last_payload
 
 pytestmark = pytest.mark.anyio
-
-
-class FakeResponse:
-    def __init__(self, payload: object) -> None:
-        self.payload = payload
-        self.status_code = 200
-        self.content = b"{}"
-        self.text = str(payload)
-
-    def json(self) -> object:
-        return self.payload
-
-
-class FakeSession:
-    def __init__(self, payload: object) -> None:
-        self.response = FakeResponse(payload)
-        self.calls: list[dict[str, object]] = []
-
-    async def request(self, method: str, url: str, **kwargs: object) -> FakeResponse:
-        self.calls.append({"method": method, "url": url, "kwargs": kwargs})
-        return self.response
-
-
-def authenticated_client(session: FakeSession) -> Client:
-    return Client(
-        api_key="key",
-        api_secret="secret",
-        base_url="https://example.test",
-        session=session,
-        nonce_factory=lambda: 123456,
-    )
-
-
-def last_kwargs(session: FakeSession) -> Mapping[str, object]:
-    return cast("Mapping[str, object]", session.calls[-1]["kwargs"])
-
-
-def last_payload(session: FakeSession) -> Mapping[str, object]:
-    headers = cast("Mapping[str, str]", last_kwargs(session)["headers"])
-    payload = base64.b64decode(headers["X-MAX-PAYLOAD"]).decode()
-    return cast("Mapping[str, object]", json.loads(payload))
 
 
 def withdrawal_payload(**overrides: object) -> dict[str, object]:
@@ -160,7 +118,7 @@ async def test_withdrawal_methods_construct_authenticated_requests_and_parse_pay
     create_session = FakeSession(withdrawal_payload())
     await authenticated_client(create_session).create_withdrawal(withdraw_address_uuid="addr-1", amount="0.019")
     assert create_session.calls[-1]["method"] == "POST"
-    assert last_kwargs(create_session)["json"] == {
+    assert last_json(create_session) == {
         "nonce": 123456,
         "withdraw_address_uuid": "addr-1",
         "amount": "0.019",
@@ -170,7 +128,7 @@ async def test_withdrawal_methods_construct_authenticated_requests_and_parse_pay
     twd_session = FakeSession(withdrawal_payload(currency="twd", network_protocol=None, amount="100"))
     await authenticated_client(twd_session).create_twd_withdrawal("100")
     assert twd_session.calls[-1]["url"] == "https://example.test/api/v3/withdrawal/twd"
-    assert last_kwargs(twd_session)["json"] == {"nonce": 123456, "amount": "100"}
+    assert last_json(twd_session) == {"nonce": 123456, "amount": "100"}
 
 
 async def test_withdrawals_and_withdraw_addresses_parse_lists() -> None:
