@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from maicoin.v3._endpoints.base import EndpointExecutor
 from maicoin.v3._endpoints.base import EndpointSpec
 from maicoin.v3._endpoints.base import RestRequester
-from maicoin.v3.models import ConvertOrder
+from maicoin.v3.models.convert import ConvertOrder
 
 CREATE_CONVERT = EndpointSpec("POST", "/api/v3/convert", auth=True)
 CONVERT = EndpointSpec("GET", "/api/v3/convert", auth=True)

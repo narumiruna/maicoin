@@ -7,15 +7,15 @@ from dataclasses import dataclass
 from maicoin.v3._endpoints.base import EndpointExecutor
 from maicoin.v3._endpoints.base import EndpointSpec
 from maicoin.v3._endpoints.base import RestRequester
-from maicoin.v3.models import Deposit
-from maicoin.v3.models import DepositAddress
-from maicoin.v3.models import FundTransactionDeposit
-from maicoin.v3.models import FundTransactionTransfer
-from maicoin.v3.models import FundTransactionWithdrawal
-from maicoin.v3.models import InternalTransfer
-from maicoin.v3.models import Reward
-from maicoin.v3.models import WithdrawAddress
-from maicoin.v3.models import Withdrawal
+from maicoin.v3.models.funds import Deposit
+from maicoin.v3.models.funds import DepositAddress
+from maicoin.v3.models.funds import FundTransactionDeposit
+from maicoin.v3.models.funds import FundTransactionTransfer
+from maicoin.v3.models.funds import FundTransactionWithdrawal
+from maicoin.v3.models.funds import InternalTransfer
+from maicoin.v3.models.funds import Reward
+from maicoin.v3.models.funds import WithdrawAddress
+from maicoin.v3.models.funds import Withdrawal
 
 WITHDRAWAL = EndpointSpec("GET", "/api/v3/withdrawal", auth=True)
 CREATE_WITHDRAWAL = EndpointSpec("POST", "/api/v3/withdrawal", auth=True)

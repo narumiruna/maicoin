@@ -8,15 +8,15 @@ from typing import cast
 from maicoin.v3._endpoints.base import EndpointExecutor
 from maicoin.v3._endpoints.base import EndpointSpec
 from maicoin.v3._endpoints.base import RestRequester
-from maicoin.v3.models import HistoricalIndexPrice
-from maicoin.v3.models import InterestRate
-from maicoin.v3.models import MWalletADRatio
-from maicoin.v3.models import MWalletInterest
-from maicoin.v3.models import MWalletLiquidation
-from maicoin.v3.models import MWalletLiquidationDetail
-from maicoin.v3.models import MWalletLoan
-from maicoin.v3.models import MWalletRepayment
-from maicoin.v3.models import MWalletTransfer
+from maicoin.v3.models.m_wallet import HistoricalIndexPrice
+from maicoin.v3.models.m_wallet import InterestRate
+from maicoin.v3.models.m_wallet import MWalletADRatio
+from maicoin.v3.models.m_wallet import MWalletInterest
+from maicoin.v3.models.m_wallet import MWalletLiquidation
+from maicoin.v3.models.m_wallet import MWalletLiquidationDetail
+from maicoin.v3.models.m_wallet import MWalletLoan
+from maicoin.v3.models.m_wallet import MWalletRepayment
+from maicoin.v3.models.m_wallet import MWalletTransfer
 
 M_WALLET_INDEX_PRICES = EndpointSpec("GET", "/api/v3/wallet/m/index_prices")
 M_WALLET_HISTORICAL_INDEX_PRICES = EndpointSpec("GET", "/api/v3/wallet/m/historical_index_prices")

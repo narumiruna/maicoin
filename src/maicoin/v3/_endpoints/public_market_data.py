@@ -9,13 +9,13 @@ from typing import cast
 from maicoin.v3._endpoints.base import EndpointExecutor
 from maicoin.v3._endpoints.base import EndpointSpec
 from maicoin.v3._endpoints.base import RestRequester
-from maicoin.v3.models import Currency
-from maicoin.v3.models import Depth
-from maicoin.v3.models import KLine
-from maicoin.v3.models import Market
-from maicoin.v3.models import PublicTrade
-from maicoin.v3.models import Ticker
-from maicoin.v3.models import Timestamp
+from maicoin.v3.models.public_market_data import Currency
+from maicoin.v3.models.public_market_data import Depth
+from maicoin.v3.models.public_market_data import KLine
+from maicoin.v3.models.public_market_data import Market
+from maicoin.v3.models.public_market_data import PublicTrade
+from maicoin.v3.models.public_market_data import Ticker
+from maicoin.v3.models.public_market_data import Timestamp
 
 MARKETS = EndpointSpec("GET", "/api/v3/markets")
 CURRENCIES = EndpointSpec("GET", "/api/v3/currencies")
