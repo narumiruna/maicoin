@@ -55,3 +55,10 @@ Recent history uses short imperative or dependency-update messages, often from D
 ## Security & Configuration Tips
 
 Do not commit `.env` files, API keys, or secrets. Use `MAX_API_KEY` and `MAX_API_SECRET` only through local environment variables or ignored local configuration.
+
+## MEMORY.md
+
+- `MEMORY.md` is not auto-loaded. Check it before non-trivial debugging or design work when prior project context may matter.
+- Keep entries short and reusable.
+- `MEMORY.md` must use `## GOTCHA` and `## TASTE` sections.
+- After a non-trivial error or discovery, add one concise entry if it will help future work.
