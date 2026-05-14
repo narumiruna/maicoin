@@ -6,8 +6,7 @@ on:
     branches:
       - main
     paths:
-      - docs/**
-      - mkdocs.yml
+      - docs/site/**
       - src/**
       - pyproject.toml
       - uv.lock
@@ -17,6 +16,10 @@ permissions:
   contents: read
   pages: write
   id-token: write
+
+env:
+  MKDOCS_CONFIG: docs/site/mkdocs.yml
+  PAGES_ARTIFACT_PATH: docs/site/build
 
 concurrency:
   group: pages
@@ -30,14 +33,15 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.12"
+      - uses: actions/configure-pages@v5
       - name: Install docs dependencies
-        run: uv sync --group docs
+        run: uv sync --frozen --group docs
       - name: Build site
-        run: uv run --group docs mkdocs build --strict
+        run: uv run --group docs mkdocs build --strict -f "$MKDOCS_CONFIG"
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: site
+          path: ${{ env.PAGES_ARTIFACT_PATH }}
 
   deploy:
     needs: build

@@ -25,7 +25,7 @@ The site you're reading is built with [MkDocs](https://www.mkdocs.org/) and the 
 
 ```shell
 just docs-serve   # live preview at http://127.0.0.1:8000
-just docs-build   # build the static site into ./site
+just docs-build   # build the static site into docs/site/build
 ```
 
 Docs deploy automatically to GitHub Pages on every push to `main` via `.github/workflows/docs.yml`.
@@ -39,7 +39,9 @@ src/maicoin/
 tests/
   v3/, ws/    # unit tests with mocked sessions
   live/      # live integration tests (skipped by default)
-docs/         # MkDocs source
+docs/
+  site/      # MkDocs config, source, and generated build output
+  plans/     # coding-agent plans, TODOs, and archived notes
 examples/     # runnable scripts using the real API
 ```
 

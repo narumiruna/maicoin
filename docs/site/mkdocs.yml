@@ -3,15 +3,10 @@ site_description: Python client for the MaiCoin MAX exchange — typed REST v3 a
 site_url: https://narumiruna.github.io/maicoin/
 repo_url: https://github.com/narumiruna/maicoin
 repo_name: narumiruna/maicoin
-edit_uri: edit/main/docs/
+edit_uri: edit/main/docs/site/content/
 
-docs_dir: docs
-
-# Internal planning files live next to user-facing docs but should not appear in the published site.
-exclude_docs: |
-  TODO.md
-  *-plan.md
-  archived/
+docs_dir: content
+site_dir: build
 
 theme:
   name: material
@@ -67,7 +62,7 @@ plugins:
       default_handler: python
       handlers:
         python:
-          paths: [src]
+          paths: [../../src]
           options:
             docstring_style: google
             show_source: true

@@ -35,4 +35,4 @@ Live tests are written to be stable across market conditions:
 
 ## CI
 
-Live tests do **not** run in default CI. The archived plan ([live-integration-tests-plan](https://github.com/narumiruna/maicoin/blob/main/docs/archived/live-integration-tests-plan.md)) sketches a future `workflow_dispatch`-triggered job that reads credentials from GitHub Secrets.
+Live tests do **not** run in default CI. The archived plan ([live-integration-tests-plan](https://github.com/narumiruna/maicoin/blob/main/docs/plans/archived/live-integration-tests-plan.md)) sketches a future `workflow_dispatch`-triggered job that reads credentials from GitHub Secrets.

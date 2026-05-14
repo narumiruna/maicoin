@@ -30,8 +30,8 @@ publish:
 
 # Serve the documentation locally with live reload
 docs-serve:
-    uv run --group docs mkdocs serve
+    uv run --group docs mkdocs serve -f docs/site/mkdocs.yml
 
-# Build the static documentation site into ./site
+# Build the static documentation site into ./docs/site/build
 docs-build:
-    uv run --group docs mkdocs build --strict
+    uv run --group docs mkdocs build --strict -f docs/site/mkdocs.yml
