@@ -1,6 +1,8 @@
 # Codebase Architecture Deepening Opportunities
 
-Status: **proposed**.
+Status: **archived after completing the actionable first pass**.
+
+Completion note: the REST v3 test harness, REST v3 model locality, WebSocket Stream lifecycle split, and public export/docs-reference consistency check are complete. Remaining speculative candidates stay in `docs/plans/TODO.md` until there is a concrete trigger.
 
 This plan captures architecture deepening candidates found during the May 2026 codebase review. It is intentionally a planning document: do not implement every item at once. Pick one candidate, sharpen the intended Module Interface, then make a focused change with tests.
 
@@ -234,8 +236,8 @@ Keep endpoint tests focused on domain payloads and expected public Client behavi
 
 ### Files
 
-- `.agents/docs/TODO.md`
-- `.agents/docs/plans/client-resilience-and-ergonomics-follow-ups.md`
+- `docs/plans/TODO.md`
+- `docs/plans/archived/client-resilience-and-ergonomics-follow-ups.md`
 - `tests/live/*`
 - future destructive live-test files
 
@@ -274,14 +276,14 @@ Before adding destructive tests, design a destructive live-test safety Module. A
 
 - `src/maicoin/v3/__init__.py`
 - `src/maicoin/ws/__init__.py`
-- `docs/reference/v3.md`
-- `docs/reference/ws.md`
-- `mkdocs.yml`
+- `docs/site/content/reference/v3.md`
+- `docs/site/content/reference/ws.md`
+- `docs/site/mkdocs.yml`
 - `tests/*`
 
 ### Problem
 
-Public exports and MkDocs reference targets are maintained manually. A recent docs build failed because `maicoin.ws.ReconnectPolicy` was exported but not listed in `docs/reference/ws.md`, so `mkdocs_autorefs` could not resolve a cross-reference target.
+Public exports and MkDocs reference targets are maintained manually. A recent docs build failed because `maicoin.ws.ReconnectPolicy` was exported but not listed in `docs/site/content/reference/ws.md`, so `mkdocs_autorefs` could not resolve a cross-reference target.
 
 This is a locality problem: the public export list and docs reference list encode related knowledge in separate places.
 

@@ -8,7 +8,8 @@ This repository is a Python package for the MaiCoin MAX API. Core package code l
 - `src/maicoin/v3/` contains HTTP API-related modules.
 - `tests/` mirrors package areas, with current coverage focused on `tests/ws/` and `tests/v3/`.
 - `examples/` contains runnable scripts (`rest.py`, `websocket.py`) that load MAX credentials from `.env` and exercise the package locally.
-- `.agents/docs/` is for coding-agent-authored working documents: put finished plans or notes in `.agents/docs/archived/`, unfinished implementation plans in `.agents/docs/plans/`, and future follow-up items in `.agents/docs/TODO.md`.
+- `docs/site/` contains the MkDocs site: `docs/site/mkdocs.yml` is the config, `docs/site/content/` is the published source, and `docs/site/build/` is generated output.
+- `docs/plans/` is for coding-agent-authored working documents: keep unfinished implementation plans and `TODO.md` there, and put completed plans or notes in `docs/plans/archived/`.
 
 ## Build, Test, and Development Commands
 
@@ -21,6 +22,7 @@ just format   # uv run ruff format
 just lint     # uv run ruff check --fix
 just type     # uv run ty check
 just test     # uv run pytest -v -s --cov=src tests
+just docs-build  # uv run --group docs mkdocs build --strict -f docs/site/mkdocs.yml
 just publish  # uv build; uv publish
 ```
 
