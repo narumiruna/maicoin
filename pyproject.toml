@@ -1,6 +1,6 @@
 [project]
 name            = "maicoin"
-version         = "0.6.0"
+version         = "0.7.0"
 description     = ""
 readme          = "README.md"
 requires-python = ">=3.12"
@@ -32,7 +32,7 @@ requires      = ["uv_build>=0.9.30,<0.10.0"]
 build-backend = "uv_build"
 
 [tool.bumpversion]
-current_version  = "0.6.0"
+current_version  = "0.7.0"
 tag              = true
 commit           = true
 pre_commit_hooks = ["uv lock", "git add uv.lock"]
