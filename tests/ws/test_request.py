@@ -64,10 +64,19 @@ def test_action_auth_filters() -> None:
         "nonce": 1591690054859,
         "signature": "....",
         "id": "client-id",
-        "filters": ["order", "trade"],  # ignore account update
+        "filters": ["order", "trade", "fast_trade_update"],  # ignore account update
     }
 
-    Request.model_validate(d)
+    request = Request.model_validate(d)
+
+    assert request.filters == [Filter.ORDER, Filter.TRADE, Filter.FAST_TRADE_UPDATE]
+
+
+def test_auth_message_can_request_private_filters() -> None:
+    request = Request.auth("key", "secret", filters=[Filter.ORDER, Filter.FAST_TRADE_UPDATE])
+    message = json.loads(request.message())
+
+    assert message["filters"] == ["order", "fast_trade_update"]
 
 
 def test_action_auth_mwallet_filters() -> None:

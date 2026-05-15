@@ -78,10 +78,18 @@ async with Client(api_key=..., api_secret=...) as client:
 ```python
 from maicoin.ws import Channel, Stream, Subscription
 
-stream = Stream()                  # or Stream.from_env() for private channels
+stream = Stream()
 stream.subscribe([Subscription(channel=Channel.TICKER, market="btcusdt")])
 stream.add_handler(lambda r: print(r.model_dump(exclude_none=True)))
 stream.run()
+```
+
+Private streams authenticate with optional filters for the private event families you want:
+
+```python
+from maicoin.ws import Filter, Stream
+
+stream = Stream.from_env(auth_filters=[Filter.ORDER, Filter.TRADE, Filter.ACCOUNT])
 ```
 
 Full runnable scripts: [`examples/rest.py`](examples/rest.py), [`examples/websocket.py`](examples/websocket.py).
@@ -106,7 +114,7 @@ RUN_LIVE_TESTS=1 uv run pytest -v -s -m live tests/live
 just live-test
 ```
 
-Private read-only live tests also require `MAX_API_KEY` and `MAX_API_SECRET`; `just` loads these from `.env` automatically. Set `MAX_LIVE_MARKET` to override the default public test market (`btctwd`). Destructive live tests are intentionally not implemented yet.
+Private read-only live tests also require `MAX_API_KEY` and `MAX_API_SECRET`; `just` loads these from `.env` automatically. Set `MAX_LIVE_MARKET` to override the default public test market (`btctwd`). Destructive live tests require a separate `RUN_DESTRUCTIVE_TESTS=1` gate and are intentionally not implemented without a reviewed safety plan.
 
 ## 📚 References
 

@@ -32,6 +32,10 @@ async def private_examples(client: Client) -> None:
     print("[bold magenta]open orders btctwd[/bold magenta]")
     print(await client.open_orders(market="btctwd"))
 
+    print("[bold magenta]recent order history btctwd[/bold magenta]")
+    async for order in client.iter_order_history("btctwd", page_limit=10, max_items=3):
+        print({"id": order.id, "state": order.state, "market": order.market})
+
 
 async def main() -> None:
     load_dotenv(find_dotenv())

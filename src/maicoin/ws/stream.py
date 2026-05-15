@@ -27,6 +27,7 @@ from maicoin.ws._stream.types import HandlerErrorCallback
 from maicoin.ws._stream.types import LifecycleCallback
 from maicoin.ws._stream.types import WebSocketConnection
 from maicoin.ws._stream.types import WebSocketContext
+from maicoin.ws.request import Filter
 from maicoin.ws.request import Request
 from maicoin.ws.response import Response
 from maicoin.ws.subscription import Subscription
@@ -77,6 +78,7 @@ class Stream:
         uri: str = MAX_WS_URI,
         reconnect: bool = True,
         reconnect_policy: ReconnectPolicy | None = None,
+        auth_filters: list[Filter] | None = None,
         dispatch: DispatchMode = "inline",
         response_queue: asyncio.Queue[Response] | None = None,
         connect_factory: ConnectFactory | None = None,
@@ -96,6 +98,7 @@ class Stream:
             reconnect: Convenience switch for reconnects. Ignored when
                 `reconnect_policy` is provided.
             reconnect_policy: Backoff/retry settings.
+            auth_filters: Optional private event filters for the auth request.
             dispatch: Handler dispatch strategy: `inline`, `task`, or `queue`.
             response_queue: Queue used by `dispatch="queue"`. Created lazily
                 when omitted.
@@ -129,7 +132,7 @@ class Stream:
         )
         self._handler_tasks = self._dispatcher._handler_tasks
 
-        self.auth(api_key, api_secret)
+        self.auth(api_key, api_secret, filters=auth_filters)
 
     def subscribe(self, subscriptions: list[Subscription]) -> None:
         """Queue a `subscribe` request for the given list of subscriptions.
@@ -139,15 +142,22 @@ class Stream:
         """
         self.requests += [Request.subscribe(subscriptions)]
 
-    def auth(self, api_key: str | None, api_secret: str | None) -> None:
+    def auth(
+        self,
+        api_key: str | None,
+        api_secret: str | None,
+        *,
+        filters: list[Filter] | None = None,
+    ) -> None:
         """Queue an `auth` request when credentials are present.
 
         Called automatically by `__init__`; expose as a method so credentials
         can also be added after construction. Missing credentials are silently
-        ignored — public-only streams stay unauthenticated.
+        ignored — public-only streams stay unauthenticated. Pass `filters` to
+        narrow MAX private event families.
         """
         if api_key and api_secret:
-            self.requests += [Request.auth(api_key, api_secret)]
+            self.requests += [Request.auth(api_key, api_secret, filters=filters)]
 
     @classmethod
     def from_env(
@@ -156,6 +166,7 @@ class Stream:
         uri: str = MAX_WS_URI,
         reconnect: bool = True,
         reconnect_policy: ReconnectPolicy | None = None,
+        auth_filters: list[Filter] | None = None,
         dispatch: DispatchMode = "inline",
         response_queue: asyncio.Queue[Response] | None = None,
         connect_factory: ConnectFactory | None = None,
@@ -185,6 +196,7 @@ class Stream:
             uri=uri,
             reconnect=reconnect,
             reconnect_policy=reconnect_policy,
+            auth_filters=auth_filters,
             dispatch=dispatch,
             response_queue=response_queue,
             connect_factory=connect_factory,
