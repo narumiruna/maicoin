@@ -23,23 +23,26 @@ stream.run()
 
 ## Private channels
 
-Private channels (user orders, balances, M-Wallet events) require credentials. Use [`Stream.from_env`][maicoin.ws.Stream.from_env] to construct the stream from `MAX_API_KEY` / `MAX_API_SECRET`:
+Private events (user orders, trades, balances, M-Wallet events) require credentials. Authenticate with optional [`Filter`][maicoin.ws.Filter] values to choose the event families MAX should send:
 
 ```python
-stream = Stream.from_env()
-stream.subscribe(
-    [
-        Subscription(channel=Channel.ORDER),
-        Subscription(channel=Channel.TRADE_UPDATE),
-        Subscription(channel=Channel.BALANCE_UPDATE),
-    ]
-)
+from maicoin.ws import Filter, Stream
+
+stream = Stream.from_env(auth_filters=[Filter.ORDER, Filter.TRADE, Filter.ACCOUNT])
+stream.add_handler(lambda r: print(r.event, r.model_dump(exclude_none=True)))
+stream.run()
 ```
 
-Or pass them explicitly:
+Or pass credentials explicitly:
 
 ```python
-stream = Stream(api_key="...", api_secret="...")
+from maicoin.ws import Filter, Stream
+
+stream = Stream(
+    api_key="...",
+    api_secret="...",
+    auth_filters=[Filter.ORDER, Filter.FAST_TRADE_UPDATE],
+)
 ```
 
 ## Handlers and dispatch modes
@@ -61,7 +64,13 @@ stream.add_handler(on_response)
 - `queue`: put responses into `stream.response_queue` for consumer-managed processing; registered handlers are ignored.
 
 ```python
-stream = Stream(dispatch="task", on_handler_error=lambda exc, response: print(exc))
+from maicoin.ws import Filter, Stream
+
+stream = Stream.from_env(
+    auth_filters=[Filter.ORDER, Filter.TRADE],
+    dispatch="task",
+    on_handler_error=lambda exc, response: print(exc),
+)
 
 queue_stream = Stream(dispatch="queue")
 # elsewhere: response = await queue_stream.response_queue.get()
@@ -72,9 +81,10 @@ queue_stream = Stream(dispatch="queue")
 By default, `Stream` reconnects after transient disconnects and replays queued auth/subscription requests. Configure backoff with [`ReconnectPolicy`][maicoin.ws.ReconnectPolicy], or disable reconnects with `reconnect=False`:
 
 ```python
-from maicoin.ws import ReconnectPolicy
+from maicoin.ws import Filter, ReconnectPolicy, Stream
 
-stream = Stream(
+stream = Stream.from_env(
+    auth_filters=[Filter.ORDER, Filter.ACCOUNT],
     reconnect_policy=ReconnectPolicy(max_retries=10, base_delay=1, max_delay=30),
     ping_interval=20,
     ping_timeout=20,
@@ -91,8 +101,10 @@ Extra keyword arguments are forwarded to `websockets.connect`, including heartbe
 ```python
 import asyncio
 
+from maicoin.ws import Filter, Stream
+
 async def main():
-    stream = Stream.from_env()
+    stream = Stream.from_env(auth_filters=[Filter.ORDER])
     stream.subscribe([...])
     stream.add_handler(...)
     await stream.arun()

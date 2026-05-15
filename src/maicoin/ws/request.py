@@ -36,6 +36,7 @@ class Filter(StrEnum):
     TRADE = "trade"
     ACCOUNT = "account"
     TRADE_UPDATE = "trade_update"
+    FAST_TRADE_UPDATE = "fast_trade_update"
     MWALLET_ORDER = "mwallet_order"
     MWALLET_TRADE = "mwallet_trade"
     MWALLET_FAST_TRADE_UPDATE = "mwallet_fast_trade_update"
@@ -72,11 +73,12 @@ class Request(BaseModel):
     """Subscriptions for `unsub` requests. Note: MAX uses the singular key here."""
 
     @classmethod
-    def auth(cls, api_key: str, api_secret: str) -> Request:
+    def auth(cls, api_key: str, api_secret: str, *, filters: list[Filter] | None = None) -> Request:
         """Build an `auth` request signed with `api_secret`.
 
         The signature is `HMAC-SHA256(api_secret, str(nonce))` where `nonce`
-        is the current UTC time in milliseconds.
+        is the current UTC time in milliseconds. Pass `filters` to narrow
+        private event families instead of receiving MAX's default private set.
         """
         nonce = int(datetime.now(tz=UTC).timestamp() * 1000)
 
@@ -90,6 +92,7 @@ class Request(BaseModel):
             api_key=api_key,
             signature=signature,
             nonce=nonce,
+            filters=filters,
         )
 
     @classmethod

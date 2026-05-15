@@ -7,6 +7,7 @@ from collections.abc import Iterator
 import pytest
 
 from maicoin.ws import Channel
+from maicoin.ws import Filter
 from maicoin.ws import ReconnectPolicy
 from maicoin.ws import Response
 from maicoin.ws import Stream
@@ -150,3 +151,9 @@ def test_stream_forwards_websocket_connect_options() -> None:
         "args": ("wss://example.invalid/ws",),
         "kwargs": {"ping_interval": 10, "ping_timeout": 5, "close_timeout": 2, "max_queue": 16},
     }
+
+
+def test_stream_auth_can_request_private_filters() -> None:
+    stream = Stream(api_key="key", api_secret="secret", auth_filters=[Filter.ORDER, Filter.FAST_TRADE_UPDATE])
+
+    assert stream.requests[0].filters == [Filter.ORDER, Filter.FAST_TRADE_UPDATE]

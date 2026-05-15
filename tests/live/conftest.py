@@ -8,13 +8,17 @@ from maicoin.v3 import Client
 
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
-    if os.environ.get("RUN_LIVE_TESTS") == "1":
-        return
-
+    live_enabled = os.environ.get("RUN_LIVE_TESTS") == "1"
+    destructive_enabled = os.environ.get("RUN_DESTRUCTIVE_TESTS") == "1"
     skip_live = pytest.mark.skip(reason="set RUN_LIVE_TESTS=1 to run live integration tests")
+    skip_destructive = pytest.mark.skip(
+        reason="set RUN_DESTRUCTIVE_TESTS=1 only after reviewing destructive live-test safety controls"
+    )
     for item in items:
-        if "live" in item.keywords:
+        if "live" in item.keywords and not live_enabled:
             item.add_marker(skip_live)
+        if "destructive" in item.keywords and not destructive_enabled:
+            item.add_marker(skip_destructive)
 
 
 @pytest.fixture(scope="session")

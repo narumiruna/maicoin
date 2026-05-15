@@ -38,10 +38,12 @@ stream.add_handler(lambda r: print(r.model_dump(exclude_none=True)))
 stream.run()
 ```
 
-For private channels (orders, balances, M-Wallet events) construct the stream from your environment:
+For private events (orders, trades, balances, M-Wallet events), authenticate the stream from your environment and choose auth filters:
 
 ```python
-stream = Stream.from_env()  # reads MAX_API_KEY / MAX_API_SECRET
+from maicoin.ws import Filter, Stream
+
+stream = Stream.from_env(auth_filters=[Filter.ORDER, Filter.TRADE, Filter.ACCOUNT])
 ```
 
 ## Runnable examples

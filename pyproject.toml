@@ -1,16 +1,31 @@
 [project]
 name            = "maicoin"
 version         = "0.7.0"
-description     = ""
+description     = "Typed async Python client for the MaiCoin MAX REST v3 and WebSocket APIs."
 readme          = "README.md"
 requires-python = ">=3.12"
 authors         = [{ name = "narumi", email = "toucans-cutouts0f@icloud.com" }]
+keywords        = ["api", "crypto", "exchange", "maicoin", "max", "websocket"]
+classifiers     = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Typing :: Typed",
+]
 dependencies    = [
   "httpx>=0.28.1",
   "orjson>=3.11.9",
   "pydantic>=2.13.4",
   "websockets>=16.0",
 ]
+
+[project.urls]
+Documentation = "https://narumiruna.github.io/maicoin/"
+Homepage      = "https://github.com/narumiruna/maicoin"
+Issues        = "https://github.com/narumiruna/maicoin/issues"
+Repository    = "https://github.com/narumiruna/maicoin"
 
 [dependency-groups]
 dev  = [

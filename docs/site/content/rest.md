@@ -23,6 +23,16 @@ ticker = client.ticker_sync("btctwd")
 
 `_sync` wrappers use `asyncio.run()`, so code already running in an event loop should call the async methods directly.
 
+When you cannot use `async with`, close the client explicitly:
+
+```python
+client = Client(api_key="...", api_secret="...")
+try:
+    accounts = await client.accounts()
+finally:
+    await client.aclose()
+```
+
 You can override the base URL, timeout, retry policy, or HTTP session if needed:
 
 ```python
@@ -40,6 +50,18 @@ client = Client(
 ```
 
 Retries are conservative by default: only idempotent methods (`GET`, `HEAD`, `OPTIONS`) retry transient `429`, `502`, `503`, and `504` responses or network/timeout failures. `Retry-After` is respected when present. State-changing methods such as order placement and withdrawals are not retried unless you explicitly opt in with `RetryPolicy(retry_non_idempotent=True)`.
+
+Keep non-idempotent retries off for trading and transfer flows unless your own idempotency plan can tolerate a repeated request:
+
+```python
+safe_public_client = Client(retry_policy=RetryPolicy(total_attempts=3))
+
+explicit_opt_in = Client(
+    api_key="...",
+    api_secret="...",
+    retry_policy=RetryPolicy(total_attempts=3, retry_non_idempotent=True),
+)
+```
 
 ## Public endpoints
 
@@ -64,8 +86,37 @@ await client.closed_orders(market="btctwd", limit=10)
 await client.wallet_trades(limit=10)
 ```
 
+## Pagination helpers
+
+Use async iterators for ID-cursor history endpoints instead of managing `from_id` manually:
+
+```python
+async with Client(api_key="...", api_secret="...") as client:
+    async for order in client.iter_order_history("btctwd", page_limit=100):
+        print(order.id, order.state)
+
+    async for trade in client.iter_wallet_trades(market="btctwd", page_limit=100):
+        print(trade.id, trade.price)
+```
+
 !!! warning "⚠️ Private methods can move money"
     Private methods include order placement, withdrawals, internal transfers, convert orders, and M-Wallet borrow/repay/transfer. Double-check arguments before calling state-changing methods against a live account.
+
+For state-changing methods, prefer explicit identifiers and small scoped calls:
+
+```python
+await client.create_order(
+    market="btctwd",
+    side="buy",
+    volume="0.001",
+    price="1000",
+    ord_type="limit",
+    client_oid="local-dedupe-id",
+)
+
+# Avoid broad cancellation in automation. Cancel the exact order you created.
+await client.cancel_order(client_oid="local-dedupe-id")
+```
 
 ## Raw escape hatch
 
