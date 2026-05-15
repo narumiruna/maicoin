@@ -9,7 +9,7 @@ This repository is a Python package for the MaiCoin MAX API. Core package code l
 - `tests/` mirrors package areas, with current coverage focused on `tests/ws/` and `tests/v3/`.
 - `examples/` contains runnable scripts (`rest.py`, `websocket.py`) that load MAX credentials from `.env` and exercise the package locally.
 - `docs/site/` contains the MkDocs site: `docs/site/mkdocs.yml` is the config, `docs/site/content/` is the published source, and `docs/site/build/` is generated output.
-- `docs/plans/` is for coding-agent-authored working documents: keep unfinished implementation plans and `TODO.md` there, and put completed plans or notes in `docs/plans/archived/`.
+- `docs/plans/` is for coding-agent-authored working documents: keep active or unfinished implementation plans there, and put completed plans or durable notes in `docs/plans/archived/`.
 
 ## Build, Test, and Development Commands
 
