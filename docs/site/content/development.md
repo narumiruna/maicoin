@@ -41,7 +41,7 @@ tests/
   live/      # live integration tests (skipped by default)
 docs/
   site/      # MkDocs config, source, and generated build output
-  plans/     # coding-agent plans, TODOs, and archived notes
+  plans/     # active coding-agent plans and archived notes
 examples/     # runnable scripts using the real API
 ```
 

@@ -2,7 +2,7 @@
 
 Status: **archived after completing the actionable first pass**.
 
-Completion note: the REST v3 test harness, REST v3 model locality, WebSocket Stream lifecycle split, and public export/docs-reference consistency check are complete. Remaining speculative candidates stay in `docs/plans/TODO.md` until there is a concrete trigger.
+Completion note: the REST v3 test harness, REST v3 model locality, WebSocket Stream lifecycle split, and public export/docs-reference consistency check are complete. Remaining follow-up decisions are recorded in `docs/plans/archived/todo-follow-up-decisions.md`; active follow-up plans belong in `docs/plans/`.
 
 This plan captures architecture deepening candidates found during the May 2026 codebase review. It is intentionally a planning document: do not implement every item at once. Pick one candidate, sharpen the intended Module Interface, then make a focused change with tests.
 
@@ -236,7 +236,7 @@ Keep endpoint tests focused on domain payloads and expected public Client behavi
 
 ### Files
 
-- `docs/plans/TODO.md`
+- future active plans under `docs/plans/`
 - `docs/plans/archived/client-resilience-and-ergonomics-follow-ups.md`
 - `tests/live/*`
 - future destructive live-test files
