@@ -1,3 +1,6 @@
+from datetime import UTC
+from datetime import datetime
+
 from maicoin.ws.response import Response
 
 
@@ -9,7 +12,9 @@ def test_response_auth_success() -> None:
         "T": 1591686735192,
     }
 
-    Response.model_validate(d)
+    response = Response.model_validate(d)
+
+    assert response.created_at == datetime(2020, 6, 9, 7, 12, 15, 192000, tzinfo=UTC)
 
 
 # https://maicoin.github.io/max-websocket-docs/#/?id=error-response
@@ -180,7 +185,11 @@ def test_response_private_order_snapshot() -> None:
         "T": 1521726960357,
     }
 
-    Response.model_validate(d)
+    response = Response.model_validate(d)
+
+    assert response.orders is not None
+    assert response.orders[0].created_at == datetime(2022, 8, 2, 5, 44, 8, tzinfo=UTC)
+    assert response.orders[0].updated_at == datetime(2022, 8, 2, 5, 44, 8, 406000, tzinfo=UTC)
 
 
 # https://maicoin.github.io/max-websocket-docs/#/private_channels?id=update
@@ -549,6 +558,7 @@ def test_response_mwallet_account_update_without_balance_update_time() -> None:
                 "av": "123.4",
                 "l": "0.5",
                 "stk": None,
+                "TU": None,
             },
         ],
         "T": 1521726960357,

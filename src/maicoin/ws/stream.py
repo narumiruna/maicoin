@@ -15,10 +15,8 @@ from typing import cast
 import websockets
 
 from maicoin.ws._stream.dispatch import ResponseDispatcher
-from maicoin.ws._stream.lifecycle import call_lifecycle
 from maicoin.ws._stream.reconnect import ReconnectLoop
 from maicoin.ws._stream.reconnect import ReconnectPolicy
-from maicoin.ws._stream.reconnect import should_reconnect
 from maicoin.ws._stream.session import ConnectedSession
 from maicoin.ws._stream.types import ConnectFactory
 from maicoin.ws._stream.types import DispatchMode
@@ -130,7 +128,6 @@ class Stream:
             response_queue=self.response_queue,
             on_handler_error=on_handler_error,
         )
-        self._handler_tasks = self._dispatcher._handler_tasks
 
         self.auth(api_key, api_secret, filters=auth_filters)
 
@@ -237,7 +234,7 @@ class Stream:
         try:
             await loop.run()
         except asyncio.CancelledError:
-            await self._cancel_handler_tasks()
+            await self._dispatcher.cancel_handler_tasks()
             raise
 
     def add_handler(self, handler: Handler) -> None:
@@ -249,18 +246,3 @@ class Stream:
         [`response_queue`][maicoin.ws.Stream.response_queue].
         """
         self.handlers.append(handler)
-
-    def _should_reconnect(self, retry_count: int) -> bool:
-        return should_reconnect(self.reconnect_policy, retry_count)
-
-    async def _dispatch(self, resp: Response) -> None:
-        await self._dispatcher.dispatch_response(resp)
-
-    async def _call_handler(self, handler: Handler, resp: Response) -> None:
-        await self._dispatcher.call_handler(handler, resp)
-
-    async def _call_lifecycle(self, callback: LifecycleCallback | None, exc: Exception | None) -> None:
-        await call_lifecycle(callback, exc)
-
-    async def _cancel_handler_tasks(self) -> None:
-        await self._dispatcher.cancel_handler_tasks()

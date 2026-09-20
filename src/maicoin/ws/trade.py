@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from datetime import UTC
 from datetime import datetime
 
 from pydantic import BaseModel
 from pydantic import Field
 from pydantic import field_validator
 
+from maicoin.ws._datetime import from_milliseconds
 from maicoin.ws.side import Side
 
 
@@ -30,6 +30,4 @@ class Trade(BaseModel):
     @field_validator("created_at", "updated_at", mode="before")
     @classmethod
     def convert_datetime(cls, t: int | None) -> datetime | None:
-        if t is None:
-            return None
-        return datetime.fromtimestamp(int(t) / 1000, tz=UTC)
+        return from_milliseconds(t)

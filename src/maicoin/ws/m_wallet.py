@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from datetime import UTC
 from datetime import datetime
 
 from pydantic import BaseModel
 from pydantic import Field
 from pydantic import field_validator
+
+from maicoin.ws._datetime import from_milliseconds
 
 
 class PoolQuota(BaseModel):
@@ -16,7 +17,7 @@ class PoolQuota(BaseModel):
     @field_validator("updated_at", mode="before")
     @classmethod
     def convert_datetime(cls, t: int) -> datetime:
-        return datetime.fromtimestamp(int(t) / 1000, tz=UTC)
+        return from_milliseconds(t)
 
 
 class MWalletIndexPrice(BaseModel):
@@ -34,7 +35,7 @@ class MWalletADRatio(BaseModel):
     @field_validator("updated_at", mode="before")
     @classmethod
     def convert_datetime(cls, t: int) -> datetime:
-        return datetime.fromtimestamp(int(t) / 1000, tz=UTC)
+        return from_milliseconds(t)
 
 
 class MWalletBorrowing(BaseModel):
@@ -46,4 +47,4 @@ class MWalletBorrowing(BaseModel):
     @field_validator("updated_at", mode="before")
     @classmethod
     def convert_datetime(cls, t: int) -> datetime:
-        return datetime.fromtimestamp(int(t) / 1000, tz=UTC)
+        return from_milliseconds(t)

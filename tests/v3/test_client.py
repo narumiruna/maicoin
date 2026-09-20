@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import httpx
 import pytest
 
 from maicoin.v3._endpoints.base import EndpointExecutor
@@ -182,6 +183,38 @@ async def test_post_request_does_not_retry_by_default() -> None:
     assert len(session.calls) == 1
 
 
+async def test_get_request_retries_after_timeout() -> None:
+    session = FakeSession([httpx.ReadTimeout("timed out"), FakeResponse({"ok": True})])
+    client = Client(
+        base_url="https://example.test",
+        session=session,
+        retry_policy=RetryPolicy(backoff_factor=0, jitter=0),
+    )
+
+    assert await client.request("GET", "/api/v3/ping") == {"ok": True}
+    assert len(session.calls) == 2
+
+
+async def test_get_request_raises_final_transport_error() -> None:
+    session = FakeSession(
+        [
+            httpx.ConnectError("network failure 1"),
+            httpx.ConnectError("network failure 2"),
+            httpx.ConnectError("network failure 3"),
+        ]
+    )
+    client = Client(
+        base_url="https://example.test",
+        session=session,
+        retry_policy=RetryPolicy(backoff_factor=0, jitter=0),
+    )
+
+    with pytest.raises(httpx.ConnectError, match="network failure 3"):
+        await client.request("GET", "/api/v3/ping")
+
+    assert len(session.calls) == 3
+
+
 async def test_post_request_retries_when_non_idempotent_opted_in(monkeypatch: pytest.MonkeyPatch) -> None:
     session = FakeSession(
         [
@@ -210,6 +243,21 @@ def test_request_sync_wrapper_runs_async_request() -> None:
 
     assert client.request_sync("GET", "/api/v3/ping") == {"ok": True}
     assert session.calls[-1]["url"] == "https://example.test/api/v3/ping"
+
+
+def test_typed_sync_wrapper_forwards_positional_and_keyword_arguments() -> None:
+    session = FakeSession([[1678766100, "1", "2", "0.5", "1.5", "42"]])
+    client = Client(base_url="https://example.test", session=session)
+
+    klines = client.kline_sync("btctwd", limit=1, period=5, timestamp=1678766100)
+
+    assert [(kline.timestamp, kline.volume) for kline in klines] == [(1678766100, "42")]
+    assert last_kwargs(session)["params"] == {
+        "market": "btctwd",
+        "limit": 1,
+        "period": 5,
+        "timestamp": 1678766100,
+    }
 
 
 async def test_sync_wrappers_raise_inside_running_event_loop() -> None:

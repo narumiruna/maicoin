@@ -8,7 +8,6 @@ from dataclasses import dataclass
 
 from maicoin.v3._endpoints.base import EndpointExecutor
 from maicoin.v3._endpoints.base import EndpointSpec
-from maicoin.v3._endpoints.base import RestRequester
 from maicoin.v3._endpoints.base import iter_id_paginated
 from maicoin.v3.models.orders import Account
 from maicoin.v3.models.orders import Order
@@ -34,11 +33,7 @@ ORDER_TRADES = EndpointSpec("GET", "/api/v3/order/trades", auth=True)
 class OrderIntakeHistoryEndpoints:
     """Authenticated account, trade, and order request/parse rules."""
 
-    requester: RestRequester
-
-    @property
-    def endpoint(self) -> EndpointExecutor:
-        return EndpointExecutor(self.requester)
+    endpoint: EndpointExecutor
 
     async def info(self) -> UserInfo:
         return await self.endpoint.model(INFO, UserInfo)

@@ -42,12 +42,6 @@ class ReconnectPolicy:
         return backoff + random.uniform(0, self.jitter)
 
 
-def should_reconnect(policy: ReconnectPolicy, retry_count: int) -> bool:
-    if not policy.enabled:
-        return False
-    return policy.max_retries is None or retry_count <= policy.max_retries
-
-
 class ReconnectLoop:
     """Own reconnect retry state, lifecycle callback ordering, and backoff sleep."""
 
@@ -86,13 +80,13 @@ class ReconnectLoop:
             except Exception as exc:
                 await call_lifecycle(self.on_disconnected, exc)
                 retry_count += 1
-                if not self.should_reconnect(retry_count):
+                retries_exhausted = not self.reconnect_policy.enabled or (
+                    self.reconnect_policy.max_retries is not None and retry_count > self.reconnect_policy.max_retries
+                )
+                if retries_exhausted:
                     await call_lifecycle(self.on_permanent_failure, exc)
                     raise
                 await call_lifecycle(self.on_reconnecting, exc)
                 delay = self.reconnect_policy.delay(retry_count)
                 if delay > 0:
                     await self.sleep(delay)
-
-    def should_reconnect(self, retry_count: int) -> bool:
-        return should_reconnect(self.reconnect_policy, retry_count)

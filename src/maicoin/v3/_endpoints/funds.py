@@ -6,7 +6,6 @@ from dataclasses import dataclass
 
 from maicoin.v3._endpoints.base import EndpointExecutor
 from maicoin.v3._endpoints.base import EndpointSpec
-from maicoin.v3._endpoints.base import RestRequester
 from maicoin.v3.models.funds import Deposit
 from maicoin.v3.models.funds import DepositAddress
 from maicoin.v3.models.funds import FundTransactionDeposit
@@ -39,11 +38,7 @@ FUND_TRANSACTION_TRANSFER = EndpointSpec("GET", "/api/v3/fund_transactions/trans
 class FundsEndpoints:
     """Authenticated fund movement request/parse rules."""
 
-    requester: RestRequester
-
-    @property
-    def endpoint(self) -> EndpointExecutor:
-        return EndpointExecutor(self.requester)
+    endpoint: EndpointExecutor
 
     async def withdrawal(self, uuid: str) -> Withdrawal:
         return await self.endpoint.model(WITHDRAWAL, Withdrawal, {"uuid": uuid})
