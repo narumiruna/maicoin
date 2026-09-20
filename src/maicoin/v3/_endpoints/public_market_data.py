@@ -8,7 +8,6 @@ from typing import cast
 
 from maicoin.v3._endpoints.base import EndpointExecutor
 from maicoin.v3._endpoints.base import EndpointSpec
-from maicoin.v3._endpoints.base import RestRequester
 from maicoin.v3.models.public_market_data import Currency
 from maicoin.v3.models.public_market_data import Depth
 from maicoin.v3.models.public_market_data import KLine
@@ -31,11 +30,7 @@ TICKER = EndpointSpec("GET", "/api/v3/ticker")
 class PublicMarketDataEndpoints:
     """Public MAX market-data request and parsing rules."""
 
-    requester: RestRequester
-
-    @property
-    def endpoint(self) -> EndpointExecutor:
-        return EndpointExecutor(self.requester)
+    endpoint: EndpointExecutor
 
     async def markets(self) -> list[Market]:
         return await self.endpoint.model_list(MARKETS, Market)

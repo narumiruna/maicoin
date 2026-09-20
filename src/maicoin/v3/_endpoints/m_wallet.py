@@ -7,7 +7,6 @@ from typing import cast
 
 from maicoin.v3._endpoints.base import EndpointExecutor
 from maicoin.v3._endpoints.base import EndpointSpec
-from maicoin.v3._endpoints.base import RestRequester
 from maicoin.v3.models.m_wallet import HistoricalIndexPrice
 from maicoin.v3.models.m_wallet import InterestRate
 from maicoin.v3.models.m_wallet import MWalletADRatio
@@ -38,11 +37,7 @@ M_WALLET_AD_RATIO = EndpointSpec("GET", "/api/v3/wallet/m/ad_ratio", auth=True)
 class MWalletEndpoints:
     """M-Wallet public and authenticated request/parse rules."""
 
-    requester: RestRequester
-
-    @property
-    def endpoint(self) -> EndpointExecutor:
-        return EndpointExecutor(self.requester)
+    endpoint: EndpointExecutor
 
     async def m_wallet_index_prices(self) -> dict[str, str]:
         payload = await self.endpoint.raw(M_WALLET_INDEX_PRICES)

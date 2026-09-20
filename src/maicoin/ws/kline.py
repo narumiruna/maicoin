@@ -1,10 +1,11 @@
-from datetime import UTC
 from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel
 from pydantic import Field
 from pydantic import field_validator
+
+from maicoin.ws._datetime import from_milliseconds
 
 RESOLUTION = Literal["1m", "5m", "15m", "30m", "1h", "2h", "4h", "6h", "12h", "1d"]
 
@@ -26,4 +27,4 @@ class KLine(BaseModel):
     @field_validator("start_time", "end_time", mode="before")
     @classmethod
     def convert_datetime(cls, t: int) -> datetime:
-        return datetime.fromtimestamp(int(t) / 1000, tz=UTC)
+        return from_milliseconds(t)

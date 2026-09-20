@@ -6,7 +6,6 @@ from dataclasses import dataclass
 
 from maicoin.v3._endpoints.base import EndpointExecutor
 from maicoin.v3._endpoints.base import EndpointSpec
-from maicoin.v3._endpoints.base import RestRequester
 from maicoin.v3.models.convert import ConvertOrder
 
 CREATE_CONVERT = EndpointSpec("POST", "/api/v3/convert", auth=True)
@@ -18,11 +17,7 @@ CONVERTS = EndpointSpec("GET", "/api/v3/converts", auth=True)
 class ConvertEndpoints:
     """Authenticated convert request/parse rules."""
 
-    requester: RestRequester
-
-    @property
-    def endpoint(self) -> EndpointExecutor:
-        return EndpointExecutor(self.requester)
+    endpoint: EndpointExecutor
 
     async def create_convert(
         self,

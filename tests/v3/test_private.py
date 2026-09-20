@@ -9,8 +9,8 @@ from maicoin.v3 import OrderState
 from maicoin.v3 import OrderType
 from maicoin.v3 import PrivateTrade
 from maicoin.v3 import UserInfo
+from tests.v3.helpers import FakeResponse
 from tests.v3.helpers import FakeSession
-from tests.v3.helpers import PagedFakeSession
 from tests.v3.helpers import authenticated_client
 from tests.v3.helpers import call_kwargs
 from tests.v3.helpers import last_json
@@ -142,10 +142,10 @@ async def test_wallet_trades_constructs_authenticated_request_and_parses_private
 
 
 async def test_iter_wallet_trades_advances_from_id_and_stops_at_max_items() -> None:
-    session = PagedFakeSession(
+    session = FakeSession(
         [
-            [trade_payload(id=1), trade_payload(id=2)],
-            [trade_payload(id=2), trade_payload(id=3)],
+            FakeResponse([trade_payload(id=1), trade_payload(id=2)]),
+            FakeResponse([trade_payload(id=2), trade_payload(id=3)]),
         ]
     )
     client = authenticated_client(session)
@@ -170,10 +170,10 @@ async def test_iter_wallet_trades_advances_from_id_and_stops_at_max_items() -> N
 
 
 async def test_iter_order_history_advances_from_id_until_short_page() -> None:
-    session = PagedFakeSession(
+    session = FakeSession(
         [
-            [order_payload(id=1), order_payload(id=2)],
-            [order_payload(id=3)],
+            FakeResponse([order_payload(id=1), order_payload(id=2)]),
+            FakeResponse([order_payload(id=3)]),
         ]
     )
     client = authenticated_client(session)
@@ -196,10 +196,10 @@ async def test_iter_order_history_advances_from_id_until_short_page() -> None:
 
 
 async def test_iter_order_history_respects_max_pages() -> None:
-    session = PagedFakeSession(
+    session = FakeSession(
         [
-            [order_payload(id=1), order_payload(id=2)],
-            [order_payload(id=3), order_payload(id=4)],
+            FakeResponse([order_payload(id=1), order_payload(id=2)]),
+            FakeResponse([order_payload(id=3), order_payload(id=4)]),
         ]
     )
     client = authenticated_client(session)
