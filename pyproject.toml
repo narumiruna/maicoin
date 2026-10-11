@@ -16,9 +16,9 @@ classifiers     = [
 ]
 dependencies    = [
   "httpx>=0.28.1",
-  "orjson>=3.11.9",
-  "pydantic>=2.13.4",
-  "websockets>=16.0",
+  "orjson>=3.13.0",
+  "pydantic>=2.14.0",
+  "websockets>=17.2",
 ]
 
 [project.urls]
@@ -29,17 +29,17 @@ Repository    = "https://github.com/narumiruna/maicoin"
 
 [dependency-groups]
 dev  = [
-  "pytest>=9.0.3",
+  "pytest>=9.1.1",
   "pytest-cov>=7.1.0",
-  "python-dotenv>=1.2.2",
+  "python-dotenv>=1.2.4",
   "rich>=15.0.0",
-  "ruff>=0.15.12",
-  "ty>=0.0.34",
+  "ruff>=0.17.0",
+  "ty>=0.0.86",
 ]
 docs = [
   "mkdocs>=1.6.1",
-  "mkdocs-material>=9.5.0",
-  "mkdocstrings[python]>=0.27.0",
+  "mkdocs-material>=9.7.7",
+  "mkdocstrings[python]>=1.0.7",
 ]
 
 [build-system]
